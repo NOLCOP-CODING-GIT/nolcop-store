@@ -1,5 +1,5 @@
 {
-  "name": "templates-typescript",
+  "name": "nolcop-store",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/vite": "^4.1.18",
     "framer-motion": "^12.24.12",
     "lucide-react": "^0.562.0",

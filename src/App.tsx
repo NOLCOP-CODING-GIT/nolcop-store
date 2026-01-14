@@ -1,102 +1,60 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { CartProvider } from "./contexts/CartContext";
+import { useState, useEffect } from "react";
 import Header from "./components/Header";
-import Footer from "./components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
-import AuthLayout from "./components/AuthLayout";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Profile from "./pages/Profile";
-import ProductDetail from "./pages/ProductDetail";
-import Wishlist from "./pages/Wishlist";
-import Cart from "./pages/Cart";
-import Orders from "./pages/Orders";
-import Admin from "./pages/Admin";
-import CategoryPage from "./pages/CategoryPage";
-import SearchPage from "./pages/SearchPage";
-import Unauthorized from "./pages/Unauthorized";
-
-// Layout pour les pages avec header et footer
-const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-screen flex flex-col">
-    <Header />
-    <main className="grow">{children}</main>
-    <Footer />
-  </div>
-);
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./pages/Dashboard";
+import Students from "./pages/Students";
+import Teachers from "./pages/Teachers";
+import Classes from "./pages/Classes";
+import Courses from "./pages/Courses";
+import Grades from "./pages/Grades";
+import Attendance from "./pages/Attendance";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 
 function App() {
-  return (
-    <AuthProvider>
-      <CartProvider>
-        <Router>
-          <Routes>
-            {/* Routes d'authentification sans header/footer */}
-            <Route
-              path="/login"
-              element={
-                <AuthLayout>
-                  <Login />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <AuthLayout>
-                  <Register />
-                </AuthLayout>
-              }
-            />
-            <Route path="/unauthorized" element={<Unauthorized />} />
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-            {/* Routes principales avec header/footer */}
-            <Route
-              path="/*"
-              element={
-                <MainLayout>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/category/:slug" element={<CategoryPage />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/orders"
-                      element={
-                        <ProtectedRoute>
-                          <Orders />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <Admin />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Add more routes here */}
-                  </Routes>
-                </MainLayout>
-              }
-            />
-          </Routes>
-        </Router>
-      </CartProvider>
-    </AuthProvider>
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <Sidebar isOpen={sidebarOpen} />
+        <main
+          className={`transition-all duration-300 pt-16 ${
+            sidebarOpen && !isMobile ? "lg:ml-64" : "ml-0"
+          }`}
+        >
+          <div className="p-4 sm:p-6">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/students" element={<Students />} />
+              <Route path="/teachers" element={<Teachers />} />
+              <Route path="/classes" element={<Classes />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/grades" element={<Grades />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
+    </Router>
   );
 }
 

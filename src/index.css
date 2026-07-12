@@ -1,5 +1,41 @@
 @import "tailwindcss";
 
+@theme {
+  --color-orange-rougi: #F05121;
+  --color-violet-myrtille-tenebreux: #2D4040;
+  --color-blanc: #FFFFFF;
+  --color-gris-canon-de-fusil: #111827;
+  --color-bleu-clair: #ABBCE5;
+  --color-bleu-saphir: #2041B1;
+  --color-vert-jungle: #178A3D;
+  --color-rouge-ecarlate: #C4232E;
+}
+
+/* --- Configuration de la Scrollbar avec vos couleurs natives --- */
+
+/* La piste (le fond de la barre) */
+::-webkit-scrollbar-track {
+  background-color: var(--color-blanc);
+}
+
+/* Mode sombre natif pour la piste (si vous gérez une classe .dark ou le sélecteur média) */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background-color: var(--color-violet-myrtille-tenebreux);
+  }
+}
+
+/* La poignée (le curseur que l'on glisse) */
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-gris-canon-de-fusil) 30%, transparent);
+  border-radius: 9999px;
+}
+
+/* Effet au survol (hover) sur la poignée */
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-bleu-clair);
+}
+
 /* Custom styles for dark mode transitions */
 * {
   transition-property: background-color, border-color, color, fill, stroke;
@@ -15,16 +51,4 @@ html {
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-500;
 }

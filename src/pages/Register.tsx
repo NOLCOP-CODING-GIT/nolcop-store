@@ -91,23 +91,30 @@ const Register: React.FC = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="py-12 flex items-center justify-center bg-blanc px-4">
         <div className="max-w-md w-full">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            {/* Remplacement des couleurs vertes par vert-jungle */}
+            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-vert-jungle/10">
+              <CheckCircle className="h-6 w-6 text-vert-jungle" />
             </div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+
+            <h2 className="mt-6 text-3xl font-extrabold text-gris-canon-de-fusil">
               Inscription réussie !
             </h2>
+
             {message ? (
               <>
-                <p className="mt-2 text-sm text-gray-600">{message}</p>
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800 font-medium mb-3">
+                <p className="mt-2 text-sm text-gris-canon-de-fusil/70">
+                  {message}
+                </p>
+
+                {/* Remplacement de la boîte bleue générique par bleu-clair/20 et bleu-saphir */}
+                <div className="mt-6 p-4 bg-bleu-clair/20 rounded-lg">
+                  <p className="text-sm text-bleu-saphir font-medium mb-3">
                     Étapes suivantes :
                   </p>
-                  <ol className="text-left text-sm text-blue-700 space-y-2">
+                  <ol className="text-left text-sm text-gris-canon-de-fusil/80 space-y-2">
                     <li>1. Vérifiez votre boîte de réception</li>
                     <li>
                       2. Cliquez sur le bouton "Confirmer mon email" dans
@@ -117,16 +124,20 @@ const Register: React.FC = () => {
                     <li>4. Connectez-vous à votre compte</li>
                   </ol>
                 </div>
+
                 <div className="mt-6 space-y-3">
+                  {/* Bouton principal en bleu-saphir */}
                   <button
                     onClick={() => (window.location.href = `mailto:${email}`)}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-blanc bg-bleu-saphir hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bleu-saphir transition-all"
                   >
                     Ouvrir ma boîte mail
                   </button>
+
+                  {/* Bouton secondaire avec vos bordures et texte gris-canon-de-fusil */}
                   <Link
                     to="/login"
-                    className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="w-full flex justify-center py-2 px-4 border border-gris-canon-de-fusil/20 rounded-md shadow-sm text-sm font-medium text-gris-canon-de-fusil bg-blanc hover:bg-gris-canon-de-fusil/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bleu-saphir transition-colors"
                   >
                     J'ai déjà confirmé mon email
                   </Link>
@@ -134,12 +145,13 @@ const Register: React.FC = () => {
               </>
             ) : (
               <>
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-gris-canon-de-fusil/70">
                   Votre compte a été créé avec succès. Vous allez être redirigé
                   vers la page de connexion.
                 </p>
                 <div className="mt-6">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                  {/* Loader utilisant bleu-saphir */}
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bleu-saphir mx-auto"></div>
                 </div>
               </>
             )}
@@ -150,20 +162,24 @@ const Register: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex items-center justify-center bg-blanc py-12 px-4">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-indigo-100">
-            <User className="h-6 w-6 text-indigo-600" />
+          <div className="mx-auto h-auto w-25 flex items-center justify-center rounded-full bg-bleu-clair/20">
+            <img
+              src="/logo.png"
+              alt="Nolcop Store"
+              className="object-contain rounded-full"
+            />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gris-canon-de-fusil">
             Créer votre compte
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gris-canon-de-fusil/70">
             Ou{" "}
             <Link
               to="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-bleu-saphir hover:text-bleu-saphir/80 transition-colors"
             >
               connectez-vous à votre compte existant
             </Link>
@@ -171,33 +187,37 @@ const Register: React.FC = () => {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Alerte Erreur avec rouge-ecarlate */}
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
+            <div className="rounded-md bg-rouge-ecarlate/10 p-4">
               <div className="flex">
                 <div className="shrink-0">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
+                  <AlertCircle className="h-5 w-5 text-rouge-ecarlate" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
+                  <h3 className="text-sm font-medium text-rouge-ecarlate">
                     Erreur d'inscription
                   </h3>
-                  <div className="mt-2 text-sm text-red-700">{error}</div>
+                  <div className="mt-2 text-sm text-rouge-ecarlate/90">
+                    {error}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           <div className="space-y-4">
+            {/* Champ : Nom complet */}
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gris-canon-de-fusil"
               >
                 Nom complet
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <User className="h-5 w-5 text-gris-canon-de-fusil/40" />
                 </div>
                 <input
                   id="name"
@@ -207,22 +227,23 @@ const Register: React.FC = () => {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gris-canon-de-fusil/20 bg-blanc text-gris-canon-de-fusil rounded-md placeholder-gris-canon-de-fusil/40 focus:outline-none focus:ring-2 focus:ring-bleu-saphir focus:border-transparent sm:text-sm"
                   placeholder="Jean Dupont"
                 />
               </div>
             </div>
 
+            {/* Champ : Adresse */}
             <div>
               <label
                 htmlFor="address"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gris-canon-de-fusil"
               >
                 Adresse
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin className="h-5 w-5 text-gray-400" />
+                  <MapPin className="h-5 w-5 text-gris-canon-de-fusil/40" />
                 </div>
                 <input
                   id="address"
@@ -232,22 +253,23 @@ const Register: React.FC = () => {
                   required
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gris-canon-de-fusil/20 bg-blanc text-gris-canon-de-fusil rounded-md placeholder-gris-canon-de-fusil/40 focus:outline-none focus:ring-2 focus:ring-bleu-saphir focus:border-transparent sm:text-sm"
                   placeholder="123 Rue de la République, 75001 Paris"
                 />
               </div>
             </div>
 
+            {/* Champ : Adresse email */}
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gris-canon-de-fusil"
               >
                 Adresse email
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-gris-canon-de-fusil/40" />
                 </div>
                 <input
                   id="email"
@@ -257,22 +279,21 @@ const Register: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gris-canon-de-fusil/20 bg-blanc text-gris-canon-de-fusil rounded-md placeholder-gris-canon-de-fusil/40 focus:outline-none focus:ring-2 focus:ring-bleu-saphir focus:border-transparent sm:text-sm"
                   placeholder="vous@exemple.com"
                 />
               </div>
             </div>
-
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gris-canon-de-fusil"
               >
                 Mot de passe
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-gris-canon-de-fusil/40" />
                 </div>
                 <input
                   id="password"
@@ -282,7 +303,7 @@ const Register: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gris-canon-de-fusil/20 bg-blanc text-gris-canon-de-fusil rounded-md placeholder-gris-canon-de-fusil/40 focus:outline-none focus:ring-2 focus:ring-bleu-saphir focus:border-transparent sm:text-sm"
                   placeholder="•••••••••"
                 />
                 <button
@@ -291,25 +312,28 @@ const Register: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-gris-canon-de-fusil/40" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-gris-canon-de-fusil/40" />
                   )}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">Minimum 6 caractères</p>
+              <p className="mt-1 text-xs text-gris-canon-de-fusil/60">
+                Minimum 6 caractères
+              </p>
             </div>
 
+            {/* Champ : Confirmer le mot de passe */}
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gris-canon-de-fusil"
               >
                 Confirmer le mot de passe
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-gris-canon-de-fusil/40" />
                 </div>
                 <input
                   id="confirmPassword"
@@ -319,7 +343,7 @@ const Register: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gris-canon-de-fusil/20 bg-blanc text-gris-canon-de-fusil rounded-md placeholder-gris-canon-de-fusil/40 focus:outline-none focus:ring-2 focus:ring-bleu-saphir focus:border-transparent sm:text-sm"
                   placeholder="•••••••••"
                 />
                 <button
@@ -328,52 +352,54 @@ const Register: React.FC = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-gris-canon-de-fusil/40" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-gris-canon-de-fusil/40" />
                   )}
                 </button>
               </div>
             </div>
           </div>
 
+          {/* Cases à cocher : CGU & Confidentialité */}
           <div className="flex items-center">
             <input
               id="agree-terms"
               name="agree-terms"
               type="checkbox"
               required
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              className="h-4 w-4 text-bleu-saphir focus:ring-bleu-saphir border-gris-canon-de-fusil/20 rounded"
             />
             <label
               htmlFor="agree-terms"
-              className="ml-2 block text-sm text-gray-900"
+              className="ml-2 block text-sm text-gris-canon-de-fusil/80"
             >
               J'accepte les{" "}
               <Link
                 to="/terms"
-                className="text-indigo-600 hover:text-indigo-500"
+                className="text-bleu-saphir hover:text-bleu-saphir/80 font-medium transition-colors"
               >
                 conditions d'utilisation
               </Link>{" "}
               et la{" "}
               <Link
                 to="/privacy"
-                className="text-indigo-600 hover:text-indigo-500"
+                className="text-bleu-saphir hover:text-bleu-saphir/80 font-medium transition-colors"
               >
                 politique de confidentialité
               </Link>
             </label>
           </div>
 
+          {/* Bouton de soumission principal */}
           <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-blanc bg-bleu-saphir hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bleu-saphir disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blanc"></div>
               ) : (
                 "Créer mon compte"
               )}

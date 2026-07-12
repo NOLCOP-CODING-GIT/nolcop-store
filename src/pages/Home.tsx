@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { ArrowRight, Truck, Shield, RefreshCw, Package } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import type { Product } from "../types";
+import Lottie from "lottie-react";
+import animationBg from "../../public/lottie/welcome.json";
 
 const Home: React.FC = () => {
   const mockProducts: Product[] = [
@@ -157,38 +159,45 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-blanc">
       {/* Hero Section */}
-      <section className="relative bg-linear-to-r from-indigo-600 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="relative bg-linear-to-r from-violet-myrtille-tenebreux to-[#1e1433] text-blanc overflow-hidden">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                Bienvenue sur Nolcop Store
-                <span className="block text-indigo-200">
-                  Votre e-commerce sur mesure
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+                <span className="block text-3xl md:text-5xl font-extrabold mb-3 text-blanc">
+                  Bienvenue chez
+                </span>
+                <span className="bg-linear-to-r from-bleu-clair via-orange-rougi to-bleu-clair bg-clip-text text-transparent">
+                  Nolcop Store
+                </span>
+                <span className="block text-bleu-clair text-2xl md:text-4xl mt-6 font-semibold tracking-normal">
+                  Votre boutique en ligne
                 </span>
               </h1>
-              <p className="text-xl mb-8 text-indigo-100">
-                Découvrez notre démonstration e-commerce. Une solution complète
-                développée par Nolcop Coding pour présenter notre expertise en
-                développement web.
+              <p className="text-xl mb-8 text-blanc/80 leading-relaxed text-justify">
+                Plongez au cœur d'une expérience d'achat fluide, rapide et
+                sécurisée. Cette plateforme de démonstration illustre tout le
+                savoir-faire technique de Nolcop Coding : une interface
+                intuitive, des performances optimisées et des fonctionnalités
+                sur mesure conçues pour propulser votre business en ligne.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   to="/products"
-                  className="inline-flex items-center justify-center bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                  className="inline-flex items-center justify-center bg-bleu-saphir text-blanc px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-all shadow-lg"
                 >
                   Explorer la démo
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
                   to="/contact"
-                  className="inline-flex items-center justify-center border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors"
+                  className="inline-flex items-center justify-center border-2 border-blanc/40 text-blanc px-8 py-3 rounded-lg font-semibold hover:bg-blanc hover:text-violet-myrtille-tenebreux hover:border-blanc transition-all"
                 >
                   Nous contacter
                 </Link>
@@ -198,20 +207,17 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
+              className="flex justify-center items-center"
             >
-              <img
-                src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600"
-                alt="Shopping"
-                className="rounded-lg shadow-2xl"
-              />
+              {/* Le Lottie remplace ici l'image illustrative du Hero */}
+              <Lottie animationData={animationBg} loop={true} />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-12 bg-gray-50">
+      <section className="py-12 bg-gris-canon-de-fusil/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
@@ -222,13 +228,15 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="text-center"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-                  <feature.icon className="h-8 w-8 text-indigo-600" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-bleu-saphir/10 rounded-full mb-4">
+                  <feature.icon className="h-8 w-8 text-bleu-saphir" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gris-canon-de-fusil mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <p className="text-gris-canon-de-fusil/70 text-sm">
+                  {feature.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -236,13 +244,13 @@ const Home: React.FC = () => {
       </section>
 
       {/* Categories */}
-      <section className="py-16">
+      <section className="py-16 bg-blanc">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-gris-canon-de-fusil mb-4">
               Parcourir par catégorie
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gris-canon-de-fusil/60">
               Trouvez exactement ce que vous cherchez
             </p>
           </div>
@@ -256,7 +264,7 @@ const Home: React.FC = () => {
               >
                 <Link
                   to={`/category/${category.slug}`}
-                  className="group relative block overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow"
+                  className="group relative block overflow-hidden rounded-lg shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="aspect-w-16 aspect-h-12">
                     <img
@@ -265,9 +273,9 @@ const Home: React.FC = () => {
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent flex items-end">
+                  <div className="absolute inset-0 bg-linear-to-t from-violet-myrtille-tenebreux/80 via-violet-myrtille-tenebreux/30 to-transparent flex items-end">
                     <div className="p-4">
-                      <h3 className="text-xl font-semibold text-white">
+                      <h3 className="text-xl font-semibold text-blanc group-hover:text-bleu-clair transition-colors">
                         {category.name}
                       </h3>
                     </div>
@@ -280,20 +288,20 @@ const Home: React.FC = () => {
       </section>
 
       {/* Featured Products */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gris-canon-de-fusil/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-12">
+          <div className="flex justify-between items-center mb-12 flex-col md:flex-row text-center md:text-left">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl  font-bold text-gris-canon-de-fusil mb-2">
                 Produits vedettes
               </h2>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-gris-canon-de-fusil/60">
                 Les articles les plus populaires du moment
               </p>
             </div>
             <Link
               to="/products?featured=true"
-              className="text-indigo-600 hover:text-indigo-700 font-medium flex items-center"
+              className="bg-bleu-saphir/10 px-4 py-2 rounded-lg mt-4 md:mt-0 text-bleu-saphir hover:text-bleu-saphir/80 font-medium flex items-center transition-colors"
             >
               Voir tout
               <ArrowRight className="ml-1 h-4 w-4" />
@@ -308,20 +316,20 @@ const Home: React.FC = () => {
       </section>
 
       {/* New Products */}
-      <section className="py-16">
+      <section className="py-16 bg-blanc">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-12">
+          <div className="flex justify-between items-center mb-12 flex-col md:flex-row text-center md:text-left">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-gris-canon-de-fusil mb-2">
                 Nouveautés
               </h2>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-gris-canon-de-fusil/60">
                 Découvrez nos derniers arrivages
               </p>
             </div>
             <Link
               to="/products?sort=newest"
-              className="text-indigo-600 hover:text-indigo-700 font-medium flex items-center"
+              className="bg-bleu-saphir/10 px-4 py-2 rounded-lg mt-4 md:mt-0 text-bleu-saphir hover:text-bleu-saphir/80 font-medium flex items-center transition-colors"
             >
               Voir tout
               <ArrowRight className="ml-1 h-4 w-4" />
@@ -332,33 +340,6 @@ const Home: React.FC = () => {
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-16 bg-indigo-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ne manquez aucune offre exclusive
-          </h2>
-          <p className="text-xl text-indigo-100 mb-8">
-            Abonnez-vous à notre newsletter et recevez -10% sur votre première
-            commande
-          </p>
-          <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Votre adresse email"
-              className="flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              S'abonner
-            </button>
-          </form>
         </div>
       </section>
     </div>

@@ -230,7 +230,7 @@ const CategoryPage: React.FC = () => {
             </select>
 
             {/* View Mode */}
-            <div className="flex items-center space-x-2 bg-gris-canon-de-fusil/[0.03] p-1 rounded-xl border border-gris-canon-de-fusil/5">
+            <div className="flex items-center space-x-2 bg-gris-canon-de-fusil/10 p-1 rounded-xl border border-gris-canon-de-fusil/5">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-lg transition-all cursor-pointer ${

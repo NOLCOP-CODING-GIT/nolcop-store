@@ -4,7 +4,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
 import AuthLayout from "./components/AuthLayout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";

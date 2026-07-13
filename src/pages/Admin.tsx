@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import {
   Users,
   ShoppingCart,
@@ -10,12 +9,9 @@ import {
   Trash2,
   Plus,
   BarChart3,
-  Settings,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
 
 const Admin: React.FC = () => {
-  const { user } = useAuth(); //[cite: 6]
   const [activeTab, setActiveTab] = useState("dashboard"); //[cite: 6]
 
   // Formateur de prix FCFA (XOF) adapté pour le Bénin
@@ -295,7 +291,7 @@ const Admin: React.FC = () => {
               {products.map((product) => (
                 <tr
                   key={product.id}
-                  className="hover:bg-gris-canon-de-fusil/[0.01] transition-colors"
+                  className="hover:bg-gris-canon-de-fusil/10 transition-colors"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">

@@ -192,7 +192,7 @@ const Home: React.FC = () => {
                   to="/products"
                   className="inline-flex items-center justify-center bg-bleu-saphir text-blanc px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-all shadow-lg"
                 >
-                  Explorer la démo
+                  Explorer nos produits
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link

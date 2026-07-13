@@ -1,24 +1,13 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Grid, List, Search, SlidersHorizontal } from "lucide-react";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  rating: number;
-  reviews: number;
-  featured?: boolean;
-}
+import { Grid, List, Search, Star, ShoppingCart } from "lucide-react";
+import type { Product } from "../types";
+import ProductCard from "../components/ProductCard";
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("name");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
-  const [showFilters, setShowFilters] = useState(false);
 
   // Mapping des slugs vers les noms de catégories
   const categoryNames: Record<string, string> = {
@@ -36,74 +25,95 @@ const CategoryPage: React.FC = () => {
     {
       id: "1",
       name: "iPhone 15 Pro",
-      price: 999.99,
+      description:
+        "Le summum de la technologie mobile avec châssis en titane et puce A17 Pro.",
+      price: 650000, // Prix adapté en Francs CFA
       image:
         "https://images.unsplash.com/photo-1592286115803-a1c3b552ee43?w=300",
       category: "Électronique",
+      stock: 12,
       rating: 4.5,
       reviews: 234,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: "2",
       name: "MacBook Air M2",
-      price: 1299.99,
+      description:
+        "Incroyablement fin, rapide et silencieux avec une autonomie record de 18 heures.",
+      price: 850000, // Prix adapté en Francs CFA
       image:
         "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300",
       category: "Électronique",
+      stock: 8,
       rating: 4.8,
       reviews: 156,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: "3",
       name: "Apple Watch Series 9",
-      price: 449.99,
+      description:
+        "Votre compagnon idéal pour la santé, le sport et une connectivité toujours active.",
+      price: 295000, // Prix adapté en Francs CFA
       image: "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=300",
       category: "Électronique",
+      stock: 15,
       rating: 4.6,
       reviews: 89,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: "4",
       name: "AirPods Pro",
-      price: 249.99,
+      description:
+        "Réduction active du bruit deux fois plus performante et audio spatial personnalisé.",
+      price: 165000, // Prix adapté en Francs CFA
       image:
         "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=300",
       category: "Électronique",
+      stock: 25,
       rating: 4.4,
       reviews: 312,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: "5",
       name: "iPad Air",
-      price: 599.99,
+      description:
+        "Écran Liquid Retina immersif de 10,9 pouces et puissance phénoménale de la puce M1.",
+      price: 395000, // Prix adapté en Francs CFA
       image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300",
       category: "Électronique",
+      stock: 10,
       rating: 4.7,
       reviews: 178,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: "6",
       name: "Samsung Galaxy S24",
-      price: 899.99,
+      description:
+        "Découvrez l'ère de la puissance mobile assistée par intelligence artificielle (Galaxy AI).",
+      price: 590000, // Prix adapté en Francs CFA
       image:
         "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=300",
       category: "Électronique",
+      stock: 14,
       rating: 4.3,
       reviews: 267,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
   ]);
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.price >= priceRange[0] && product.price <= priceRange[1]
-  );
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
+  const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
-      case "price-asc":
-        return a.price - b.price;
-      case "price-desc":
-        return b.price - a.price;
       case "rating":
         return b.rating - a.rating;
       case "name":
@@ -112,138 +122,106 @@ const CategoryPage: React.FC = () => {
     }
   });
 
-  const ProductCard = ({ product }: { product: Product }) => (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-      <div className="relative">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-48 object-cover rounded-t-lg"
-        />
-        {product.featured && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-            Populaire
-          </span>
-        )}
-      </div>
+  const ProductListItem = ({ product }: { product: Product }) => {
+    // Formateur de prix FCFA (Bénin / XOF)
+    const formatPrice = (price: number) => {
+      return new Intl.NumberFormat("fr-BJ", {
+        style: "currency",
+        currency: "XOF",
+        maximumFractionDigits: 0,
+      }).format(price);
+    };
 
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {product.name}
-        </h3>
+    return (
+      <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-4 hover:shadow-md transition-shadow duration-300">
+        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
+          {/* Image du produit */}
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-24 h-24 object-cover rounded-xl shrink-0"
+          />
 
-        <div className="flex items-center mb-2">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <svg
-                key={i}
-                className={`h-4 w-4 ${i < Math.floor(product.rating) ? "text-yellow-400" : "text-gray-300"}`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
-          <span className="ml-2 text-sm text-gray-600">
-            {product.rating} ({product.reviews} avis)
-          </span>
-        </div>
+          {/* Détails du produit */}
+          <div className="flex-1 text-center sm:text-left space-y-1">
+            <h3 className="text-base font-bold text-gris-canon-de-fusil">
+              {product.name}
+            </h3>
 
-        <div className="flex items-center justify-between">
-          <p className="text-2xl font-bold text-indigo-600">
-            {product.price.toFixed(2)} €
-          </p>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-            Ajouter au panier
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const ProductListItem = ({ product }: { product: Product }) => (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-4">
-      <div className="flex items-center space-x-4">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-24 h-24 object-cover rounded-md"
-        />
-
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {product.name}
-          </h3>
-
-          <div className="flex items-center mb-2">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <svg
-                  key={i}
-                  className={`h-4 w-4 ${i < Math.floor(product.rating) ? "text-yellow-400" : "text-gray-300"}`}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
+            {/* Étoiles de notation */}
+            <div className="flex items-center justify-center sm:justify-start space-x-1">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-3.5 w-3.5 ${
+                      i < Math.floor(product.rating)
+                        ? "text-amber-400 fill-amber-400"
+                        : "text-gris-canon-de-fusil/20"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-gris-canon-de-fusil/50">
+                {product.rating} ({product.reviews} avis)
+              </span>
             </div>
-            <span className="ml-2 text-sm text-gray-600">
-              {product.rating} ({product.reviews} avis)
-            </span>
+
+            <p className="text-xs text-gris-canon-de-fusil/60">
+              {product.category}
+            </p>
           </div>
 
-          <p className="text-sm text-gray-600">{product.category}</p>
-        </div>
-
-        <div className="text-right">
-          <p className="text-2xl font-bold text-indigo-600 mb-2">
-            {product.price.toFixed(2)} €
-          </p>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-            Ajouter au panier
-          </button>
+          {/* Prix et Bouton d'action */}
+          <div className="text-center sm:text-right shrink-0 flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-0 border-gris-canon-de-fusil/5">
+            <p className="text-xl font-extrabold text-bleu-saphir mb-0 sm:mb-2">
+              {formatPrice(product.price)}
+            </p>
+            <button className="flex items-center space-x-2 px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-colors shadow-xs cursor-pointer text-sm font-semibold">
+              <ShoppingCart className="h-4 w-4" />
+              <span>Ajouter</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blanc">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-2">
           {categoryName}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm text-gris-canon-de-fusil/60">
           Découvrez notre sélection de {sortedProducts.length} produits dans
           cette catégorie
         </p>
       </div>
 
       {/* Filters and Controls */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+      <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 p-4 mb-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           {/* Search */}
           <div className="flex-1 max-w-md">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gris-canon-de-fusil/40" />
               <input
                 type="text"
                 placeholder="Rechercher dans cette catégorie..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-4 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm text-gris-canon-de-fusil"
               />
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between lg:justify-end space-x-4 w-full lg:w-auto">
             {/* Sort */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm font-semibold text-gris-canon-de-fusil/80 bg-blanc cursor-pointer"
             >
               <option value="name">Nom</option>
               <option value="price-asc">Prix croissant</option>
@@ -252,79 +230,43 @@ const CategoryPage: React.FC = () => {
             </select>
 
             {/* View Mode */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 bg-gris-canon-de-fusil/[0.03] p-1 rounded-xl border border-gris-canon-de-fusil/5">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded ${viewMode === "grid" ? "bg-indigo-100 text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                className={`p-2 rounded-lg transition-all cursor-pointer ${
+                  viewMode === "grid"
+                    ? "bg-blanc text-bleu-saphir shadow-xs font-bold"
+                    : "text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
+                }`}
               >
                 <Grid className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2 rounded ${viewMode === "list" ? "bg-indigo-100 text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                className={`p-2 rounded-lg transition-all cursor-pointer ${
+                  viewMode === "list"
+                    ? "bg-blanc text-bleu-saphir shadow-xs font-bold"
+                    : "text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
+                }`}
               >
                 <List className="h-5 w-5" />
               </button>
             </div>
-
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <SlidersHorizontal className="h-5 w-5" />
-            </button>
           </div>
         </div>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prix
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="number"
-                    value={priceRange[0]}
-                    onChange={(e) =>
-                      setPriceRange([Number(e.target.value), priceRange[1]])
-                    }
-                    className="w-20 px-2 py-1 border border-gray-300 rounded"
-                    placeholder="Min"
-                  />
-                  <span>-</span>
-                  <input
-                    type="number"
-                    value={priceRange[1]}
-                    onChange={(e) =>
-                      setPriceRange([priceRange[0], Number(e.target.value)])
-                    }
-                    className="w-20 px-2 py-1 border border-gray-300 rounded"
-                    placeholder="Max"
-                  />
-                </div>
-              </div>
-
-              {/* Add more filters here */}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Products */}
+      {/* Products Section */}
       {sortedProducts.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
+        <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs">
+          <div className="text-gris-canon-de-fusil/20 mb-4">
             <Search className="h-16 w-16 mx-auto" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-bold text-gris-canon-de-fusil mb-1">
             Aucun produit trouvé
           </h3>
-          <p className="text-gray-600">
-            Essayez de modifier vos filtres ou votre recherche
+          <p className="text-sm text-gris-canon-de-fusil/50">
+            Essayez de modifier vos filtres ou votre recherche.
           </p>
         </div>
       ) : (
@@ -340,7 +282,7 @@ const CategoryPage: React.FC = () => {
               <ProductCard key={product.id} product={product} />
             ) : (
               <ProductListItem key={product.id} product={product} />
-            )
+            ),
           )}
         </div>
       )}

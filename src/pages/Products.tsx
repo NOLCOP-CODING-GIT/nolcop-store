@@ -13,7 +13,7 @@ interface Product {
   description?: string;
 }
 
-const SearchPage: React.FC = () => {
+const Products: React.FC = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -115,7 +115,7 @@ const SearchPage: React.FC = () => {
         description: "Console de jeux hybride",
       },
     ],
-    []
+    [],
   );
 
   useEffect(() => {
@@ -133,7 +133,7 @@ const SearchPage: React.FC = () => {
             product.name.toLowerCase().includes(query.toLowerCase()) ||
             product.category.toLowerCase().includes(query.toLowerCase()) ||
             (product.description &&
-              product.description.toLowerCase().includes(query.toLowerCase()))
+              product.description.toLowerCase().includes(query.toLowerCase())),
         );
         setSearchResults(filtered);
       }
@@ -146,7 +146,7 @@ const SearchPage: React.FC = () => {
 
   const filteredResults = searchResults.filter(
     (product) =>
-      product.price >= priceRange[0] && product.price <= priceRange[1]
+      product.price >= priceRange[0] && product.price <= priceRange[1],
   );
 
   const sortedResults = [...filteredResults].sort((a, b) => {
@@ -276,20 +276,6 @@ const SearchPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-          <Link to="/" className="hover:text-indigo-600">
-            Accueil
-          </Link>
-          <span>/</span>
-          <span>Recherche</span>
-          {query && (
-            <>
-              <span>/</span>
-              <span className="text-gray-900">"{query}"</span>
-            </>
-          )}
-        </div>
-
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           {query ? `Résultats pour "${query}"` : "Tous les produits"}
         </h1>
@@ -301,7 +287,7 @@ const SearchPage: React.FC = () => {
       </div>
 
       {/* Filters and Controls */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+      <div className="mb-10">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           {/* Search */}
           <div className="flex-1 max-w-md">
@@ -427,7 +413,7 @@ const SearchPage: React.FC = () => {
               <ProductCard key={product.id} product={product} />
             ) : (
               <ProductListItem key={product.id} product={product} />
-            )
+            ),
           )}
         </div>
       )}
@@ -435,4 +421,4 @@ const SearchPage: React.FC = () => {
   );
 };
 
-export default SearchPage;
+export default Products;

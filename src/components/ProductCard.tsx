@@ -11,8 +11,10 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
-  product,
-  className = "",
+  product, className,
+}: {
+  product: Product;
+  className?: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);

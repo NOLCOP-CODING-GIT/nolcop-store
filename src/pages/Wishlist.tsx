@@ -94,7 +94,7 @@ const Wishlist: React.FC = () => {
             Ajoutez des articles à vos favoris pour les retrouver facilement
           </p>
           <Link
-            to="/"
+            to="/products"
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
           >
             Découvrir des produits

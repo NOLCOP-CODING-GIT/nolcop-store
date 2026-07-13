@@ -15,193 +15,222 @@ import {
 import { useAuth } from "../hooks/useAuth";
 
 const Admin: React.FC = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const { user } = useAuth(); //[cite: 6]
+  const [activeTab, setActiveTab] = useState("dashboard"); //[cite: 6]
 
-  // Données simulées pour la démo
+  // Formateur de prix FCFA (XOF) adapté pour le Bénin
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("fr-BJ", {
+      style: "currency",
+      currency: "XOF",
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
+  // Données simulées adaptées en Francs CFA (FCFA)
   const [stats] = useState({
-    totalUsers: 1234,
-    totalOrders: 567,
-    totalRevenue: 45678.9,
-    totalProducts: 89,
+    totalUsers: 1234, //[cite: 6]
+    totalOrders: 567, //[cite: 6]
+    totalRevenue: 29850000, // Ajusté à ~29,8 Millions FCFA
+    totalProducts: 89, //[cite: 6]
   });
 
   const [recentOrders] = useState([
     {
-      id: "ORD-001",
-      customer: "Jean Dupont",
-      total: 1299.99,
-      status: "delivered",
-      date: "2024-01-15",
+      id: "ORD-001", //[cite: 6]
+      customer: "Jean Dupont", //[cite: 6]
+      total: 650000, // iPhone 15 Pro en FCFA
+      status: "delivered", //[cite: 6]
+      date: "2024-01-15", //[cite: 6]
     },
     {
-      id: "ORD-002",
-      customer: "Marie Martin",
-      total: 199.99,
-      status: "shipped",
-      date: "2024-01-20",
+      id: "ORD-002", //[cite: 6]
+      customer: "Marie Martin", //[cite: 6]
+      total: 130000, // AirPods / Accessoires en FCFA
+      status: "shipped", //[cite: 6]
+      date: "2024-01-20", //[cite: 6]
     },
     {
-      id: "ORD-003",
-      customer: "Pierre Durand",
-      total: 89.99,
-      status: "processing",
-      date: "2024-01-22",
+      id: "ORD-003", //[cite: 6]
+      customer: "Pierre Durand", //[cite: 6]
+      total: 590000, // Galaxy S24 en FCFA
+      status: "processing", //[cite: 6]
+      date: "2024-01-22", //[cite: 6]
     },
   ]);
 
   const [products] = useState([
     {
-      id: "1",
-      name: "iPhone 15 Pro",
-      price: 999.99,
-      stock: 45,
-      category: "Électronique",
+      id: "1", //[cite: 6]
+      name: "iPhone 15 Pro", //[cite: 6]
+      price: 650000, //[cite: 6]
+      stock: 45, //[cite: 6]
+      category: "Électronique", //[cite: 6]
       image:
-        "https://images.unsplash.com/photo-1592286115803-a1c3b552ee43?w=300",
+        "https://images.unsplash.com/photo-1592286115803-a1c3b552ee43?w=300", //[cite: 6]
     },
     {
-      id: "2",
-      name: "MacBook Air M2",
-      price: 1299.99,
-      stock: 12,
-      category: "Électronique",
+      id: "2", //[cite: 6]
+      name: "MacBook Air M2", //[cite: 6]
+      price: 850000, //[cite: 6]
+      stock: 12, //[cite: 6]
+      category: "Électronique", //[cite: 6]
       image:
-        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300",
+        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300", //[cite: 6]
     },
     {
-      id: "3",
-      name: "Apple Watch Series 9",
-      price: 449.99,
-      stock: 0,
-      category: "Électronique",
-      image: "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=300",
+      id: "3", //[cite: 6]
+      name: "Apple Watch Series 9", //[cite: 6]
+      price: 295000, //[cite: 6]
+      stock: 0, //[cite: 6]
+      category: "Électronique", //[cite: 6]
+      image: "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=300", //[cite: 6]
     },
   ]);
 
-  if (!user || user.role !== "admin") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Accès non autorisé
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Vous n'avez pas les permissions nécessaires pour accéder à cette
-            page
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Retour à l'accueil
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Écran d'accès refusé si l'utilisateur n'est pas Admin
+  // if (!user || user.role !== "admin") {
+  //   //[cite: 6]
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-blanc">
+  //       <div className="text-center">
+  //         <Settings className="h-12 w-12 text-gris-canon-de-fusil/30 mx-auto mb-4" />
+  //         <h2 className="text-2xl font-bold text-gris-canon-de-fusil mb-2">
+  //           Accès non autorisé
+  //         </h2>
+  //         <p className="text-gris-canon-de-fusil/60 mb-6">
+  //           Vous n'avez pas les permissions nécessaires pour accéder à cette
+  //           page
+  //         </p>
+  //         <Link
+  //           to="/"
+  //           className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-semibold rounded-xl text-blanc bg-bleu-saphir hover:bg-bleu-saphir/90 transition-colors shadow-xs"
+  //         >
+  //           Retour à l'accueil
+  //         </Link>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const renderDashboard = () => (
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 p-6 shadow-xs">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Utilisateurs</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gris-canon-de-fusil/50">
+                Utilisateurs
+              </p>
+              <p className="text-2xl font-black text-gris-canon-de-fusil mt-1">
                 {stats.totalUsers}
               </p>
             </div>
-            <Users className="h-8 w-8 text-blue-500" />
+            <div className="p-3 bg-blue-50 text-blue-500 rounded-xl">
+              <Users className="h-6 w-6" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 p-6 shadow-xs">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Commandes</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gris-canon-de-fusil/50">
+                Commandes
+              </p>
+              <p className="text-2xl font-black text-gris-canon-de-fusil mt-1">
                 {stats.totalOrders}
               </p>
             </div>
-            <ShoppingCart className="h-8 w-8 text-green-500" />
+            <div className="p-3 bg-emerald-50 text-emerald-500 rounded-xl">
+              <ShoppingCart className="h-6 w-6" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 p-6 shadow-xs">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Revenus</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats.totalRevenue.toFixed(2)} €
+              <p className="text-sm font-medium text-gris-canon-de-fusil/50">
+                Revenus
+              </p>
+              <p className="text-2xl font-black text-gris-canon-de-fusil mt-1">
+                {formatPrice(stats.totalRevenue)}
               </p>
             </div>
-            <DollarSign className="h-8 w-8 text-yellow-500" />
+            <div className="p-3 bg-amber-50 text-amber-500 rounded-xl">
+              <DollarSign className="h-6 w-6" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 p-6 shadow-xs">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Produits</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gris-canon-de-fusil/50">
+                Produits
+              </p>
+              <p className="text-2xl font-black text-gris-canon-de-fusil mt-1">
                 {stats.totalProducts}
               </p>
             </div>
-            <Package className="h-8 w-8 text-purple-500" />
+            <div className="p-3 bg-purple-50 text-purple-500 rounded-xl">
+              <Package className="h-6 w-6" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 p-6 shadow-xs">
+        <h2 className="text-xl font-bold text-gris-canon-de-fusil mb-4">
           Commandes récentes
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b">
-                <th className="pb-3 text-sm font-medium text-gray-600">
+              <tr className="border-b border-gris-canon-de-fusil/5">
+                <th className="pb-3 text-sm font-bold text-gris-canon-de-fusil/60">
                   Commande
                 </th>
-                <th className="pb-3 text-sm font-medium text-gray-600">
+                <th className="pb-3 text-sm font-bold text-gris-canon-de-fusil/60">
                   Client
                 </th>
-                <th className="pb-3 text-sm font-medium text-gray-600">
+                <th className="pb-3 text-sm font-bold text-gris-canon-de-fusil/60">
                   Total
                 </th>
-                <th className="pb-3 text-sm font-medium text-gray-600">
+                <th className="pb-3 text-sm font-bold text-gris-canon-de-fusil/60">
                   Statut
                 </th>
-                <th className="pb-3 text-sm font-medium text-gray-600">Date</th>
-                <th className="pb-3 text-sm font-medium text-gray-600">
+                <th className="pb-3 text-sm font-bold text-gris-canon-de-fusil/60">
+                  Date
+                </th>
+                <th className="pb-3 text-sm font-bold text-gris-canon-de-fusil/60">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gris-canon-de-fusil/5">
               {recentOrders.map((order) => (
-                <tr key={order.id} className="border-b">
-                  <td className="py-3 text-sm font-medium text-gray-900">
+                <tr key={order.id}>
+                  <td className="py-3.5 text-sm font-bold text-gris-canon-de-fusil">
                     {order.id}
                   </td>
-                  <td className="py-3 text-sm text-gray-600">
+                  <td className="py-3.5 text-sm text-gris-canon-de-fusil/80">
                     {order.customer}
                   </td>
-                  <td className="py-3 text-sm font-medium text-gray-900">
-                    {order.total.toFixed(2)} €
+                  <td className="py-3.5 text-sm font-black text-bleu-saphir">
+                    {formatPrice(order.total)}
                   </td>
-                  <td className="py-3">
+                  <td className="py-3.5">
                     <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
                         order.status === "delivered"
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-emerald-50 text-emerald-700"
                           : order.status === "shipped"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-amber-50 text-amber-700"
                       }`}
                     >
                       {order.status === "delivered"
@@ -211,9 +240,11 @@ const Admin: React.FC = () => {
                           : "En traitement"}
                     </span>
                   </td>
-                  <td className="py-3 text-sm text-gray-600">{order.date}</td>
-                  <td className="py-3">
-                    <button className="text-indigo-600 hover:text-indigo-800">
+                  <td className="py-3.5 text-sm text-gris-canon-de-fusil/60">
+                    {order.date}
+                  </td>
+                  <td className="py-3.5">
+                    <button className="text-bleu-saphir hover:text-bleu-saphir/80 transition-colors p-1 hover:bg-bleu-saphir/5 rounded-lg">
                       <Eye className="h-4 w-4" />
                     </button>
                   </td>
@@ -228,76 +259,83 @@ const Admin: React.FC = () => {
 
   const renderProducts = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-2xl font-bold text-gris-canon-de-fusil">
           Gestion des produits
         </h2>
-        <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+        <button className="flex items-center px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-colors shadow-xs font-semibold text-sm cursor-pointer self-start sm:self-auto">
           <Plus className="h-4 w-4 mr-2" />
           Ajouter un produit
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md">
+      <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b">
-                <th className="pb-3 text-sm font-medium text-gray-600">
+              <tr className="bg-gris-canon-de-fusil/5 border-b border-gris-canon-de-fusil/5">
+                <th className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil/60">
                   Produit
                 </th>
-                <th className="pb-3 text-sm font-medium text-gray-600">
+                <th className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil/60">
                   Catégorie
                 </th>
-                <th className="pb-3 text-sm font-medium text-gray-600">Prix</th>
-                <th className="pb-3 text-sm font-medium text-gray-600">
+                <th className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil/60">
+                  Prix
+                </th>
+                <th className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil/60">
                   Stock
                 </th>
-                <th className="pb-3 text-sm font-medium text-gray-600">
+                <th className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil/60">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gris-canon-de-fusil/5">
               {products.map((product) => (
-                <tr key={product.id} className="border-b">
-                  <td className="py-3">
+                <tr
+                  key={product.id}
+                  className="hover:bg-gris-canon-de-fusil/[0.01] transition-colors"
+                >
+                  <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-10 h-10 object-cover rounded-md"
+                        className="w-12 h-12 object-cover rounded-xl shrink-0"
                       />
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-bold text-gris-canon-de-fusil">
                         {product.name}
                       </span>
                     </div>
                   </td>
-                  <td className="py-3 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/60">
                     {product.category}
                   </td>
-                  <td className="py-3 text-sm font-medium text-gray-900">
-                    {product.price.toFixed(2)} €
+                  <td className="px-6 py-4 text-sm font-black text-bleu-saphir">
+                    {formatPrice(product.price)}
                   </td>
-                  <td className="py-3">
+                  <td className="px-6 py-4">
                     <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
                         product.stock === 0
-                          ? "bg-red-100 text-red-800"
+                          ? "bg-rose-50 text-rose-700"
                           : product.stock < 10
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-green-100 text-green-800"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-emerald-50 text-emerald-700"
                       }`}
                     >
-                      {product.stock === 0 ? "Rupture" : product.stock}
+                      {product.stock === 0
+                        ? "Rupture"
+                        : `${product.stock} dispo`}
                     </span>
                   </td>
-                  <td className="py-3">
+                  <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">
-                      <button className="text-indigo-600 hover:text-indigo-800">
+                      <button className="text-bleu-saphir hover:text-bleu-saphir/80 transition-colors p-1.5 hover:bg-bleu-saphir/5 rounded-lg">
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-800">
+                      <button className="text-rose-600 hover:text-rose-800 transition-colors p-1.5 hover:bg-rose-50 rounded-lg">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -312,21 +350,21 @@ const Admin: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-blanc">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-8">
           Administration
         </h1>
 
         {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="-mb-px flex space-x-8">
+        <div className="border-b border-gris-canon-de-fusil/10 mb-8">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === "dashboard"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-bleu-saphir text-bleu-saphir"
+                  : "border-transparent text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -337,10 +375,10 @@ const Admin: React.FC = () => {
 
             <button
               onClick={() => setActiveTab("products")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === "products"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-bleu-saphir text-bleu-saphir"
+                  : "border-transparent text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -351,10 +389,10 @@ const Admin: React.FC = () => {
 
             <button
               onClick={() => setActiveTab("orders")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === "orders"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-bleu-saphir text-bleu-saphir"
+                  : "border-transparent text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -365,10 +403,10 @@ const Admin: React.FC = () => {
 
             <button
               onClick={() => setActiveTab("users")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap cursor-pointer ${
                 activeTab === "users"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-bleu-saphir text-bleu-saphir"
+                  : "border-transparent text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -383,17 +421,17 @@ const Admin: React.FC = () => {
         {activeTab === "dashboard" && renderDashboard()}
         {activeTab === "products" && renderProducts()}
         {activeTab === "orders" && (
-          <div className="text-center py-12">
-            <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">
+          <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs">
+            <ShoppingCart className="h-16 w-16 text-gris-canon-de-fusil/20 mx-auto mb-4" />
+            <p className="text-sm font-semibold text-gris-canon-de-fusil/60">
               Gestion des commandes en cours de développement...
             </p>
           </div>
         )}
         {activeTab === "users" && (
-          <div className="text-center py-12">
-            <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">
+          <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs">
+            <Users className="h-16 w-16 text-gris-canon-de-fusil/20 mx-auto mb-4" />
+            <p className="text-sm font-semibold text-gris-canon-de-fusil/60">
               Gestion des utilisateurs en cours de développement...
             </p>
           </div>

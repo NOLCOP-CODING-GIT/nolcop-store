@@ -26,14 +26,11 @@ const Footer: React.FC = () => {
     { name: "Contact", href: "/contact" },
     { name: "FAQ", href: "/faq" },
     { name: "Livraison", href: "/shipping" },
-    { name: "Retours", href: "/returns" },
     { name: "Conditions générales", href: "/terms" },
     { name: "Politique de confidentialité", href: "/privacy" },
   ];
 
   const customerService = [
-    { name: "Suivi de commande", href: "/order-tracking" },
-    { name: "Guide des tailles", href: "/size-guide" },
     { name: "Moyens de paiement", href: "/payment" },
     { name: "Service client", href: "/customer-service" },
   ];
@@ -50,7 +47,7 @@ const Footer: React.FC = () => {
                 alt="Nolcop Store"
                 className="h-10 w-10 object-contain rounded-full"
               />
-              <span className="text-xl font-bold tracking-wide">
+              <span className="text-xl font-bold tracking-wide bg-linear-to-r from-bleu-saphir via-orange-rougi to-bleu-saphir bg-clip-text text-transparent">
                 Nolcop Store
               </span>
             </div>
@@ -173,7 +170,7 @@ const Footer: React.FC = () => {
               <Phone className="h-5 w-5 text-bleu-clair" />
               <div>
                 <p className="text-xs text-blanc/50">Téléphone</p>
-                <p className="text-sm text-blanc">+229 01 44 161 373</p>
+                <p className="text-sm text-blanc">+229 01 44 16 13 73</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">

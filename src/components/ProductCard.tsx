@@ -42,14 +42,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden ${className}`}
+      className={`bg-blanc rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative">
           {/* Product Images */}
-          <div className="relative h-64 overflow-hidden bg-gray-100">
+          <div className="relative h-64 overflow-hidden bg-gris-canon-de-fusil/5">
             <img
               src={product.images?.[selectedImage] || product.image}
               alt={product.name}
@@ -60,17 +60,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {/* Badges */}
             <div className="absolute top-2 left-2 flex flex-col gap-2">
               {product.featured && (
-                <span className="bg-indigo-600 text-white px-2 py-1 text-xs font-medium rounded">
+                <span className="bg-bleu-saphir text-blanc px-2 py-1 text-xs font-medium rounded">
                   Vedette
                 </span>
               )}
               {discountPercentage > 0 && (
-                <span className="bg-red-600 text-white px-2 py-1 text-xs font-medium rounded">
+                <span className="bg-orange-rougi text-blanc px-2 py-1 text-xs font-medium rounded">
                   -{discountPercentage}%
                 </span>
               )}
               {product.stock < 10 && product.stock > 0 && (
-                <span className="bg-orange-600 text-white px-2 py-1 text-xs font-medium rounded">
+                <span className="bg-orange-rougi/90 text-blanc px-2 py-1 text-xs font-medium rounded">
                   Plus que {product.stock} articles
                 </span>
               )}
@@ -85,16 +85,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
             >
               <button
                 onClick={handleQuickView}
-                className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                className="bg-blanc p-2 rounded-full shadow-md hover:bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil transition-colors"
                 aria-label="Aperçu rapide"
               >
-                <Eye className="h-4 w-4 text-gray-700" />
+                <Eye className="h-4 w-4" />
               </button>
               <button
-                className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                className="bg-blanc p-2 rounded-full shadow-md hover:bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil transition-colors"
                 aria-label="Ajouter aux favoris"
               >
-                <Heart className="h-4 w-4 text-gray-700" />
+                <Heart className="h-4 w-4" />
               </button>
             </motion.div>
 
@@ -109,7 +109,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                       setSelectedImage(index);
                     }}
                     className={`w-2 h-2 rounded-full transition-colors ${
-                      selectedImage === index ? "bg-white" : "bg-white/50"
+                      selectedImage === index ? "bg-blanc" : "bg-blanc/50"
                     }`}
                   />
                 ))}
@@ -120,17 +120,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {/* Product Info */}
           <div className="p-4">
             {/* Category */}
-            <p className="text-sm text-indigo-600 font-medium mb-1">
+            <p className="text-sm text-bleu-saphir font-medium mb-1">
               {product.category}
             </p>
 
             {/* Product Name */}
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+            <h3 className="text-lg font-semibold text-gris-canon-de-fusil mb-2 line-clamp-2 group-hover:text-bleu-saphir transition-colors">
               {product.name}
             </h3>
 
             {/* Description */}
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            <p className="text-sm text-gris-canon-de-fusil/70 mb-3 line-clamp-2">
               {product.description}
             </p>
 
@@ -143,12 +143,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     className={`h-4 w-4 ${
                       i < Math.floor(product.rating)
                         ? "text-yellow-400 fill-current"
-                        : "text-gray-300"
+                        : "text-gris-canon-de-fusil/20"
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gris-canon-de-fusil/60">
                 {product.rating} ({product.reviews} avis)
               </span>
             </div>
@@ -156,11 +156,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {/* Price and Add to Cart */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-gray-900">
+                <span className="text-xl font-bold text-gris-canon-de-fusil">
                   {displayPrice.toFixed(2)} €
                 </span>
                 {product.discount && (
-                  <span className="text-sm text-gray-500 line-through">
+                  <span className="text-sm text-gris-canon-de-fusil/40 line-through">
                     {originalPrice.toFixed(2)} €
                   </span>
                 )}
@@ -171,8 +171,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 disabled={product.stock === 0}
                 className={`p-2 rounded-lg transition-colors ${
                   product.stock === 0
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                    ? "bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil/30 cursor-not-allowed"
+                    : "bg-bleu-saphir text-blanc hover:opacity-90"
                 }`}
                 aria-label="Ajouter au panier"
               >
@@ -182,7 +182,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
             {/* Stock Status */}
             {product.stock === 0 && (
-              <p className="text-red-600 text-sm font-medium mt-2">
+              <p className="text-orange-rougi text-sm font-medium mt-2">
                 Rupture de stock
               </p>
             )}
@@ -190,18 +190,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {/* Color Options */}
             {product.colors && product.colors.length > 0 && (
               <div className="flex items-center gap-2 mt-3">
-                <span className="text-sm text-gray-600">Couleurs:</span>
+                <span className="text-sm text-gris-canon-de-fusil/60">
+                  Couleurs:
+                </span>
                 <div className="flex gap-1">
                   {product.colors.slice(0, 4).map((color, index) => (
                     <div
                       key={index}
-                      className="w-4 h-4 rounded-full border border-gray-300"
+                      className="w-4 h-4 rounded-full border border-gris-canon-de-fusil/20"
                       style={{ backgroundColor: color }}
                       title={color}
                     />
                   ))}
                   {product.colors.length > 4 && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gris-canon-de-fusil/60">
                       +{product.colors.length - 4}
                     </span>
                   )}

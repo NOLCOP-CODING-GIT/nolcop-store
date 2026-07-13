@@ -53,7 +53,7 @@ const Header: React.FC = () => {
               alt="Nolcop Store"
               className="h-10 w-10 object-contain rounded-full"
             />
-            <span className="text-xl font-bold bg-linear-to-r from-bleu-clair via-orange-rougi to-bleu-clair bg-clip-text text-transparent">
+            <span className="text-xl font-bold bg-linear-to-r from-bleu-saphir via-orange-rougi to-bleu-saphir bg-clip-text text-transparent">
               Nolcop Store
             </span>
           </Link>

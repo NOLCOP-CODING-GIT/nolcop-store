@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
@@ -17,10 +18,11 @@ import Admin from "./pages/Admin";
 import CategoryPage from "./pages/CategoryPage";
 import SearchPage from "./pages/SearchPage";
 import Unauthorized from "./pages/Unauthorized";
+import NotFound from "./components/NotFound";
 
-// Layout pour les pages avec header et footer
+// Layout pour les pages avec header et footer harmonisé
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-screen flex flex-col">
+  <div className="min-h-screen flex flex-col bg-blanc">
     <Header />
     <main className="grow">{children}</main>
     <Footer />
@@ -33,7 +35,7 @@ function App() {
       <CartProvider>
         <Router>
           <Routes>
-            {/* Routes d'authentification sans header/footer */}
+            {/* 1. Routes d'authentification (Sans MainLayout) */}
             <Route
               path="/login"
               element={
@@ -52,47 +54,90 @@ function App() {
             />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* Routes principales avec header/footer */}
+            {/* 2. Routes principales de l'application (Avec MainLayout) */}
             <Route
-              path="/*"
+              path="/"
               element={
                 <MainLayout>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/category/:slug" element={<CategoryPage />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/orders"
-                      element={
-                        <ProtectedRoute>
-                          <Orders />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <Admin />
-                        </ProtectedRoute>
-                      }
-                    />
-                    {/* Add more routes here */}
-                  </Routes>
+                  <Home />
                 </MainLayout>
               }
             />
+            <Route
+              path="/search"
+              element={
+                <MainLayout>
+                  <SearchPage />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/category/:slug"
+              element={
+                <MainLayout>
+                  <CategoryPage />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/product/:id"
+              element={
+                <MainLayout>
+                  <ProductDetail />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/wishlist"
+              element={
+                <MainLayout>
+                  <Wishlist />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/cart"
+              element={
+                <MainLayout>
+                  <Cart />
+                </MainLayout>
+              }
+            />
+
+            {/* Routes Protégées (Avec MainLayout) */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Profile />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Orders />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <MainLayout>
+                    <Admin />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 3. Capture globale 404 : S'affichera de manière totalement isolée */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </CartProvider>

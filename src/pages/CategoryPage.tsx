@@ -1,13 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Grid, List, Search, Star, ShoppingCart } from "lucide-react";
 import type { Product } from "../types";
 import ProductCard from "../components/ProductCard";
+import NotFound from "../components/NotFound";
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("name");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    // Simuler un délai de chargement
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  }, [slug]);
 
   // Mapping des slugs vers les noms de catégories
   const categoryNames: Record<string, string> = {
@@ -18,7 +28,23 @@ const CategoryPage: React.FC = () => {
     software: "Logiciels",
   };
 
-  const categoryName = categoryNames[slug || ""] || "Catégorie";
+  const isValidCategory = slug && slug in categoryNames;
+
+  useEffect(() => {
+    if (isValidCategory) {
+      setLoading(true);
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [slug, isValidCategory]);
+
+  if (!isValidCategory) {
+    return <NotFound />;
+  }
+
+  const categoryName = categoryNames[slug];
 
   // Produits simulés pour la démo
   const [products] = useState<Product[]>([
@@ -187,6 +213,29 @@ const CategoryPage: React.FC = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-blanc gap-4">
+        <div className="relative flex items-center justify-center">
+          {/* Rail extérieur discret */}
+          <div className="absolute h-12 w-12 rounded-full border-4 border-gris-canon-de-fusil/5"></div>
+          {/* Spinner actif */}
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-bleu-saphir"></div>
+        </div>
+
+        {/* Texte avec pulsation douce */}
+        <div className="text-center animate-pulse">
+          <h5 className="text-sm font-bold text-gris-canon-de-fusil">
+            Chargement de la catégorie...
+          </h5>
+          <p className="text-xs text-gris-canon-de-fusil/50 mt-1">
+            Veuillez patienter un instant...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blanc">
       {/* Header */}
@@ -201,7 +250,7 @@ const CategoryPage: React.FC = () => {
       </div>
 
       {/* Filters and Controls */}
-      <div className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 p-4 mb-6 shadow-xs">
+      <div className="mb-10">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           {/* Search */}
           <div className="flex-1 max-w-md">

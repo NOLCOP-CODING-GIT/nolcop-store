@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, User, Menu, X, Heart } from "lucide-react";
+import { ShoppingCart, User, Menu, X, Heart, ChevronDown } from "lucide-react";
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const { state } = useCart();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -77,6 +78,11 @@ const Header: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {/* Produits */}
+            <button className="hover:text-bleu-saphir font-medium transition-colors">
+              <Link to="/products">Produits</Link>
+            </button>
 
             {/* Wishlist */}
             <Link
@@ -184,20 +190,60 @@ const Header: React.FC = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-blanc border-t border-gris-canon-de-fusil/10 w-full shadow-lg"
+              className="bg-blanc border-t border-gris-canon-de-fusil/10 w-full shadow-lg overflow-hidden"
             >
-              <div className="px-4 py-2 space-y-2">
-                {categories.map((category) => (
-                  <Link
-                    key={category.slug}
-                    to={`/category/${category.slug}`}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
-                  >
-                    {category.name}
-                  </Link>
-                ))}
+              <div className="px-4 py-3 space-y-2">
+                {/* Lien direct : Produits */}
+                <Link
+                  to="/products"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors font-semibold"
+                >
+                  Produits
+                </Link>
 
+                {/* Menu déroulant accordéon : Catégories */}
+                <div>
+                  <button
+                    onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                    className="flex items-center justify-between w-full px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors font-semibold text-left"
+                  >
+                    <span>Catégories</span>
+                    <ChevronDown
+                      className={`h-5 w-5 transition-transform duration-200 ${
+                        isCategoriesOpen ? "rotate-180" : "rotate-0"
+                      }`}
+                    />
+                  </button>
+
+                  {/* Sous-menus des catégories animés */}
+                  <AnimatePresence initial={false}>
+                    {isCategoriesOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="pl-4 mt-1 space-y-1 overflow-hidden"
+                      >
+                        {categories.map((category) => (
+                          <Link
+                            key={category.slug}
+                            to={`/category/${category.slug}`}
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsCategoriesOpen(false);
+                            }}
+                            className="block px-4 py-2 text-sm text-gris-canon-de-fusil/80 hover:bg-bleu-clair/10 hover:text-bleu-saphir rounded-lg transition-colors"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Section Utilisateur / Favoris */}
                 <div className="border-t border-gris-canon-de-fusil/10 pt-2 mt-2">
                   <Link
                     to="/wishlist"
@@ -244,7 +290,7 @@ const Header: React.FC = () => {
                     <Link
                       to="/login"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center space-x-2 bg-bleu-saphir text-blanc px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                      className="flex items-center space-x-2 bg-bleu-saphir text-blanc px-4 py-2 rounded-lg hover:opacity-90 transition-opacity mt-2"
                     >
                       <User className="h-5 w-5" />
                       <span>Connexion</span>

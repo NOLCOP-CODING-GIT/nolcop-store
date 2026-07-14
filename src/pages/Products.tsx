@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, Grid, List, SlidersHorizontal } from "lucide-react";
+import { Search, Grid, List } from "lucide-react";
 
 interface Product {
   id: string;
@@ -18,8 +18,6 @@ const Products: React.FC = () => {
   const query = searchParams.get("q") || "";
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("relevance");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
-  const [showFilters, setShowFilters] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -143,13 +141,7 @@ const Products: React.FC = () => {
 
     performSearch();
   }, [query, allProducts]);
-
-  const filteredResults = searchResults.filter(
-    (product) =>
-      product.price >= priceRange[0] && product.price <= priceRange[1],
-  );
-
-  const sortedResults = [...filteredResults].sort((a, b) => {
+  const sortedResults = [...searchResults].sort((a, b) => {
     let aScore = 0;
     let bScore = 0;
 
@@ -266,8 +258,23 @@ const Products: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-blanc gap-4">
+        <div className="relative flex items-center justify-center">
+          {/* Rail extérieur discret */}
+          <div className="absolute h-12 w-12 rounded-full border-4 border-gris-canon-de-fusil/5"></div>
+          {/* Spinner actif */}
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-bleu-saphir"></div>
+        </div>
+
+        {/* Texte avec pulsation douce */}
+        <div className="text-center animate-pulse">
+          <h5 className="text-sm font-bold text-gris-canon-de-fusil">
+            Chargement des produits...
+          </h5>
+          <p className="text-xs text-gris-canon-de-fusil/50 mt-1">
+            Veuillez patienter un instant...
+          </p>
+        </div>
       </div>
     );
   }
@@ -303,7 +310,7 @@ const Products: React.FC = () => {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between lg:justify-end space-x-4 w-full lg:w-auto">
             {/* Sort */}
             <select
               value={sortBy}
@@ -317,66 +324,30 @@ const Products: React.FC = () => {
             </select>
 
             {/* View Mode */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 bg-gris-canon-de-fusil/10 p-1 rounded-xl border border-gris-canon-de-fusil/5">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded ${viewMode === "grid" ? "bg-indigo-100 text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                className={`p-2 rounded-lg transition-all cursor-pointer ${
+                  viewMode === "grid"
+                    ? "bg-blanc text-bleu-saphir shadow-xs font-bold"
+                    : "text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
+                }`}
               >
                 <Grid className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2 rounded ${viewMode === "list" ? "bg-indigo-100 text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                className={`p-2 rounded-lg transition-all cursor-pointer ${
+                  viewMode === "list"
+                    ? "bg-blanc text-bleu-saphir shadow-xs font-bold"
+                    : "text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
+                }`}
               >
                 <List className="h-5 w-5" />
               </button>
             </div>
-
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <SlidersHorizontal className="h-5 w-5" />
-            </button>
           </div>
         </div>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prix
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="number"
-                    value={priceRange[0]}
-                    onChange={(e) =>
-                      setPriceRange([Number(e.target.value), priceRange[1]])
-                    }
-                    className="w-20 px-2 py-1 border border-gray-300 rounded"
-                    placeholder="Min"
-                  />
-                  <span>-</span>
-                  <input
-                    type="number"
-                    value={priceRange[1]}
-                    onChange={(e) =>
-                      setPriceRange([priceRange[0], Number(e.target.value)])
-                    }
-                    className="w-20 px-2 py-1 border border-gray-300 rounded"
-                    placeholder="Max"
-                  />
-                </div>
-              </div>
-
-              {/* Add more filters here */}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Results */}

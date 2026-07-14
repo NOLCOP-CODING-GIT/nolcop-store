@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Truck, Shield, RefreshCw, Package } from "lucide-react";
+import { ArrowRight, Shield, RefreshCw, Package } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import type { Product } from "../types";
 import Lottie from "lottie-react";
@@ -13,7 +13,7 @@ const Home: React.FC = () => {
       id: "1",
       name: 'MacBook Pro 14"',
       description: "Ordinateur portable puissant avec puce M3 Pro",
-      price: 1999.99,
+      price: 574846,
       category: "Électronique",
       image:
         "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500",
@@ -112,8 +112,7 @@ const Home: React.FC = () => {
     {
       name: "Électronique",
       slug: "electronics",
-      image:
-        "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500",
+      image: "/categories/electronics.jfif",
     },
     {
       name: "Mode",
@@ -137,11 +136,6 @@ const Home: React.FC = () => {
 
   const features = [
     {
-      icon: Truck,
-      title: "Livraison gratuite",
-      description: "À partir de 50€ d'achat",
-    },
-    {
       icon: Shield,
       title: "Paiement sécurisé",
       description: "100% sécurisé et crypté",
@@ -149,7 +143,7 @@ const Home: React.FC = () => {
     {
       icon: RefreshCw,
       title: "Retours faciles",
-      description: "30 jours pour retourner",
+      description: "14 jours pour retourner",
     },
     {
       icon: Package,
@@ -181,11 +175,14 @@ const Home: React.FC = () => {
                 </span>
               </h1>
               <p className="text-xl mb-8 text-blanc/80 leading-relaxed text-justify">
-                Plongez au cœur d'une expérience d'achat fluide, rapide et
-                sécurisée. Cette plateforme de démonstration illustre tout le
-                savoir-faire technique de Nolcop Coding : une interface
-                intuitive, des performances optimisées et des fonctionnalités
-                sur mesure conçues pour propulser votre business en ligne.
+                Explorez une nouvelle façon de faire vos achats en ligne grâce à
+                Nolcop Store. De la sélection rigoureuse de nos nouveautés à la
+                rapidité de notre service de livraison, nous mettons tout en
+                œuvre pour vous offrir des produits de qualité au meilleur prix
+                du marché. Faites votre choix en quelques clics, profitez de la
+                flexibilité du paiement à la livraison et achetez en toute
+                sérénité grâce à notre
+                assistance instantanée toujours à votre écoute.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link

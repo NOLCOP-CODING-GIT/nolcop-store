@@ -1,14 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Mail,
-  Phone,
-  MapPin,
-} from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -51,7 +43,7 @@ const Footer: React.FC = () => {
                 Nolcop Store
               </span>
             </div>
-            <p className="text-blanc/70 mb-6 max-w-md text-sm leading-relaxed">
+            <p className="text-blanc/70 mb-6 max-w-md text-sm leading-relaxed text-justify">
               Nolcop Store - Votre solution e-commerce sur mesure. Une
               démonstration de notre expertise en développement web pour votre
               future boutique en ligne.
@@ -60,40 +52,20 @@ const Footer: React.FC = () => {
             {/* Social Media */}
             <div className="flex space-x-3">
               <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blanc/5 hover:bg-bleu-saphir p-2 rounded-lg transition-colors duration-200"
-                aria-label="Facebook"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blanc/5 hover:bg-bleu-saphir p-2 rounded-lg transition-colors duration-200"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-blanc/5 hover:bg-bleu-saphir p-2 rounded-lg transition-colors duration-200"
                 aria-label="Instagram"
               >
-                <Instagram className="h-5 w-5" />
+                <img src="/instagram.png" className="h-auto w-7" />
               </a>
               <a
-                href="https://youtube.com"
+                href="https://wa.me/2290144161373?text=Bonjour%20je%20souhaite%20avoir%20des%20informations"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-blanc/5 hover:bg-bleu-saphir p-2 rounded-lg transition-colors duration-200"
-                aria-label="YouTube"
+                aria-label="WhatsApp"
               >
-                <Youtube className="h-5 w-5" />
+                <img src="/whatsapp.png" className="h-auto w-7" />
               </a>
             </div>
           </div>

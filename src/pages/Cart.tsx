@@ -23,8 +23,8 @@ const Cart: React.FC = () => {
   };
 
   const subtotal = state.total;
-  const shipping = subtotal > 100 ? 0 : 9.99;
-  const tax = subtotal * 0.2; // TVA 20%
+  const shipping = 1000;
+  const tax = subtotal * 0.18; // TVA 20%
   const total = subtotal + shipping + tax;
 
   if (state.items.length === 0) {
@@ -169,27 +169,21 @@ const Cart: React.FC = () => {
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>Sous-total</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {subtotal.toFixed(2)} €
+                  {subtotal.toFixed(2)} Fcfa
                 </span>
               </div>
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>Livraison</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {shipping === 0 ? "Gratuite" : `${shipping.toFixed(2)} €`}
+                  {`${shipping.toFixed(2)} Fcfa`}
                 </span>
               </div>
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>TVA (20%)</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {tax.toFixed(2)} €
+                  {tax.toFixed(2)} Fcfa
                 </span>
               </div>
-
-              {shipping === 0 && (
-                <div className="bg-bleu-clair/10 text-bleu-saphir text-sm p-2 rounded-md font-medium text-center">
-                  🎉 Livraison offerte !
-                </div>
-              )}
 
               <div className="border-t border-gris-canon-de-fusil/10 pt-3">
                 <div className="flex justify-between text-lg font-bold text-gris-canon-de-fusil">

@@ -1,23 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-orange-rougi: #F05121;
-  --color-violet-myrtille-tenebreux: #2D4040;
-  --color-blanc: #FFFFFF;
+  --color-orange-rougi: #f05121;
+  --color-violet-myrtille-tenebreux: #2d4040;
+  --color-blanc: #ffffff;
   --color-gris-canon-de-fusil: #111827;
-  --color-bleu-clair: #ABBCE5;
-  --color-bleu-saphir: #2041B1;
-  --color-vert-jungle: #178A3D;
-  --color-rouge-ecarlate: #C4232E;
+  --color-bleu-clair: #abbce5;
+  --color-bleu-saphir: #2041b1;
+  --color-vert-jungle: #178a3d;
+  --color-rouge-ecarlate: #c4232e;
 }
 
 /* --- Configuration de la Scrollbar avec vos couleurs natives --- */
+* {
+  /* 1. Pour les navigateurs basés sur WebKit (Chrome, Safari, Edge, Opera, etc.) */
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
-/* La piste (le fond de la barre) */
-::-webkit-scrollbar-track {
-  background-color: var(--color-blanc);
+  /* 2. Pour Firefox (CSS standardisé moderne) */
+  scrollbar-width: none;
+
+  /* 3. Pour Internet Explorer et l'ancien Edge (historique) */
+  -ms-overflow-style: none;
 }
-
 /* Mode sombre natif pour la piste (si vous gérez une classe .dark ou le sélecteur média) */
 @media (prefers-color-scheme: dark) {
   ::-webkit-scrollbar-track {
@@ -27,7 +33,11 @@
 
 /* La poignée (le curseur que l'on glisse) */
 ::-webkit-scrollbar-thumb {
-  background-color: color-mix(in srgb, var(--color-gris-canon-de-fusil) 30%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--color-gris-canon-de-fusil) 30%,
+    transparent
+  );
   border-radius: 9999px;
 }
 
@@ -41,14 +51,4 @@
   transition-property: background-color, border-color, color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
 }

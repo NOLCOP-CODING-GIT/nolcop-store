@@ -7,6 +7,8 @@ import {
   Clock,
   AlertCircle,
   Eye,
+  Lock,
+  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -30,6 +32,13 @@ const Orders: React.FC = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("fr-BJ", {
+      style: "currency",
+      currency: "XOF",
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
 
   // Simuler des données pour la démo
   React.useEffect(() => {
@@ -167,44 +176,112 @@ const Orders: React.FC = () => {
       </div>
     );
   }
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-blanc px-4">
+        <div className="text-center max-w-md w-full bg-blanc border border-gris-canon-de-fusil/5 p-8 rounded-2xl shadow-xs">
+          {/* Icône de cadenas ou d'alerte stylisée avec un fond doux */}
+          <div className="h-16 w-16 bg-bleu-saphir/5 text-bleu-saphir rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="h-8 w-8" />
+          </div>
 
+          <h2 className="text-2xl font-black text-gris-canon-de-fusil mb-3 tracking-tight">
+            Espace sécurisé
+          </h2>
+
+          <p className="text-sm text-gris-canon-de-fusil/60 leading-relaxed mb-8">
+            Vous devez être connecté à votre compte Nolcop Coding pour accéder à
+            l'historique et au suivi en temps réel de vos commandes.
+          </p>
+
+          <Link
+            to="/login"
+            className="inline-flex items-center justify-center w-full px-6 py-3.5 bg-bleu-saphir hover:bg-bleu-saphir/90 text-blanc text-sm font-bold rounded-xl transition-all duration-200 shadow-xs cursor-pointer"
+          >
+            Se connecter à mon compte
+          </Link>
+
+          <p className="text-xs text-gris-canon-de-fusil/40 mt-4">
+            Pas encore de compte ?{" "}
+            <Link
+              to="/register"
+              className="text-bleu-saphir hover:underline font-semibold"
+            >
+              Créez-en un ici
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-blanc gap-4">
+        <div className="relative flex items-center justify-center">
+          {/* Rail extérieur discret */}
+          <div className="absolute h-12 w-12 rounded-full border-4 border-gris-canon-de-fusil/5"></div>
+          {/* Spinner actif */}
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-bleu-saphir"></div>
+        </div>
+
+        {/* Message de chargement avec pulsation douce */}
+        <div className="text-center animate-pulse">
+          <h5 className="text-sm font-bold text-gris-canon-de-fusil">
+            Chargement de vos commandes...
+          </h5>
+          <p className="text-xs text-gris-canon-de-fusil/50 mt-1">
+            Récupération de votre historique sécurisé
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-          <Package className="h-8 w-8 mr-3 text-indigo-600" />
-          Mes Commandes
-        </h1>
-        <p className="text-gray-600">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-gris-canon-de-fusil/5 mb-8 gap-4">
+        <div className="flex items-center">
+          <div className="h-12 w-12 bg-bleu-saphir/5 text-bleu-saphir rounded-xl flex items-center justify-center mr-4 shrink-0">
+            <Package className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-gris-canon-de-fusil tracking-tight">
+              Mes Commandes
+            </h1>
+            <p className="text-xs text-gris-canon-de-fusil/50 mt-0.5">
+              Suivi en temps réel de vos achats sécurisés
+            </p>
+          </div>
+        </div>
+        <div className="bg-gris-canon-de-fusil/5 px-4 py-2 rounded-xl text-sm font-bold text-gris-canon-de-fusil/70 self-start sm:self-center">
           {orders.length} {orders.length === 1 ? "commande" : "commandes"}
-        </p>
+        </div>
       </div>
 
+      {/* Empty State */}
       {orders.length === 0 ? (
-        <div className="text-center py-12">
-          <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs max-w-md mx-auto">
+          <div className="h-16 w-16 bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="h-8 w-8" />
+          </div>
+          <h2 className="text-lg font-bold text-gris-canon-de-fusil mb-1">
             Vous n'avez pas encore de commandes
           </h2>
-          <p className="text-gray-600 mb-6">
-            Découvrez nos produits et passez votre première commande
+          <p className="text-sm text-gris-canon-de-fusil/50 max-w-xs mx-auto mb-6 leading-relaxed">
+            Découvrez nos produits exclusifs et passez votre première commande
+            dès aujourd'hui.
           </p>
           <Link
             to="/"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            className="inline-flex items-center justify-center px-6 py-3 bg-bleu-saphir hover:bg-bleu-saphir/90 text-blanc text-sm font-bold rounded-xl transition-all duration-200 cursor-pointer shadow-xs gap-2"
           >
-            Découvrir des produits
+            <span>Découvrir nos produits</span>
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       ) : (
+        /* Orders List */
         <div className="space-y-6">
           {orders.map((order) => {
             const statusInfo = getStatusInfo(order.status);
@@ -213,85 +290,99 @@ const Orders: React.FC = () => {
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+                className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl hover:shadow-md transition-all duration-300 overflow-hidden"
               >
-                <div className="p-6">
+                <div className="p-5 sm:p-6">
                   {/* Order Header */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gris-canon-de-fusil/5 gap-3">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Commande {order.id}
+                      <h3 className="text-base font-extrabold text-gris-canon-de-fusil">
+                        Référence #{order.id.slice(0, 8).toUpperCase()}
                       </h3>
-                      <p className="text-sm text-gray-500">
-                        Passée le{" "}
-                        {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+                      <p className="text-xs text-gris-canon-de-fusil/40 mt-0.5">
+                        Achat effectué le{" "}
+                        {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-between sm:justify-end space-x-3 w-full sm:w-auto">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${statusInfo.color}`}
                       >
-                        <StatusIcon className="h-4 w-4 mr-1" />
+                        <StatusIcon className="h-3.5 w-3.5 mr-1.5 shrink-0" />
                         {statusInfo.label}
                       </span>
-                      <button className="p-2 text-gray-400 hover:text-gray-600">
+                      <button className="p-2 text-gris-canon-de-fusil/40 hover:text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer">
                         <Eye className="h-5 w-5" />
                       </button>
                     </div>
                   </div>
 
                   {/* Order Items */}
-                  <div className="border-t pt-4">
-                    <div className="space-y-3">
-                      {order.items.map((item, index) => (
-                        <div
-                          key={`${item.product.id}-${index}`}
-                          className="flex items-center space-x-4"
-                        >
-                          <img
-                            src={item.product.image}
-                            alt={item.product.name}
-                            className="w-16 h-16 object-cover rounded-md"
-                          />
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium text-gray-900">
-                              {item.product.name}
-                            </h4>
-                            <p className="text-sm text-gray-500">
-                              Quantité: {item.quantity} ×{" "}
-                              {item.product.price.toFixed(2)} €
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-medium text-gray-900">
-                              {(item.product.price * item.quantity).toFixed(2)}{" "}
-                              €
-                            </p>
-                          </div>
+                  <div className="py-4 my-2 space-y-4">
+                    {order.items.map((item, index) => (
+                      <div
+                        key={`${item.product.id}-${index}`}
+                        className="flex items-center space-x-4"
+                      >
+                        <img
+                          src={item.product.image}
+                          alt={item.product.name}
+                          className="w-14 h-14 object-cover rounded-xl border border-gris-canon-de-fusil/5 shrink-0 bg-gris-canon-de-fusil/5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-bold text-gris-canon-de-fusil truncate">
+                            {item.product.name}
+                          </h4>
+                          <p className="text-xs text-gris-canon-de-fusil/50 mt-0.5">
+                            Quantité: {item.quantity} ×{" "}
+                            {formatPrice(item.product.price)}
+                          </p>
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-extrabold text-gris-canon-de-fusil">
+                            {formatPrice(item.product.price * item.quantity)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Order Footer */}
-                  <div className="border-t mt-4 pt-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-500">
-                        {order.items.length}{" "}
-                        {order.items.length === 1 ? "article" : "articles"}
-                      </div>
-                      <div className="text-lg font-bold text-gray-900">
-                        Total: {order.total.toFixed(2)} €
-                      </div>
+                  <div className="border-t border-gris-canon-de-fusil/5 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="text-xs font-semibold text-gris-canon-de-fusil/50 order-2 sm:order-1">
+                      {order.items.reduce(
+                        (acc, item) => acc + item.quantity,
+                        0,
+                      )}{" "}
+                      {order.items.reduce(
+                        (acc, item) => acc + item.quantity,
+                        0,
+                      ) === 1
+                        ? "article"
+                        : "articles"}
                     </div>
-                    <div className="mt-4 flex space-x-3">
-                      <button className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
-                        Suivre la commande
-                      </button>
-                      <button className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-                        Contacter le support
-                      </button>
+                    <div className="text-right order-1 sm:order-2">
+                      <span className="text-xs text-gris-canon-de-fusil/40 mr-2">
+                        Montant total :
+                      </span>
+                      <span className="text-xl font-black text-bleu-saphir">
+                        {formatPrice(order.total)}
+                      </span>
                     </div>
+                  </div>
+
+                  {/* Actions Buttons */}
+                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <button className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/70 hover:bg-gris-canon-de-fusil/5 font-bold text-sm rounded-xl transition-colors cursor-pointer text-center">
+                      Détails du suivi
+                    </button>
+                    <button className="w-full px-4 py-2.5 bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 font-bold text-sm rounded-xl transition-colors cursor-pointer text-center shadow-xs">
+                      Besoin d'aide ?
+                    </button>
                   </div>
                 </div>
               </div>

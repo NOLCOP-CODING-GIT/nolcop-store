@@ -106,7 +106,7 @@ const Home: React.FC = () => {
   ];
 
   const featuredProducts = mockProducts.filter((p) => p.featured);
-  const newProducts = mockProducts.slice(0, 4);
+  const newProducts = mockProducts.slice(0, 6);
 
   const categories = [
     {

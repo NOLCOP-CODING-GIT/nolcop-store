@@ -48,7 +48,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`/product/${product.id}`} className="block">
+      <Link to={`/products/${product.id}`} className="block">
         <div className="relative">
           {/* Product Images */}
           <div className="relative h-64 overflow-hidden bg-gris-canon-de-fusil/5">

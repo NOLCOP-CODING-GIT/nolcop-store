@@ -161,100 +161,153 @@ const Products: React.FC = () => {
     }
   });
 
-  const ProductCard = ({ product }: { product: Product }) => (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-      <div className="relative">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-48 object-cover rounded-t-lg"
-        />
-      </div>
+  const ProductCard = ({ product }: { product: Product }) => {
+    // Formateur de prix FCFA (Bénin / XOF) pour rester cohérent avec CategoryPage
+    const formatPrice = (price: number) => {
+      return new Intl.NumberFormat("fr-BJ", {
+        style: "currency",
+        currency: "XOF",
+        maximumFractionDigits: 0,
+      }).format(price);
+    };
 
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {product.name}
-        </h3>
-
-        <div className="flex items-center mb-2">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <svg
-                key={i}
-                className={`h-4 w-4 ${i < Math.floor(product.rating) ? "text-yellow-400" : "text-gray-300"}`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
-          <span className="ml-2 text-sm text-gray-600">
-            {product.rating} ({product.reviews} avis)
-          </span>
+    return (
+      <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col h-full">
+        {/* Zone Image */}
+        <div className="relative overflow-hidden bg-gris-canon-de-fusil/5 aspect-video">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          />
         </div>
 
-        <div className="flex items-center justify-between">
-          <p className="text-2xl font-bold text-indigo-600">
-            {product.price.toFixed(2)} €
-          </p>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-            Ajouter au panier
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+        {/* Contenu */}
+        <div className="p-5 flex flex-col flex-1 justify-between gap-4">
+          <div className="space-y-2">
+            {/* Titre du produit */}
+            <h3 className="text-base font-bold text-gris-canon-de-fusil line-clamp-2 min-h-[3rem] leading-tight">
+              {product.name}
+            </h3>
 
-  const ProductListItem = ({ product }: { product: Product }) => (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-4">
-      <div className="flex items-center space-x-4">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-24 h-24 object-cover rounded-md"
-        />
-
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {product.name}
-          </h3>
-          {product.description && (
-            <p className="text-sm text-gray-600 mb-2">{product.description}</p>
-          )}
-
-          <div className="flex items-center mb-2">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <svg
-                  key={i}
-                  className={`h-4 w-4 ${i < Math.floor(product.rating) ? "text-yellow-400" : "text-gray-300"}`}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
+            {/* Étoiles et Note */}
+            <div className="flex items-center space-x-1.5">
+              <div className="flex items-center text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <svg
+                    key={i}
+                    className={`h-3.5 w-3.5 ${
+                      i < Math.floor(product.rating)
+                        ? "fill-current"
+                        : "text-gris-canon-de-fusil/20"
+                    }`}
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <span className="text-[11px] font-bold text-gris-canon-de-fusil/50">
+                {product.rating} ({product.reviews} avis)
+              </span>
             </div>
-            <span className="ml-2 text-sm text-gray-600">
-              {product.rating} ({product.reviews} avis)
-            </span>
           </div>
 
-          <p className="text-sm text-gray-600">{product.category}</p>
-        </div>
-
-        <div className="text-right">
-          <p className="text-2xl font-bold text-indigo-600 mb-2">
-            {product.price.toFixed(2)} €
-          </p>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-            Ajouter au panier
-          </button>
+          {/* Prix et Bouton Action */}
+          <div className="flex items-center justify-between pt-3 border-t border-gris-canon-de-fusil/5 mt-auto">
+            <p className="text-xl font-black text-bleu-saphir">
+              {formatPrice(product.price)}
+            </p>
+            <button className="px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-colors shadow-xs cursor-pointer text-xs font-bold">
+              Ajouter
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const ProductListItem = ({ product }: { product: Product }) => {
+    // Formateur de prix FCFA (Bénin / XOF) pour rester cohérent avec CategoryPage et ProductCard
+    const formatPrice = (price: number) => {
+      return new Intl.NumberFormat("fr-BJ", {
+        style: "currency",
+        currency: "XOF",
+        maximumFractionDigits: 0,
+      }).format(price);
+    };
+
+    return (
+      <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-5 hover:shadow-md transition-shadow duration-300">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          {/* Zone Image */}
+          <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden bg-gris-canon-de-fusil/5 rounded-xl border border-gris-canon-de-fusil/5">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            />
+          </div>
+
+          {/* Détails du produit */}
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Badge Catégorie */}
+            {product.category && (
+              <span className="inline-block text-[10px] font-black uppercase tracking-wider text-bleu-saphir/60 bg-bleu-saphir/5 px-2.5 py-1 rounded-md">
+                {product.category}
+              </span>
+            )}
+
+            {/* Nom du produit */}
+            <h3 className="text-base sm:text-lg font-bold text-gris-canon-de-fusil leading-tight truncate">
+              {product.name}
+            </h3>
+
+            {/* Description */}
+            {product.description && (
+              <p className="text-xs sm:text-sm text-gris-canon-de-fusil/60 line-clamp-2 leading-relaxed">
+                {product.description}
+              </p>
+            )}
+
+            {/* Étoiles et Note */}
+            <div className="flex items-center space-x-1.5">
+              <div className="flex items-center text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <svg
+                    key={i}
+                    className={`h-3.5 w-3.5 ${
+                      i < Math.floor(product.rating)
+                        ? "fill-current"
+                        : "text-gris-canon-de-fusil/20"
+                    }`}
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <span className="text-[11px] font-bold text-gris-canon-de-fusil/50">
+                {product.rating} ({product.reviews} avis)
+              </span>
+            </div>
+          </div>
+
+          {/* Prix et Action */}
+          <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-gris-canon-de-fusil/5 shrink-0">
+            <div className="sm:text-right">
+              <p className="text-xl sm:text-2xl font-black text-bleu-saphir">
+                {formatPrice(product.price)}
+              </p>
+            </div>
+            <button className="px-5 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-colors shadow-xs cursor-pointer text-xs font-bold whitespace-nowrap">
+              Ajouter au panier
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -280,13 +333,13 @@ const Products: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blanc">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-black text-gris-canon-de-fusil mb-2 leading-tight">
           {query ? `Résultats pour "${query}"` : "Tous les produits"}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-xs sm:text-sm text-gris-canon-de-fusil/50 font-medium">
           {sortedResults.length}{" "}
           {sortedResults.length === 1 ? "résultat" : "résultats"} trouvé
           {sortedResults.length > 1 ? "s" : ""}
@@ -350,23 +403,23 @@ const Products: React.FC = () => {
         </div>
       </div>
 
-      {/* Results */}
+      {/* Results Area */}
       {sortedResults.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <Search className="h-16 w-16 mx-auto" />
+        <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs max-w-xl mx-auto px-4">
+          <div className="text-gris-canon-de-fusil/20 mb-4">
+            <Search className="h-14 w-14 mx-auto" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-black text-gris-canon-de-fusil mb-1">
             {query ? "Aucun résultat trouvé" : "Aucun produit disponible"}
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-xs sm:text-sm text-gris-canon-de-fusil/50 mb-6 leading-relaxed">
             {query
               ? `Aucun produit ne correspond à votre recherche "${query}"`
-              : "Essayez de modifier vos filtres"}
+              : "Essayez de modifier vos filtres ou de revenir plus tard."}
           </p>
           <Link
             to="/"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            className="inline-flex items-center justify-center px-5 py-3 bg-bleu-saphir text-blanc rounded-xl text-xs font-bold hover:bg-bleu-saphir/90 shadow-sm transition-colors cursor-pointer"
           >
             Découvrir tous nos produits
           </Link>

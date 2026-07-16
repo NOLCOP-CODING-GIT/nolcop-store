@@ -33,16 +33,16 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
+            <Link to="/" className="flex items-center space-x-2">
               <img
                 src="/logo.png"
                 alt="Nolcop Store"
                 className="h-10 w-10 object-contain rounded-full"
               />
-              <span className="text-xl font-bold tracking-wide bg-linear-to-r from-bleu-saphir via-orange-rougi to-bleu-saphir bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-linear-to-r from-bleu-saphir via-orange-rougi to-bleu-saphir bg-clip-text text-transparent">
                 Nolcop Store
               </span>
-            </div>
+            </Link>
             <p className="text-blanc/70 mb-6 max-w-md text-sm leading-relaxed text-justify">
               Nolcop Store - Votre solution e-commerce sur mesure. Une
               démonstration de notre expertise en développement web pour votre

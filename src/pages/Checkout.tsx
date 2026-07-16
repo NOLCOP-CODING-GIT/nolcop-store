@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { useCart } from "../hooks/useCart";
-import { CreditCard, Truck, ShieldCheck, ArrowRight } from "lucide-react";
+import {
+  CreditCard,
+  Truck,
+  ShieldCheck,
+  ArrowRight,
+  Smartphone,
+} from "lucide-react";
 
 const Checkout: React.FC = () => {
   const { state } = useCart();
@@ -12,6 +18,7 @@ const Checkout: React.FC = () => {
     zipCode: "",
     phone: "",
   });
+  const [paymentMethod, setPaymentMethod] = useState("credit_card");
 
   // Calculs financiers réutilisés du panier
   const subtotal = state.items.reduce(
@@ -71,22 +78,13 @@ const Checkout: React.FC = () => {
             <input
               type="text"
               required
-              placeholder="Adresse postale complète"
+              placeholder="Adresse complète"
               className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
               onChange={(e) =>
                 setShippingInfo({ ...shippingInfo, address: e.target.value })
               }
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input
-                type="text"
-                required
-                placeholder="Code postal"
-                className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
-                onChange={(e) =>
-                  setShippingInfo({ ...shippingInfo, zipCode: e.target.value })
-                }
-              />
               <input
                 type="text"
                 required
@@ -108,43 +106,117 @@ const Checkout: React.FC = () => {
             />
           </div>
 
-          {/* Section 2 : Paiement sécurisé factice */}
+          {/* Section 2 : Méthode de paiement */}
           <div className="bg-blanc border border-gris-canon-de-fusil/5 shadow-sm rounded-2xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold flex items-center mb-2">
-              <CreditCard className="h-5 w-5 mr-2 text-bleu-saphir" />
-              2. Paiement sécurisé par carte
+            <h2 className="text-lg font-semibold flex items-center mb-4">
+              <ShieldCheck className="h-5 w-5 mr-2 text-bleu-saphir" />
+              2. Méthode de paiement
             </h2>
-            <div className="space-y-3">
-              <input
-                type="text"
-                required
-                placeholder="Nom inscrit sur la carte"
-                className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
-              />
-              <input
-                type="text"
-                required
-                maxLength={16}
-                placeholder="Numéro de carte (16 chiffres)"
-                className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
-              />
-              <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("credit_card")}
+                className={`p-4 border rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                  paymentMethod === "credit_card"
+                    ? "border-bleu-saphir bg-bleu-saphir/5 text-bleu-saphir"
+                    : "border-gris-canon-de-fusil/10 text-gris-canon-de-fusil hover:border-gris-canon-de-fusil/30"
+                }`}
+              >
+                <CreditCard className="h-5 w-5 mr-2" />
+                <span className="font-semibold text-sm">Carte Bancaire</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("mtn_momo")}
+                className={`p-4 border rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                  paymentMethod === "mtn_momo"
+                    ? "border-yellow-500 bg-yellow-50 text-yellow-700"
+                    : "border-gris-canon-de-fusil/10 text-gris-canon-de-fusil hover:border-gris-canon-de-fusil/30"
+                }`}
+              >
+                <Smartphone className="h-5 w-5 mr-2" />
+                <span className="font-semibold text-sm">MTN MoMo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("moov_money")}
+                className={`p-4 border rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                  paymentMethod === "moov_money"
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gris-canon-de-fusil/10 text-gris-canon-de-fusil hover:border-gris-canon-de-fusil/30"
+                }`}
+              >
+                <Smartphone className="h-5 w-5 mr-2" />
+                <span className="font-semibold text-sm">Moov Money</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("celtiis_cash")}
+                className={`p-4 border rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                  paymentMethod === "celtiis_cash"
+                    ? "border-green-500 bg-green-50 text-green-700"
+                    : "border-gris-canon-de-fusil/10 text-gris-canon-de-fusil hover:border-gris-canon-de-fusil/30"
+                }`}
+              >
+                <Smartphone className="h-5 w-5 mr-2" />
+                <span className="font-semibold text-sm">Celtiis Cash</span>
+              </button>
+            </div>
+
+            {/* Champs spécifiques selon la méthode */}
+            {paymentMethod === "credit_card" && (
+              <div className="space-y-3 pt-4 border-t border-gris-canon-de-fusil/5">
                 <input
                   type="text"
                   required
-                  maxLength={5}
-                  placeholder="MM/AA"
-                  className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm text-center"
+                  placeholder="Nom inscrit sur la carte"
+                  className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
                 />
                 <input
                   type="text"
                   required
-                  maxLength={3}
-                  placeholder="CVV"
-                  className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm text-center"
+                  maxLength={16}
+                  placeholder="Numéro de carte (16 chiffres)"
+                  className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    required
+                    maxLength={5}
+                    placeholder="MM/AA"
+                    className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm text-center"
+                  />
+                  <input
+                    type="text"
+                    required
+                    maxLength={3}
+                    placeholder="CVV"
+                    className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm text-center"
+                  />
+                </div>
+              </div>
+            )}
+
+            {paymentMethod !== "credit_card" && (
+              <div className="space-y-3 pt-4 border-t border-gris-canon-de-fusil/5">
+                <p className="text-sm text-gris-canon-de-fusil/70 mb-2">
+                  Veuillez entrer le numéro de téléphone associé à votre compte
+                  Mobile Money. Vous recevrez une notification sur votre
+                  téléphone pour valider le paiement.
+                </p>
+                <input
+                  type="tel"
+                  required
+                  placeholder="Numéro de téléphone Mobile Money"
+                  className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
                 />
               </div>
-            </div>
+            )}
           </div>
 
           <button

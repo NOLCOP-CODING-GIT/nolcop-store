@@ -27,7 +27,7 @@ const Unauthorized: React.FC = () => {
 
           <div className="space-y-6">
             {/* Alert Box */}
-            <div className="bg-rose-500/[0.02] border border-rose-500/10 rounded-2xl p-4">
+            <div className="bg-rose-500/20 border border-rose-500/10 rounded-2xl p-4">
               <div className="flex items-start">
                 <AlertTriangle className="h-5 w-5 text-rose-500 shrink-0 mr-3 mt-0.5" />
                 <div className="text-left">

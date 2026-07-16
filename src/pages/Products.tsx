@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, Grid, List } from "lucide-react";
+import { Search, Grid, List, ShoppingCart } from "lucide-react";
 
 interface Product {
   id: string;
@@ -186,7 +186,7 @@ const Products: React.FC = () => {
         <div className="p-5 flex flex-col flex-1 justify-between gap-4">
           <div className="space-y-2">
             {/* Titre du produit */}
-            <h3 className="text-base font-bold text-gris-canon-de-fusil line-clamp-2 min-h-[3rem] leading-tight">
+            <h3 className="text-base font-bold text-gris-canon-de-fusil line-clamp-2 min-h-12 leading-tight">
               {product.name}
             </h3>
 
@@ -214,11 +214,12 @@ const Products: React.FC = () => {
           </div>
 
           {/* Prix et Bouton Action */}
-          <div className="flex items-center justify-between pt-3 border-t border-gris-canon-de-fusil/5 mt-auto">
+          <div className="flex items-center justify-between gap-20 pt-3 border-t border-gris-canon-de-fusil/5 mt-auto">
             <p className="text-xl font-black text-bleu-saphir">
               {formatPrice(product.price)}
             </p>
-            <button className="px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-colors shadow-xs cursor-pointer text-xs font-bold">
+            <button className="flex-1 flex items-center justify-center py-2.5 bg-bleu-saphir text-blanc rounded-xl text-xs font-bold hover:bg-bleu-saphir/90 transition-all shadow-xs cursor-pointer">
+              <ShoppingCart className="h-4 w-4 mr-2" />
               Ajouter
             </button>
           </div>

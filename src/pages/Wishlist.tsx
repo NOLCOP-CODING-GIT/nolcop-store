@@ -44,7 +44,7 @@ const Wishlist: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gris-canon-de-fusil px-4">
+      <div className="min-h-screen flex items-center justify-center bg-blanc px-4">
         <div className="max-w-md w-full text-center space-y-6 bg-blanc border border-gris-canon-de-fusil/5 p-8 rounded-2xl shadow-xs">
           <div className="mx-auto w-16 h-16 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500">
             <AlertCircle className="h-8 w-8" />
@@ -71,8 +71,23 @@ const Wishlist: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-blanc">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-bleu-saphir"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-blanc gap-4">
+        <div className="relative flex items-center justify-center">
+          {/* Rail extérieur discret */}
+          <div className="absolute h-12 w-12 rounded-full border-4 border-gris-canon-de-fusil/5"></div>
+          {/* Spinner actif */}
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-bleu-saphir"></div>
+        </div>
+
+        {/* Texte avec pulsation douce */}
+        <div className="text-center animate-pulse">
+          <h5 className="text-sm font-bold text-gris-canon-de-fusil">
+            Chargement des favoris...
+          </h5>
+          <p className="text-xs text-gris-canon-de-fusil/50 mt-1">
+            Veuillez patienter un instant...
+          </p>
+        </div>
       </div>
     );
   }
@@ -163,10 +178,10 @@ const Wishlist: React.FC = () => {
                     className="flex-1 flex items-center justify-center px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl text-xs font-bold hover:bg-bleu-saphir/90 transition-all shadow-xs cursor-pointer"
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    Ajouter au panier
+                    Ajouter
                   </button>
                   <Link
-                    to={`/product/${item.id}`}
+                    to={`/products/${item.id}`}
                     className="flex-1 flex items-center justify-center px-4 py-2.5 border border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/70 hover:bg-gris-canon-de-fusil/5 rounded-xl text-xs font-bold transition-all text-center"
                   >
                     Détails

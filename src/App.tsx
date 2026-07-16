@@ -27,6 +27,7 @@ import About from "./pages/About";
 import Faq from "./pages/Faq";
 import Shipping from "./pages/Shipping";
 import Terms from "./pages/Terms";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // Layout pour les pages avec header et footer harmonisé
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -57,6 +58,14 @@ function App() {
               element={
                 <AuthLayout>
                   <Register />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <AuthLayout>
+                  <ForgotPassword />
                 </AuthLayout>
               }
             />
@@ -189,9 +198,9 @@ function App() {
               path="/profile"
               element={
                 // <ProtectedRoute>
-                  <MainLayout>
-                    <Profile />
-                  </MainLayout>
+                <MainLayout>
+                  <Profile />
+                </MainLayout>
                 // </ProtectedRoute>
               }
             />
@@ -199,9 +208,9 @@ function App() {
               path="/orders"
               element={
                 // <ProtectedRoute>
-                  <MainLayout>
-                    <Orders />
-                  </MainLayout>
+                <MainLayout>
+                  <Orders />
+                </MainLayout>
                 // </ProtectedRoute>
               }
             />
@@ -209,9 +218,9 @@ function App() {
               path="/admin"
               element={
                 // <ProtectedRoute requireAdmin>
-                  <MainLayout>
-                    <Admin />
-                  </MainLayout>
+                <MainLayout>
+                  <Admin />
+                </MainLayout>
                 // </ProtectedRoute>
               }
             />

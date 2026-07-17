@@ -1,17 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { useCategories } from "../hooks/useCategories";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
-
-  const categories = [
-    { name: "Électronique", slug: "electronics" },
-    { name: "Mode", slug: "fashion" },
-    { name: "Maison", slug: "home" },
-    { name: "Sports", slug: "sports" },
-    { name: "Livres", slug: "books" },
-  ];
+  const { categories } = useCategories();
 
   const usefulLinks = [
     { name: "À propos", href: "/about" },
@@ -60,7 +54,7 @@ const Footer: React.FC = () => {
                 <img src="/instagram.png" className="h-auto w-7" />
               </a>
               <a
-                href="https://wa.me/2290144161373?text=Bonjour%20je%20souhaite%20avoir%20des%20informations"
+                href="https://wa.me/2290140585835?text=Bonjour%20je%20souhaite%20avoir%20des%20informations"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -77,14 +71,13 @@ const Footer: React.FC = () => {
             </h3>
             <ul className="space-y-2 text-sm">
               {categories.map((category) => (
-                <li key={category.slug}>
-                  <Link
-                    to={`/category/${category.slug}`}
-                    className="text-blanc/70 hover:text-blanc transition-colors"
-                  >
-                    {category.name}
-                  </Link>
-                </li>
+                <Link
+                  key={category.slug}
+                  to={`/category/${category.slug}`}
+                  className="block px-4 py-2 ..."
+                >
+                  {category.name}
+                </Link>
               ))}
             </ul>
           </div>
@@ -142,7 +135,7 @@ const Footer: React.FC = () => {
               <Phone className="h-5 w-5 text-bleu-clair" />
               <div>
                 <p className="text-xs text-blanc/50">Téléphone</p>
-                <p className="text-sm text-blanc">+229 01 44 16 13 73</p>
+                <p className="text-sm text-blanc">+229 01 40 58 58 35</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">

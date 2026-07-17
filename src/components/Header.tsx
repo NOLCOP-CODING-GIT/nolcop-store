@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
+import { useCategories } from "../hooks/useCategories";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,6 +22,7 @@ const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
+  const { categories } = useCategories();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,14 +45,6 @@ const Header: React.FC = () => {
     navigate("/login");
     setIsMenuOpen(false);
   };
-
-  const categories = [
-    { name: "Électronique", slug: "electronics" },
-    { name: "Mode", slug: "fashion" },
-    { name: "Maison", slug: "home" },
-    { name: "Sports", slug: "sports" },
-    { name: "Logiciels", slug: "software" },
-  ];
 
   return (
     <header className="bg-blanc/50 backdrop-blur-md border-b border-blanc/20 shadow-sm sticky top-0 z-50">
@@ -80,7 +74,7 @@ const Header: React.FC = () => {
                   <Link
                     key={category.slug}
                     to={`/category/${category.slug}`}
-                    className="block px-4 py-2 text-sm text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir first:rounded-t-lg last:rounded-b-lg"
+                    className="block px-4 py-2 ..."
                   >
                     {category.name}
                   </Link>
@@ -238,11 +232,7 @@ const Header: React.FC = () => {
                           <Link
                             key={category.slug}
                             to={`/category/${category.slug}`}
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsCategoriesOpen(false);
-                            }}
-                            className="block px-4 py-2 text-sm text-gris-canon-de-fusil/80 hover:bg-bleu-clair/10 hover:text-bleu-saphir rounded-lg transition-colors"
+                            className="block px-4 py-2 ..."
                           >
                             {category.name}
                           </Link>

@@ -2,59 +2,74 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, Trash2, ShoppingCart, AlertCircle, Check } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { useCart } from "../hooks/useCart"; // Importation du hook de gestion du panier
+import { useCart } from "../hooks/useCart";
+import { supabase } from "../supabaseClient";
 import type { Product } from "../types";
 
 const Wishlist: React.FC = () => {
   const { user } = useAuth();
-  const { state: cartState, addToCart } = useCart(); // Récupération de l'état global et de la fonction d'ajout
+  const { state: cartState, addToCart } = useCart();
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Simuler des données calquées sur le même modèle que Products.tsx
   useEffect(() => {
-    setTimeout(() => {
-      setWishlist([
-        {
-          id: "1",
-          name: "iPhone 15 Pro",
-          price: 650000,
-          images: [
-            "https://images.unsplash.com/photo-1592286115803-a1c3b552ee43?w=300",
-          ],
-          category: "Électronique",
-          rating: 4.5,
-          reviews: 234,
-          description: "Le dernier iPhone avec processeur A17 Pro",
-          stock: 12,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          name: "MacBook Air M2",
-          price: 850000,
-          images: [
-            "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300",
-          ],
-          category: "Électronique",
-          rating: 4.8,
-          reviews: 156,
-          description: "Ordinateur portable ultra-fin avec puce M2",
-          stock: 8,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ]);
+    if (user) {
+      fetchWishlist();
+    } else {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  }, [user]);
 
-  const removeFromWishlist = (id: string) => {
-    setWishlist(wishlist.filter((item) => item.id !== id));
+  const fetchWishlist = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("wishlist_items")
+        .select(
+          `
+          product_id,
+          products (*)
+        `,
+        )
+        .eq("user_id", user?.id);
+
+      if (error) throw error;
+
+      if (data) {
+        const productsList = data
+          .map((item: any) => item.products)
+          .filter(Boolean);
+        setWishlist(productsList as Product[]);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des favoris", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Formateur de prix global XOF
+  const removeFromWishlist = async (productId: string) => {
+    if (!user) return;
+
+    const previousWishlist = [...wishlist];
+    setWishlist(wishlist.filter((item) => item.id !== productId));
+
+    try {
+      const { error } = await supabase
+        .from("wishlist_items")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("product_id", productId);
+
+      if (error) {
+        setWishlist(previousWishlist);
+        throw error;
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression du favori", error);
+    }
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
       style: "currency",
@@ -111,7 +126,6 @@ const Wishlist: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc">
-      {/* Header de la page */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex items-center space-x-3.5">
           <div className="h-12 w-12 rounded-xl bg-bleu-saphir/5 flex items-center justify-center text-bleu-saphir">
@@ -154,7 +168,6 @@ const Wishlist: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {wishlist.map((item) => {
-            // Vérification dynamique de la présence dans l'état global du panier
             const isAlreadyInCart = cartState.items.some(
               (cartItem) => cartItem.product.id === item.id,
             );
@@ -165,7 +178,6 @@ const Wishlist: React.FC = () => {
                 key={item.id}
                 className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 shadow-xs overflow-hidden group hover:border-gris-canon-de-fusil/10 transition-all duration-300"
               >
-                {/* Image de l'article */}
                 <div className="relative aspect-video sm:aspect-square md:aspect-video w-full overflow-hidden bg-gris-canon-de-fusil/5">
                   <img
                     src={item.images?.[0] || "/images/placeholder.png"}
@@ -181,7 +193,6 @@ const Wishlist: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Contenu et Actions */}
                 <div className="p-5 space-y-4">
                   <div>
                     <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider text-bleu-saphir/60 bg-bleu-saphir/5 px-2.5 py-1 rounded-md mb-1">

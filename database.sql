@@ -142,17 +142,6 @@ CREATE TABLE public.wishlist_items (
     UNIQUE(user_id, product_id)
 );
 
--- Table: contact_messages
-CREATE TABLE public.contact_messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    subject VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    status VARCHAR(50) DEFAULT 'unread',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
-
 -- Table: password_reset_otps
 CREATE TABLE public.password_reset_otps (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -161,6 +150,25 @@ CREATE TABLE public.password_reset_otps (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     is_used BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Table pour la Newsletter
+CREATE TABLE public.newsletter_subscribers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Table pour les Urgences (Tickets critiques / Problèmes site)
+CREATE TABLE public.emergencies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'resolved')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 -- ========================================================
@@ -174,6 +182,9 @@ CREATE INDEX idx_reviews_product ON public.reviews(product_id);
 -- ========================================================
 -- 5. FONCTIONS & TRIGGERS
 -- ========================================================
+CREATE TRIGGER update_emergencies_updated_at 
+BEFORE UPDATE ON public.emergencies 
+FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
 
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$

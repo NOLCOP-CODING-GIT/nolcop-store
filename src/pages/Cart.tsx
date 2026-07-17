@@ -6,6 +6,13 @@ import { useCart } from "../hooks/useCart";
 const Cart: React.FC = () => {
   const { state, updateQuantity, removeFromCart, addToCart } = useCart();
   const [promoCode, setPromoCode] = useState("");
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("fr-BJ", {
+      style: "currency",
+      currency: "XOF",
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
 
   // Ajouter des produits de démo au panier s'il est vide
   useEffect(() => {
@@ -24,8 +31,7 @@ const Cart: React.FC = () => {
 
   const subtotal = state.total;
   const shipping = 1000;
-  const tax = subtotal * 0.18; // TVA 20%
-  const total = subtotal + shipping + tax;
+  const total = subtotal + shipping;
 
   if (state.items.length === 0) {
     return (
@@ -67,7 +73,7 @@ const Cart: React.FC = () => {
               {/* Partie Gauche : Image + Infos Médias */}
               <div className="flex items-center space-x-4 flex-1">
                 <img
-                  src={item.product.image}
+                  src={item.product.images[0]}
                   alt={item.product.name}
                   className="w-24 h-24 sm:w-20 sm:h-20 object-cover rounded-lg bg-gris-canon-de-fusil/5 shrink-0"
                 />
@@ -97,7 +103,7 @@ const Cart: React.FC = () => {
                   )}
 
                   <p className="text-sm font-bold text-bleu-saphir sm:hidden pt-1">
-                    {item.product.price.toFixed(2)} €
+                    {formatPrice(item.product.price)}
                   </p>
                 </div>
               </div>
@@ -108,7 +114,7 @@ const Cart: React.FC = () => {
                 <div className="hidden sm:block text-center min-w-[70px]">
                   <p className="text-xs text-gris-canon-de-fusil/40">Prix</p>
                   <p className="text-sm font-semibold text-gris-canon-de-fusil">
-                    {item.product.price.toFixed(2)} €
+                    {formatPrice(item.product.price)}
                   </p>
                 </div>
 
@@ -141,7 +147,7 @@ const Cart: React.FC = () => {
                     Sous-total
                   </p>
                   <p className="text-base font-bold text-gris-canon-de-fusil">
-                    {(item.product.price * item.quantity).toFixed(2)} €
+                    {formatPrice(item.product.price * item.quantity)}
                   </p>
                 </div>
 
@@ -169,26 +175,20 @@ const Cart: React.FC = () => {
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>Sous-total</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {subtotal.toFixed(2)} Fcfa
+                  {formatPrice(subtotal)}
                 </span>
               </div>
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>Livraison</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {`${shipping.toFixed(2)} Fcfa`}
-                </span>
-              </div>
-              <div className="flex justify-between text-gris-canon-de-fusil/70">
-                <span>TVA (20%)</span>
-                <span className="font-medium text-gris-canon-de-fusil">
-                  {tax.toFixed(2)} Fcfa
+                  {formatPrice(shipping)}
                 </span>
               </div>
 
               <div className="border-t border-gris-canon-de-fusil/10 pt-3">
                 <div className="flex justify-between text-lg font-bold text-gris-canon-de-fusil">
                   <span>Total</span>
-                  <span className="text-bleu-saphir">{total.toFixed(2)} €</span>
+                  <span className="text-bleu-saphir">{formatPrice(total)}</span>
                 </div>
               </div>
             </div>
@@ -198,15 +198,15 @@ const Cart: React.FC = () => {
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                 Code promo
               </label>
-              <div className="flex space-x-2">
+              <div className="flex w-full items-center justify-between">
                 <input
                   type="text"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
-                  placeholder="Entrez votre code"
-                  className="flex-1 px-3 py-2 border border-gris-canon-de-fusil/20 rounded-md focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-gris-canon-de-fusil text-sm placeholder:text-gris-canon-de-fusil/40"
+                  placeholder="Entrez votre code..."
+                  className="p-2 w-10/18 border border-gris-canon-de-fusil/20 rounded-md focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-gris-canon-de-fusil text-sm placeholder:text-gris-canon-de-fusil/40"
                 />
-                <button className="px-4 py-2 bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil rounded-md hover:bg-gris-canon-de-fusil/20 transition-colors text-sm font-medium">
+                <button className="p-2 bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil rounded-md hover:bg-gris-canon-de-fusil/20 transition-colors font-medium">
                   Appliquer
                 </button>
               </div>
@@ -222,7 +222,7 @@ const Cart: React.FC = () => {
             </Link>
 
             {/* Security Info */}
-            <div className="text-center text-xs text-gris-canon-de-fusil/50 space-y-1 pt-2 border-t border-gris-canon-de-fusil/5">
+            <div className="text-left text-xs text-gris-canon-de-fusil/50 space-y-1 pt-2 border-t border-gris-canon-de-fusil/5">
               <p>🔒 Paiement sécurisé et crypté</p>
               <p>📦 Livraison sous 2-3 jours ouvrés</p>
             </div>

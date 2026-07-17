@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, User, Menu, X, Heart, ChevronDown } from "lucide-react";
+import {
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  Heart,
+  ChevronDown,
+  LogOut,
+  ShieldUser,
+} from "lucide-react";
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
 
@@ -31,7 +40,7 @@ const Header: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/");
+    navigate("/login");
     setIsMenuOpen(false);
   };
 
@@ -259,31 +268,35 @@ const Header: React.FC = () => {
                       <Link
                         to="/profile"
                         onClick={() => setIsMenuOpen(false)}
-                        className="block px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
                       >
-                        Mon profil
+                        <User className="h-5 w-5" />
+                        <span>Mon profil</span>
                       </Link>
                       <Link
                         to="/orders"
                         onClick={() => setIsMenuOpen(false)}
-                        className="block px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
                       >
-                        Mes commandes
+                        <ShoppingCart className="h-5 w-5" />
+                        <span>Mes commandes</span>
                       </Link>
                       {user.role === "admin" && (
                         <Link
                           to="/admin"
                           onClick={() => setIsMenuOpen(false)}
-                          className="block px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
+                          className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
                         >
-                          Administration
+                          <ShieldUser className="h-5 w-5" />
+                          <span>Administration</span>
                         </Link>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
                       >
-                        Déconnexion
+                        <LogOut className="h-5 w-5" />
+                        <span>Déconnexion</span>
                       </button>
                     </>
                   ) : (

@@ -1,5 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
+import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../supabaseClient";
 import {
   CreditCard,
   Truck,
@@ -9,29 +12,90 @@ import {
 } from "lucide-react";
 
 const Checkout: React.FC = () => {
-  const { state } = useCart();
+  const { state, clearCart } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
     firstName: "",
     lastName: "",
     address: "",
-    city: "",
-    zipCode: "",
     phone: "",
   });
   const [paymentMethod, setPaymentMethod] = useState("credit_card");
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("fr-BJ", {
+      style: "currency",
+      currency: "XOF",
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
 
-  // Calculs financiers réutilisés du panier
-  const subtotal = state.items.reduce(
-    (acc, item) => acc + item.product.price * item.quantity,
-    0,
-  );
-  const shipping = subtotal > 100 ? 0 : 4.9;
+  const subtotal = state.total;
+  const shipping = 1000;
   const total = subtotal + shipping;
 
-  const handlePaymentSubmit = (e: React.FormEvent) => {
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Intégration passerelle de paiement (Stripe / PayPal)
-    console.log("Traitement de commande pour :", shippingInfo);
+    if (!user) {
+      alert("Vous devez être connecté pour finaliser la commande.");
+      navigate("/login");
+      return;
+    }
+    
+    if (state.items.length === 0) {
+      alert("Votre panier est vide.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Créer la commande
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          total: total,
+          status: 'pending',
+          payment_method: paymentMethod,
+          shipping_first_name: shippingInfo.firstName,
+          shipping_last_name: shippingInfo.lastName,
+          shipping_address: shippingInfo.address,
+          shipping_city: 'Cotonou', // Valeur par défaut
+          shipping_phone: shippingInfo.phone
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Créer les éléments de la commande
+      const orderItems = state.items.map(item => ({
+        order_id: orderData.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price_at_time: item.product.price,
+        specifications: { color: item.selectedColor, size: item.selectedSize }
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // 3. Vider le panier et rediriger
+      clearCart();
+      alert("Commande effectuée avec succès !");
+      navigate('/orders');
+
+    } catch (err) {
+      console.error("Erreur lors de la création de la commande :", err);
+      alert("Une erreur est survenue lors du traitement de votre commande.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,17 +148,6 @@ const Checkout: React.FC = () => {
                 setShippingInfo({ ...shippingInfo, address: e.target.value })
               }
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input
-                type="text"
-                required
-                placeholder="Ville"
-                className="w-full px-3 py-2 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm"
-                onChange={(e) =>
-                  setShippingInfo({ ...shippingInfo, city: e.target.value })
-                }
-              />
-            </div>
             <input
               type="tel"
               required
@@ -221,10 +274,11 @@ const Checkout: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center px-6 py-3.5 bg-bleu-saphir text-blanc rounded-xl font-bold hover:opacity-90 shadow-md transition-all cursor-pointer text-base"
+            disabled={loading}
+            className="w-full flex items-center justify-center px-6 py-3.5 bg-bleu-saphir text-blanc rounded-xl font-bold hover:opacity-90 shadow-md transition-all cursor-pointer text-base disabled:opacity-50"
           >
-            Procéder au paiement de {total.toFixed(2)} €
-            <ArrowRight className="h-5 w-5 ml-2" />
+            {loading ? "Traitement en cours..." : `Procéder au paiement de ${formatPrice(total)}`}
+            {!loading && <ArrowRight className="h-5 w-5 ml-2" />}
           </button>
         </form>
 
@@ -241,7 +295,7 @@ const Checkout: React.FC = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <img
-                      src={item.product.image}
+                      src={item.product.images[0]}
                       alt={item.product.name}
                       className="w-12 h-12 rounded-lg object-cover bg-gris-canon-de-fusil/5"
                     />
@@ -254,9 +308,6 @@ const Checkout: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold">
-                    {(item.product.price * item.quantity).toFixed(2)} €
-                  </span>
                 </div>
               ))}
             </div>
@@ -265,18 +316,18 @@ const Checkout: React.FC = () => {
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>Sous-total</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {subtotal.toFixed(2)} €
+                  {formatPrice(subtotal)}
                 </span>
               </div>
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>Livraison</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {shipping === 0 ? "Gratuite" : `${shipping.toFixed(2)} €`}
+                  {formatPrice(shipping)}
                 </span>
               </div>
               <div className="border-t border-gris-canon-de-fusil/10 pt-2 flex justify-between text-base font-bold">
                 <span>Total à régler</span>
-                <span className="text-bleu-saphir">{total.toFixed(2)} €</span>
+                <span className="text-bleu-saphir">{formatPrice(total)}</span>
               </div>
             </div>
 

@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet,
+} from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import Header from "./components/Header";
@@ -28,12 +33,16 @@ import Faq from "./pages/Faq";
 import Shipping from "./pages/Shipping";
 import Terms from "./pages/Terms";
 import ForgotPassword from "./pages/ForgotPassword";
+import NotFoundLayout from "./components/NotFoundLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-// Layout pour les pages avec header et footer harmonisé
-const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+// Nouveau MainLayout utilisant <Outlet /> (Recommandé par React Router)
+const MainLayout: React.FC = () => (
   <div className="min-h-screen flex flex-col bg-blanc">
     <Header />
-    <main className="grow">{children}</main>
+    <main className="grow">
+      <Outlet /> {/* Les routes enfants s'injectent ici */}
+    </main>
     <Footer />
   </div>
 );
@@ -45,188 +54,52 @@ function App() {
         <Router>
           <Routes>
             {/* 1. Routes d'authentification (Sans MainLayout) */}
-            <Route
-              path="/login"
-              element={
-                <AuthLayout>
-                  <Login />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <AuthLayout>
-                  <Register />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/forgot-password"
-              element={
-                <AuthLayout>
-                  <ForgotPassword />
-                </AuthLayout>
-              }
-            />
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+            </Route>
+
             <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* 2. Routes principales de l'application (Avec MainLayout) */}
-            <Route
-              path="/"
-              element={
-                <MainLayout>
-                  <Home />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/products"
-              element={
-                <MainLayout>
-                  <Products />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/category/:slug"
-              element={
-                <MainLayout>
-                  <CategoryPage />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/products/:id"
-              element={
-                <MainLayout>
-                  <ProductDetail />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/wishlist"
-              element={
-                <MainLayout>
-                  <Wishlist />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/checkout"
-              element={
-                <MainLayout>
-                  <Checkout />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/contact"
-              element={
-                <MainLayout>
-                  <Contact />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/cart"
-              element={
-                <MainLayout>
-                  <Cart />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/about"
-              element={
-                <MainLayout>
-                  <About />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/faq"
-              element={
-                <MainLayout>
-                  <Faq />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/shipping"
-              element={
-                <MainLayout>
-                  <Shipping />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/terms"
-              element={
-                <MainLayout>
-                  <Terms />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/privacy"
-              element={
-                <MainLayout>
-                  <Privacy />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/payment"
-              element={
-                <MainLayout>
-                  <Payment />
-                </MainLayout>
-              }
-            />
-            <Route
-              path="/customer-service"
-              element={
-                <MainLayout>
-                  <CustomerService />
-                </MainLayout>
-              }
-            />
+            {/* 2. Routes principales de l'application (Toutes avec MainLayout automatique) */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/category/:slug" element={<CategoryPage />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/faq" element={<Faq />} />
+              <Route path="/shipping" element={<Shipping />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/payment" element={<Payment />} />
+              <Route path="/customer-service" element={<CustomerService />} />
 
-            {/* Routes Protégées (Avec MainLayout) */}
-            <Route
-              path="/profile"
-              element={
-                // <ProtectedRoute>
-                <MainLayout>
-                  <Profile />
-                </MainLayout>
-                // </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                // <ProtectedRoute>
-                <MainLayout>
-                  <Orders />
-                </MainLayout>
-                // </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                // <ProtectedRoute requireAdmin>
-                <MainLayout>
-                  <Admin />
-                </MainLayout>
-                // </ProtectedRoute>
-              }
-            />
+              {/* Routes Protégées (Avec MainLayout) */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/orders" element={<Orders />} />
+              </Route>
 
-            {/* 3. Capture globale 404 : S'affichera de manière totalement isolée */}
-            <Route path="*" element={<NotFound />} />
+              <Route element={<ProtectedRoute requireAdmin />}>
+                <Route path="/admin" element={<Admin />} />
+              </Route>
+            </Route>
+
+            {/* 3. Capture globale 404 (S'affiche dans NotFoundLayout, sans Header ni Footer) */}
+            <Route
+              path="*"
+              element={
+                <NotFoundLayout>
+                  <NotFound />
+                </NotFoundLayout>
+              }
+            />
           </Routes>
         </Router>
       </CartProvider>

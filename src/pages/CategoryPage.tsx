@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Grid, List, Search, Star, ShoppingCart } from "lucide-react";
+import { Grid, List, Search, } from "lucide-react";
 import type { Product } from "../types";
 import ProductCard from "../components/ProductCard";
-import NotFound from "../components/NotFound";
+import { useCart } from "../hooks/useCart"; // Importation du hook panier
+import { supabase } from "../supabaseClient";
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -11,132 +12,69 @@ const CategoryPage: React.FC = () => {
   const [sortBy, setSortBy] = useState("name");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    // Simuler un délai de chargement
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  }, [slug]);
+  // Récupération de l'état du panier et de la fonction d'ajout
+  const { state, addToCart } = useCart();
 
-  // Mapping des slugs vers les noms de catégories
-  const categoryNames: Record<string, string> = {
-    electronics: "Électronique",
-    fashion: "Mode",
-    home: "Maison",
-    sports: "Sports",
-    software: "Logiciels",
-  };
-
-  const isValidCategory = slug && slug in categoryNames;
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categoryName, setCategoryName] = useState<string>("");
 
   useEffect(() => {
-    if (isValidCategory) {
+    let isMounted = true;
+
+    const fetchCategoryProducts = async () => {
+      if (!slug) return;
+      
       setLoading(true);
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [slug, isValidCategory]);
+      try {
+        // Récupérer la catégorie par slug
+        const { data: categoryData } = await supabase
+          .from('categories')
+          .select('id, name')
+          .eq('slug', slug)
+          .single();
 
-  if (!isValidCategory) {
-    return <NotFound />;
-  }
+        if (categoryData && isMounted) {
+          setCategoryName(categoryData.name);
+          
+          // Récupérer les produits de cette catégorie
+          const { data: productsData } = await supabase
+            .from('products')
+            .select('*, category:categories(name)')
+            .eq('category_id', categoryData.id);
 
-  const categoryName = categoryNames[slug];
+          if (productsData) {
+            const formattedProducts = productsData.map(p => ({
+              id: p.id,
+              name: p.name,
+              description: p.description,
+              price: p.price,
+              discount: p.discount,
+              category: p.category?.name || categoryData.name,
+              images: p.images,
+              stock: p.stock,
+              rating: p.rating,
+              reviews: p.reviews,
+              featured: p.featured,
+              specifications: p.specifications,
+              createdAt: p.created_at,
+              updatedAt: p.updated_at,
+            }));
+            setProducts(formattedProducts as Product[]);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des produits de la catégorie:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-  // Produits simulés pour la démo
-  const [products] = useState<Product[]>([
-    {
-      id: "1",
-      name: "iPhone 15 Pro",
-      description:
-        "Le summum de la technologie mobile avec châssis en titane et puce A17 Pro.",
-      price: 650000, // Prix adapté en Francs CFA
-      image:
-        "https://images.unsplash.com/photo-1592286115803-a1c3b552ee43?w=300",
-      category: "Électronique",
-      stock: 12,
-      rating: 4.5,
-      reviews: 234,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      name: "MacBook Air M2",
-      description:
-        "Incroyablement fin, rapide et silencieux avec une autonomie record de 18 heures.",
-      price: 850000, // Prix adapté en Francs CFA
-      image:
-        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300",
-      category: "Électronique",
-      stock: 8,
-      rating: 4.8,
-      reviews: 156,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      name: "Apple Watch Series 9",
-      description:
-        "Votre compagnon idéal pour la santé, le sport et une connectivité toujours active.",
-      price: 295000, // Prix adapté en Francs CFA
-      image: "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=300",
-      category: "Électronique",
-      stock: 15,
-      rating: 4.6,
-      reviews: 89,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "4",
-      name: "AirPods Pro",
-      description:
-        "Réduction active du bruit deux fois plus performante et audio spatial personnalisé.",
-      price: 165000, // Prix adapté en Francs CFA
-      image:
-        "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=300",
-      category: "Électronique",
-      stock: 25,
-      rating: 4.4,
-      reviews: 312,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "5",
-      name: "iPad Air",
-      description:
-        "Écran Liquid Retina immersif de 10,9 pouces et puissance phénoménale de la puce M1.",
-      price: 395000, // Prix adapté en Francs CFA
-      image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300",
-      category: "Électronique",
-      stock: 10,
-      rating: 4.7,
-      reviews: 178,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "6",
-      name: "Samsung Galaxy S24",
-      description:
-        "Découvrez l'ère de la puissance mobile assistée par intelligence artificielle (Galaxy AI).",
-      price: 590000, // Prix adapté en Francs CFA
-      image:
-        "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=300",
-      category: "Électronique",
-      stock: 14,
-      rating: 4.3,
-      reviews: 267,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+    fetchCategoryProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
 
   const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
@@ -149,7 +87,11 @@ const CategoryPage: React.FC = () => {
   });
 
   const ProductListItem = ({ product }: { product: Product }) => {
-    // Formateur de prix FCFA (Bénin / XOF)
+    const isAlreadyInCart = state.items.some(
+      (item) => item.product.id === product.id,
+    );
+    const inStock = product.stock !== undefined ? product.stock > 0 : true;
+
     const formatPrice = (price: number) => {
       return new Intl.NumberFormat("fr-BJ", {
         style: "currency",
@@ -159,53 +101,78 @@ const CategoryPage: React.FC = () => {
     };
 
     return (
-      <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-4 hover:shadow-md transition-shadow duration-300">
-        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
-          {/* Image du produit */}
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-24 h-24 object-cover rounded-xl shrink-0"
-          />
+      <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-5 hover:shadow-md transition-shadow duration-300">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden bg-gris-canon-de-fusil/5 rounded-xl border border-gris-canon-de-fusil/5">
+            {/* Correction : Récupération de la première image du tableau images */}
+            <img
+              src={product.images[0] || "/images/placeholder.png"}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            />
+          </div>
 
-          {/* Détails du produit */}
-          <div className="flex-1 text-center sm:text-left space-y-1">
-            <h3 className="text-base font-bold text-gris-canon-de-fusil">
+          <div className="flex-1 min-w-0 space-y-2">
+            {product.category && (
+              <span className="inline-block text-[10px] font-black uppercase tracking-wider text-bleu-saphir/60 bg-bleu-saphir/5 px-2.5 py-1 rounded-md">
+                {product.category}
+              </span>
+            )}
+
+            <h3 className="text-base sm:text-lg font-bold text-gris-canon-de-fusil leading-tight truncate">
               {product.name}
             </h3>
 
-            {/* Étoiles de notation */}
-            <div className="flex items-center justify-center sm:justify-start space-x-1">
-              <div className="flex items-center">
+            {product.description && (
+              <p className="text-xs sm:text-sm text-gris-canon-de-fusil/60 line-clamp-2 leading-relaxed">
+                {product.description}
+              </p>
+            )}
+
+            <div className="flex items-center space-x-1.5">
+              <div className="flex items-center text-amber-500">
                 {[...Array(5)].map((_, i) => (
-                  <Star
+                  <svg
                     key={i}
                     className={`h-3.5 w-3.5 ${
                       i < Math.floor(product.rating)
-                        ? "text-amber-400 fill-amber-400"
+                        ? "fill-current"
                         : "text-gris-canon-de-fusil/20"
                     }`}
-                  />
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
                 ))}
               </div>
-              <span className="text-xs font-semibold text-gris-canon-de-fusil/50">
+              <span className="text-[11px] font-bold text-gris-canon-de-fusil/50">
                 {product.rating} ({product.reviews} avis)
               </span>
             </div>
-
-            <p className="text-xs text-gris-canon-de-fusil/60">
-              {product.category}
-            </p>
           </div>
 
-          {/* Prix et Bouton d'action */}
-          <div className="text-center sm:text-right shrink-0 flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-0 border-gris-canon-de-fusil/5">
-            <p className="text-xl font-extrabold text-bleu-saphir mb-0 sm:mb-2">
-              {formatPrice(product.price)}
-            </p>
-            <button className="flex items-center space-x-2 px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-colors shadow-xs cursor-pointer text-sm font-semibold">
-              <ShoppingCart className="h-4 w-4" />
-              <span>Ajouter</span>
+          <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-gris-canon-de-fusil/5 shrink-0">
+            <div className="sm:text-right">
+              <p className="text-xl sm:text-2xl font-black text-bleu-saphir">
+                {formatPrice(product.price)}
+              </p>
+            </div>
+            <button
+              disabled={isAlreadyInCart || !inStock}
+              onClick={() => addToCart(product as any, 1)}
+              className={`px-5 py-2.5 rounded-xl transition-colors shadow-xs text-xs font-bold whitespace-nowrap ${
+                !inStock
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : isAlreadyInCart
+                    ? "bg-green-100 text-green-600 border border-green-200 cursor-not-allowed"
+                    : "bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 cursor-pointer"
+              }`}
+            >
+              {isAlreadyInCart
+                ? "Déjà au panier"
+                : !inStock
+                  ? "Rupture de stock"
+                  : "Ajouter au panier"}
             </button>
           </div>
         </div>
@@ -217,13 +184,10 @@ const CategoryPage: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-blanc gap-4">
         <div className="relative flex items-center justify-center">
-          {/* Rail extérieur discret */}
           <div className="absolute h-12 w-12 rounded-full border-4 border-gris-canon-de-fusil/5"></div>
-          {/* Spinner actif */}
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-bleu-saphir"></div>
         </div>
 
-        {/* Texte avec pulsation douce */}
         <div className="text-center animate-pulse">
           <h5 className="text-sm font-bold text-gris-canon-de-fusil">
             Chargement de la catégorie...

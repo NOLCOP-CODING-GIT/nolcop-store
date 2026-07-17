@@ -9,29 +9,23 @@ import {
   Eye,
   Lock,
   ArrowRight,
+  X,
+  MapPin,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-
-interface Order {
-  id: string;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  total: number;
-  createdAt: string;
-  items: Array<{
-    product: {
-      id: string;
-      name: string;
-      image: string;
-      price: number;
-    };
-    quantity: number;
-  }>;
-}
+import type { Order } from "../types";
+import { supabase } from "../supabaseClient";
 
 const Orders: React.FC = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // État pour gérer le modal de suivi de commande
+  const [selectedOrderForTracking, setSelectedOrderForTracking] =
+    useState<Order | null>(null);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
       style: "currency",
@@ -40,78 +34,91 @@ const Orders: React.FC = () => {
     }).format(price);
   };
 
-  // Simuler des données pour la démo
+  // Données de démo conformes à ton interface Order stricte
   React.useEffect(() => {
-    setTimeout(() => {
-      setOrders([
-        {
-          id: "ORD-001",
-          status: "delivered",
-          total: 1299.99,
-          createdAt: "2024-01-15",
-          items: [
-            {
-              product: {
-                id: "1",
-                name: "MacBook Air M2",
-                image:
-                  "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300",
-                price: 1299.99,
-              },
-              quantity: 1,
+    let isMounted = true;
+
+    const fetchOrders = async () => {
+      if (!user?.id) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            order_items (
+              quantity,
+              price_at_time,
+              product:products (
+                id,
+                name,
+                description,
+                category:categories(name),
+                images,
+                price,
+                stock,
+                rating,
+                reviews,
+                created_at,
+                updated_at
+              )
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data && isMounted) {
+          const formattedOrders: Order[] = data.map((order: any) => ({
+            id: order.id,
+            userId: order.user_id,
+            status: order.status,
+            total: Number(order.total),
+            paymentMethod: order.payment_method,
+            shippingAddress: {
+              id: order.id,
+              street: order.shipping_address,
+              city: order.shipping_city,
+              country: "Bénin",
+              isDefault: false
             },
-          ],
-        },
-        {
-          id: "ORD-002",
-          status: "shipped",
-          total: 199.99,
-          createdAt: "2024-01-20",
-          items: [
-            {
+            createdAt: order.created_at,
+            updatedAt: order.updated_at,
+            items: order.order_items.map((item: any) => ({
               product: {
-                id: "2",
-                name: "iPhone 15 Pro",
-                image:
-                  "https://images.unsplash.com/photo-1592286115803-a1c3b552ee43?w=300",
-                price: 999.99,
+                id: item.product.id,
+                name: item.product.name,
+                description: item.product.description,
+                category: item.product.category?.name || "Général",
+                images: item.product.images,
+                price: Number(item.price_at_time),
+                stock: item.product.stock,
+                rating: item.product.rating,
+                reviews: item.product.reviews,
+                createdAt: item.product.created_at,
+                updatedAt: item.product.updated_at
               },
-              quantity: 1,
-            },
-            {
-              product: {
-                id: "3",
-                name: "AirPods Pro",
-                image:
-                  "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=300",
-                price: 249.99,
-              },
-              quantity: 1,
-            },
-          ],
-        },
-        {
-          id: "ORD-003",
-          status: "processing",
-          total: 89.99,
-          createdAt: "2024-01-22",
-          items: [
-            {
-              product: {
-                id: "4",
-                name: "Apple Watch Series 9",
-                image:
-                  "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=300",
-                price: 449.99,
-              },
-              quantity: 1,
-            },
-          ],
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+              quantity: item.quantity
+            }))
+          }));
+          
+          setOrders(formattedOrders);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des commandes:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   const getStatusInfo = (status: Order["status"]) => {
     switch (status) {
@@ -120,87 +127,66 @@ const Orders: React.FC = () => {
           label: "En attente",
           color: "text-yellow-600 bg-yellow-100",
           icon: Clock,
+          step: 1,
         };
       case "processing":
         return {
           label: "En traitement",
           color: "text-blue-600 bg-blue-100",
           icon: Package,
+          step: 2,
         };
       case "shipped":
         return {
           label: "Expédié",
           color: "text-indigo-600 bg-indigo-100",
           icon: Truck,
+          step: 3,
         };
       case "delivered":
         return {
           label: "Livré",
           color: "text-green-600 bg-green-100",
           icon: CheckCircle,
+          step: 4,
         };
       case "cancelled":
         return {
           label: "Annulé",
           color: "text-red-600 bg-red-100",
           icon: AlertCircle,
+          step: 0,
         };
       default:
         return {
           label: status,
           color: "text-gray-600 bg-gray-100",
           icon: Package,
+          step: 1,
         };
     }
   };
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Connectez-vous pour voir vos commandes
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Vous devez être connecté pour accéder à l'historique de vos
-            commandes
-          </p>
-          <Link
-            to="/login"
-            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Se connecter
-          </Link>
-        </div>
-      </div>
-    );
-  }
-  if (!user) {
-    return (
       <div className="min-h-screen flex items-center justify-center bg-blanc px-4">
         <div className="text-center max-w-md w-full bg-blanc border border-gris-canon-de-fusil/5 p-8 rounded-2xl shadow-xs">
-          {/* Icône de cadenas ou d'alerte stylisée avec un fond doux */}
           <div className="h-16 w-16 bg-bleu-saphir/5 text-bleu-saphir rounded-full flex items-center justify-center mx-auto mb-6">
             <Lock className="h-8 w-8" />
           </div>
-
           <h2 className="text-2xl font-black text-gris-canon-de-fusil mb-3 tracking-tight">
             Espace sécurisé
           </h2>
-
           <p className="text-sm text-gris-canon-de-fusil/60 leading-relaxed mb-8">
-            Vous devez être connecté à votre compte Nolcop Coding pour accéder à
-            l'historique et au suivi en temps réel de vos commandes.
+            Vous devez être connecté à votre compte pour accéder à l'historique
+            et au suivi en temps réel de vos commandes.
           </p>
-
           <Link
             to="/login"
             className="inline-flex items-center justify-center w-full px-6 py-3.5 bg-bleu-saphir hover:bg-bleu-saphir/90 text-blanc text-sm font-bold rounded-xl transition-all duration-200 shadow-xs cursor-pointer"
           >
             Se connecter à mon compte
           </Link>
-
           <p className="text-xs text-gris-canon-de-fusil/40 mt-4">
             Pas encore de compte ?{" "}
             <Link
@@ -214,17 +200,14 @@ const Orders: React.FC = () => {
       </div>
     );
   }
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-blanc gap-4">
         <div className="relative flex items-center justify-center">
-          {/* Rail extérieur discret */}
           <div className="absolute h-12 w-12 rounded-full border-4 border-gris-canon-de-fusil/5"></div>
-          {/* Spinner actif */}
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-bleu-saphir"></div>
         </div>
-
-        {/* Message de chargement avec pulsation douce */}
         <div className="text-center animate-pulse">
           <h5 className="text-sm font-bold text-gris-canon-de-fusil">
             Chargement de vos commandes...
@@ -237,9 +220,17 @@ const Orders: React.FC = () => {
     );
   }
 
+  // Calcul des étapes pour le modal de suivi
+  const trackingSteps = [
+    { label: "Validée", desc: "Commande reçue" },
+    { label: "Préparation", desc: "Emballage en cours" },
+    { label: "Expédiée", desc: "En route vers chez vous" },
+    { label: "Livrée", desc: "Remise en main propre" },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc">
-      {/* Page Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-gris-canon-de-fusil/5 mb-8 gap-4">
         <div className="flex items-center">
           <div className="h-12 w-12 bg-bleu-saphir/5 text-bleu-saphir rounded-xl flex items-center justify-center mr-4 shrink-0">
@@ -281,7 +272,7 @@ const Orders: React.FC = () => {
           </Link>
         </div>
       ) : (
-        /* Orders List */
+        /* List */
         <div className="space-y-6">
           {orders.map((order) => {
             const statusInfo = getStatusInfo(order.status);
@@ -297,7 +288,7 @@ const Orders: React.FC = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gris-canon-de-fusil/5 gap-3">
                     <div>
                       <h3 className="text-base font-extrabold text-gris-canon-de-fusil">
-                        Référence #{order.id.slice(0, 8).toUpperCase()}
+                        Référence {order.id.slice(0, 8).toUpperCase()}
                       </h3>
                       <p className="text-xs text-gris-canon-de-fusil/40 mt-0.5">
                         Achat effectué le{" "}
@@ -315,13 +306,16 @@ const Orders: React.FC = () => {
                         <StatusIcon className="h-3.5 w-3.5 mr-1.5 shrink-0" />
                         {statusInfo.label}
                       </span>
-                      <button className="p-2 text-gris-canon-de-fusil/40 hover:text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer">
+                      <button
+                        onClick={() => setSelectedOrderForTracking(order)}
+                        className="p-2 text-gris-canon-de-fusil/40 hover:text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer"
+                      >
                         <Eye className="h-5 w-5" />
                       </button>
                     </div>
                   </div>
 
-                  {/* Order Items */}
+                  {/* Items */}
                   <div className="py-4 my-2 space-y-4">
                     {order.items.map((item, index) => (
                       <div
@@ -329,7 +323,10 @@ const Orders: React.FC = () => {
                         className="flex items-center space-x-4"
                       >
                         <img
-                          src={item.product.image}
+                          src={
+                            item.product.images[0] ||
+                            "/categories/electronics.jfif"
+                          }
                           alt={item.product.name}
                           className="w-14 h-14 object-cover rounded-xl border border-gris-canon-de-fusil/5 shrink-0 bg-gris-canon-de-fusil/5"
                         />
@@ -338,8 +335,7 @@ const Orders: React.FC = () => {
                             {item.product.name}
                           </h4>
                           <p className="text-xs text-gris-canon-de-fusil/50 mt-0.5">
-                            Quantité: {item.quantity} ×{" "}
-                            {formatPrice(item.product.price)}
+                            Quantité: {item.quantity}
                           </p>
                         </div>
                         <div className="text-right shrink-0">
@@ -351,7 +347,7 @@ const Orders: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Order Footer */}
+                  {/* Footer */}
                   <div className="border-t border-gris-canon-de-fusil/5 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="text-xs font-semibold text-gris-canon-de-fusil/50 order-2 sm:order-1">
                       {order.items.reduce(
@@ -364,6 +360,7 @@ const Orders: React.FC = () => {
                       ) === 1
                         ? "article"
                         : "articles"}
+                      {` • Livré à ${order.shippingAddress.city} via ${order.paymentMethod}`}
                     </div>
                     <div className="text-right order-1 sm:order-2">
                       <span className="text-xs text-gris-canon-de-fusil/40 mr-2">
@@ -375,14 +372,20 @@ const Orders: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Actions Buttons */}
+                  {/* Buttons Actifs */}
                   <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <button className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/70 hover:bg-gris-canon-de-fusil/5 font-bold text-sm rounded-xl transition-colors cursor-pointer text-center">
+                    <button
+                      onClick={() => setSelectedOrderForTracking(order)}
+                      className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/70 hover:bg-gris-canon-de-fusil/5 font-bold text-sm rounded-xl transition-colors cursor-pointer text-center"
+                    >
                       Détails du suivi
                     </button>
-                    <button className="w-full px-4 py-2.5 bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 font-bold text-sm rounded-xl transition-colors cursor-pointer text-center shadow-xs">
+                    <Link
+                      to="/contact"
+                      className="w-full px-4 py-2.5 bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 font-bold text-sm rounded-xl transition-colors cursor-pointer text-center shadow-xs block"
+                    >
                       Besoin d'aide ?
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -390,6 +393,135 @@ const Orders: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* MODAL DE SUIVI DE COMMANDE */}
+      {selectedOrderForTracking &&
+        (() => {
+          const currentStep = getStatusInfo(
+            selectedOrderForTracking.status,
+          ).step;
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
+              <div className="bg-blanc max-w-lg w-full rounded-2xl shadow-xl border border-gris-canon-de-fusil/5 overflow-hidden transform transition-all duration-300">
+                {/* Header Modal */}
+                <div className="p-6 border-b border-gris-canon-de-fusil/5 flex items-center justify-between bg-gris-canon-de-fusil/2">
+                  <div>
+                    <h3 className="text-lg font-black text-gris-canon-de-fusil tracking-tight">
+                      Suivi de Commande
+                    </h3>
+                    <p className="text-xs text-gris-canon-de-fusil/50 mt-0.5">
+                      Réf : #{selectedOrderForTracking.id}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedOrderForTracking(null)}
+                    className="p-2 hover:bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil/50 hover:text-gris-canon-de-fusil rounded-xl transition-colors cursor-pointer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Contenu Modal */}
+                <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                  {/* Infos rapides */}
+                  <div className="grid grid-cols-2 gap-4 bg-gris-canon-de-fusil/5 p-4 rounded-xl text-xs">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-bleu-saphir shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-gris-canon-de-fusil">
+                          Destination
+                        </p>
+                        <p className="text-gris-canon-de-fusil/60 mt-0.5">
+                          {selectedOrderForTracking.shippingAddress.street},{" "}
+                          {selectedOrderForTracking.shippingAddress.city}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Calendar className="h-4 w-4 text-bleu-saphir shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-gris-canon-de-fusil">
+                          Date d'achat
+                        </p>
+                        <p className="text-gris-canon-de-fusil/60 mt-0.5">
+                          {new Date(
+                            selectedOrderForTracking.createdAt,
+                          ).toLocaleDateString("fr-FR", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arbre d'étapes (Stepper) */}
+                  {selectedOrderForTracking.status === "cancelled" ? (
+                    <div className="flex items-center gap-3 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">
+                      <AlertCircle className="h-5 w-5 shrink-0" />
+                      <div className="text-xs font-bold">
+                        Cette commande a été annulée. Veuillez contacter notre
+                        service client si nécessaire.
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative pl-6 space-y-6 before:absolute before:bottom-2 before:top-2 before:left-[11px] before:w-0.5 before:bg-gris-canon-de-fusil/10">
+                      {trackingSteps.map((step, idx) => {
+                        const stepNum = idx + 1;
+                        const isCompleted = currentStep >= stepNum;
+                        const isCurrent = currentStep === stepNum;
+
+                        return (
+                          <div
+                            key={idx}
+                            className="relative flex items-start gap-4 text-xs"
+                          >
+                            {/* Bulle d'indicateur d'étape */}
+                            <div
+                              className={`absolute -left-[21px] h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-300 bg-blanc z-10 ${
+                                isCompleted
+                                  ? "border-bleu-saphir bg-bleu-saphir text-blanc"
+                                  : "border-gris-canon-de-fusil/20"
+                              }`}
+                            >
+                              {isCompleted && (
+                                <div className="h-1.5 w-1.5 bg-blanc rounded-full" />
+                              )}
+                            </div>
+
+                            {/* Textes d'étapes */}
+                            <div className="flex-1">
+                              <h4
+                                className={`font-bold ${isCurrent ? "text-bleu-saphir text-sm" : isCompleted ? "text-gris-canon-de-fusil" : "text-gris-canon-de-fusil/40"}`}
+                              >
+                                {step.label} {isCurrent && "— En cours"}
+                              </h4>
+                              <p className="text-gris-canon-de-fusil/50 mt-0.5">
+                                {step.desc}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Modal */}
+                <div className="p-4 border-t border-gris-canon-de-fusil/5 bg-gris-canon-de-fusil/2 flex justify-end">
+                  <button
+                    onClick={() => setSelectedOrderForTracking(null)}
+                    className="px-5 py-2 bg-gris-canon-de-fusil text-blanc text-xs font-bold rounded-xl hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 };

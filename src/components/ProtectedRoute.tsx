@@ -1,15 +1,13 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
   requireAdmin?: boolean;
   redirectTo?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
   requireAdmin = false,
   redirectTo = "/login",
 }) => {
@@ -19,10 +17,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Afficher le chargement pendant la vérification
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-blanc">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Vérification de l'authentification...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-bleu-saphir mx-auto mb-4"></div>
+          <p className="text-gris-canon-de-fusil/60 text-xs font-bold">
+            Vérification de l'authentification...
+          </p>
         </div>
       </div>
     );
@@ -72,7 +72,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  return <>{children}</>;
+  // Remplacement crucial : Utilisation de <Outlet /> à la place de {children}
+  // pour que React Router sache où injecter tes composants Profile, Orders ou Admin
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

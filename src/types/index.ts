@@ -4,18 +4,22 @@ export interface Product {
   description: string;
   price: number;
   category: string;
-  image: string;
-  images?: string[];
+  images: string[]; // Recommandé : toujours avoir au moins une image dans le tableau
   stock: number;
   rating: number;
   reviews: number;
   featured?: boolean;
   discount?: number;
-  colors?: string[];
-  sizes?: string[];
-  specifications?: Record<string, string>;
+  specifications?: ProductSpecifications; // Typage plus précis que Record<string, string>
   createdAt: string;
   updatedAt: string;
+}
+
+// Un sous-type dédié pour tes specs, pour garder de l'autocomplétion sympa !
+export interface ProductSpecifications {
+  colors?: string[];
+  sizes?: string[];
+  [key: string]: any; // Permet d'ajouter d'autres specs (ex: poids, matière) à la volée
 }
 
 export interface Category {
@@ -41,6 +45,8 @@ export interface User {
   role: "user" | "admin";
   avatar?: string;
   addresses?: Address[];
+  phone?: string;
+  code_promo?: string;
   createdAt: string;
 }
 
@@ -48,8 +54,6 @@ export interface Address {
   id: string;
   street: string;
   city: string;
-  state: string;
-  zipCode: string;
   country: string;
   isDefault: boolean;
 }
@@ -80,14 +84,4 @@ export interface WishlistItem {
   userId: string;
   productId: string;
   addedAt: string;
-}
-
-export interface FilterState {
-  categories: string[];
-  priceRange: [number, number];
-  colors: string[];
-  sizes: string[];
-  rating: number;
-  sortBy: "price-asc" | "price-desc" | "rating" | "newest" | "name";
-  search: string;
 }

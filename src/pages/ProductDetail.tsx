@@ -13,11 +13,13 @@ import {
 } from "lucide-react";
 import type { Product } from "../types";
 import { useCart } from "../hooks/useCart";
+import { supabase } from "../supabaseClient";
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<number>(0); // Gère le carrousel d'images
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
@@ -27,57 +29,66 @@ const ProductDetail: React.FC = () => {
 
   const { addToCart } = useCart();
 
+  // Récupération sécurisée des couleurs et tailles depuis le JSONB de spécifications
+  const productColors =
+    product?.specifications?.colors || product?.specifications?.Colors;
+  const productSizes =
+    product?.specifications?.sizes || product?.specifications?.Sizes;
+
   useEffect(() => {
     let isMounted = true;
 
-    // Mock data - In real app, this would come from your database
-    const mockProducts: Product[] = [
-      {
-        id: "1",
-        name: "MacBook Pro 14",
-        description:
-          "Ordinateur portable puissant avec puce M3 Pro, écran Liquid Retina XDR, 16 Go RAM, 512 Go SSD",
-        price: 1999.99,
-        category: "Électronique",
-        image:
-          "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800",
-        images: [
-          "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800",
-          "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=600",
-          "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=600&fit=crop",
-        ],
-        stock: 15,
-        rating: 4.8,
-        reviews: 124,
-        featured: true,
-        colors: ["Space Gray", "Silver"],
-        specifications: {
-          Écran: '14.2" Liquid Retina XDR',
-          Processeur: "Apple M3 Pro",
-          Mémoire: "16 Go RAM unifiée",
-          Stockage: "512 Go SSD",
-          Autonomie: "Jusqu'à 18 heures",
-          Poids: "1.6 kg",
-        },
-        createdAt: "2024-01-15T10:00:00Z",
-        updatedAt: "2024-01-15T10:00:00Z",
-      },
-    ];
+    const fetchProduct = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*, category:categories(name)')
+          .eq('id', id)
+          .single();
 
-    // Simulate async operation
-    const foundProduct = mockProducts.find((p) => p.id === id);
+        if (error) throw error;
 
-    // Use setTimeout to simulate async behavior and prevent cascading renders
-    const timer = setTimeout(() => {
-      if (isMounted) {
-        setProduct(foundProduct || null);
-        setLoading(false);
+        if (data && isMounted) {
+          const formattedProduct: Product = {
+            id: data.id,
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            discount: data.discount,
+            category: data.category?.name || "Général",
+            images: data.images,
+            stock: data.stock,
+            rating: data.rating,
+            reviews: data.reviews,
+            featured: data.featured,
+            specifications: data.specifications,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+          };
+          
+          setProduct(formattedProduct);
+          
+          // Sélectionner par défaut la première couleur/taille si disponible
+          const colors =
+            formattedProduct.specifications?.colors ||
+            formattedProduct.specifications?.Colors;
+          const sizes =
+            formattedProduct.specifications?.sizes ||
+            formattedProduct.specifications?.Sizes;
+          if (colors && colors.length > 0) setSelectedColor(colors[0]);
+          if (sizes && sizes.length > 0) setSelectedSize(sizes[0]);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération du produit:", error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    }, 0);
+    };
+
+    fetchProduct();
 
     return () => {
       isMounted = false;
-      clearTimeout(timer);
     };
   }, [id]);
 
@@ -109,13 +120,9 @@ const ProductDetail: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-blanc gap-4">
         <div className="relative flex items-center justify-center">
-          {/* Rail extérieur discret */}
           <div className="absolute h-12 w-12 rounded-full border-4 border-gris-canon-de-fusil/5"></div>
-          {/* Spinner actif */}
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-bleu-saphir"></div>
         </div>
-
-        {/* Texte avec pulsation douce */}
         <div className="text-center animate-pulse">
           <h5 className="text-sm font-bold text-gris-canon-de-fusil">
             Chargement du produit...
@@ -156,7 +163,6 @@ const ProductDetail: React.FC = () => {
       <div className="bg-blanc border-b border-gris-canon-de-fusil/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center space-x-2 text-xs sm:text-sm text-gris-canon-de-fusil/50 font-medium">
-            {/* Accueil */}
             <Link
               to="/"
               className="flex items-center hover:text-bleu-saphir transition-colors duration-200"
@@ -164,20 +170,14 @@ const ProductDetail: React.FC = () => {
               <Home className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Accueil</span>
             </Link>
-
             <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-
-            {/* Boutique / Produits */}
             <Link
               to="/products"
               className="hover:text-bleu-saphir transition-colors duration-200"
             >
               Produits
             </Link>
-
             <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-
-            {/* Catégorie dynamique du produit */}
             {product.category && (
               <>
                 <Link
@@ -189,8 +189,6 @@ const ProductDetail: React.FC = () => {
                 <ChevronRight className="h-3.5 w-3.5 shrink-0" />
               </>
             )}
-
-            {/* Nom du produit actif */}
             <span className="text-gris-canon-de-fusil font-bold truncate max-w-[150px] sm:max-w-xs">
               {product.name}
             </span>
@@ -203,10 +201,11 @@ const ProductDetail: React.FC = () => {
           {/* Images produit */}
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-2xl bg-gris-canon-de-fusil/5 border border-gris-canon-de-fusil/5">
+              {/* Image sélectionnée dynamique */}
               <img
-                src={product.image}
+                src={product.images[selectedImage] || "/images/placeholder.png"}
                 alt={product.name}
-                className="w-full h-96 object-cover"
+                className="w-full h-96 object-cover transition-all duration-300"
               />
 
               {/* Badges */}
@@ -223,20 +222,19 @@ const ProductDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Miniatures */}
+              {/* Miniatures interactives */}
               {product.images && product.images.length > 1 && (
                 <div className="absolute bottom-4 left-4 flex gap-2">
                   {product.images.slice(0, 4).map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => {
-                        /* TODO: Implementer changement d'image */
-                      }}
+                      onClick={() => setSelectedImage(index)}
                       className={`w-3 h-3 rounded-full border-2 transition-colors ${
-                        index === 0
+                        index === selectedImage
                           ? "bg-blanc border-bleu-saphir"
                           : "bg-blanc/50 border-gris-canon-de-fusil/20"
                       }`}
+                      aria-label={`Afficher l'image ${index + 1}`}
                     />
                   ))}
                 </div>
@@ -249,38 +247,42 @@ const ProductDetail: React.FC = () => {
                 Options
               </h2>
 
-              {/* Couleurs */}
-              {product.colors && product.colors.length > 0 && (
+              {/* Color Options */}
+              {productColors && productColors.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-xs font-bold text-gris-canon-de-fusil/50 uppercase tracking-wider mb-3">
                     Couleur
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {product.colors.map((color) => (
+                    {productColors.map((color: string) => (
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
-                        className={`w-8 h-8 rounded-xl border-2 transition-colors ${
+                        className={`px-4 py-2 text-xs font-bold rounded-xl border-2 transition-colors flex items-center gap-2 ${
                           selectedColor === color
-                            ? "border-bleu-saphir bg-bleu-saphir/5"
-                            : "border-gris-canon-de-fusil/10 hover:border-bleu-saphir/40"
+                            ? "border-bleu-saphir bg-bleu-saphir text-blanc"
+                            : "border-gris-canon-de-fusil/10 hover:border-bleu-saphir/40 text-gris-canon-de-fusil/70"
                         }`}
-                        style={{ backgroundColor: color }}
-                        title={color}
-                      />
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full border border-current"
+                          style={{ backgroundColor: color.toLowerCase() }}
+                        />
+                        {color}
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Tailles */}
-              {product.sizes && product.sizes.length > 0 && (
+              {/* Tailles extraites de specifications */}
+              {productSizes && productSizes.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-xs font-bold text-gris-canon-de-fusil/50 uppercase tracking-wider mb-3">
                     Taille
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((size) => (
+                    {productSizes.map((size: string) => (
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
@@ -352,11 +354,10 @@ const ProductDetail: React.FC = () => {
 
           {/* Informations produit */}
           <div className="space-y-6">
-            {/* Prix et rating */}
             <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-6 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-black text-gris-canon-de-fusil mb-2 leading-tight">
+                  <h1 className="text-left text-2xl sm:text-3xl font-black text-gris-canon-de-fusil mb-4 leading-tight">
                     {product.name}
                   </h1>
                   <div className="flex items-center gap-2 mb-2">
@@ -369,44 +370,22 @@ const ProductDetail: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-left sm:text-right shrink-0">
+                <div className="text-center sm:text-right shrink-0">
                   {product.discount && (
                     <span className="text-sm text-gris-canon-de-fusil/40 line-through mr-2 block sm:inline font-semibold">
-                      {product.price.toFixed(2)} €
+                      {product.price.toFixed(2)} Fcfa
                     </span>
                   )}
                   <span className="text-2xl sm:text-3xl font-black text-bleu-saphir">
-                    {(product.discount || product.price).toFixed(2)} €
+                    {(product.discount || product.price).toFixed(2)} Fcfa
                   </span>
                   {product.discount && (
                     <span className="ml-2 bg-rose-50 text-rose-700 border border-rose-100 px-2 py-0.5 text-xs font-bold rounded block sm:inline-block mt-1 sm:mt-0">
                       Économisez {(product.price - product.discount).toFixed(2)}{" "}
-                      €
+                      Fcfa
                     </span>
                   )}
                 </div>
-              </div>
-
-              {/* Stock */}
-              <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-gris-canon-de-fusil/5">
-                <span className="text-gris-canon-de-fusil/50">
-                  Stock: {product.stock} articles
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wide ${
-                    product.stock > 10
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                      : product.stock > 0
-                        ? "bg-amber-50 text-amber-700 border border-amber-100"
-                        : "bg-rose-50 text-rose-700 border border-rose-100"
-                  }`}
-                >
-                  {product.stock > 10
-                    ? "Disponible"
-                    : product.stock > 0
-                      ? "Stock limité"
-                      : "Rupture de stock"}
-                </span>
               </div>
             </div>
 
@@ -455,7 +434,6 @@ const ProductDetail: React.FC = () => {
                       {product.description}
                     </p>
 
-                    {/* Features */}
                     <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gris-canon-de-fusil/5">
                       <div className="flex items-center space-x-3">
                         <Truck className="h-5 w-5 text-bleu-saphir" />
@@ -525,8 +503,15 @@ const ProductDetail: React.FC = () => {
                       Spécifications techniques
                     </h3>
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {Object.entries(product.specifications).map(
-                        ([key, value]) => (
+                      {Object.entries(product.specifications)
+                        // Filtrer pour éviter d'afficher les tableaux 'colors' ou 'sizes' sous forme brute de texte
+                        .filter(
+                          ([key]) =>
+                            !["colors", "Colors", "sizes", "Sizes"].includes(
+                              key,
+                            ),
+                        )
+                        .map(([key, value]) => (
                           <div
                             key={key}
                             className="border-b border-gris-canon-de-fusil/5 pb-2"
@@ -538,8 +523,7 @@ const ProductDetail: React.FC = () => {
                               {value as string}
                             </dd>
                           </div>
-                        ),
-                      )}
+                        ))}
                     </dl>
                   </div>
                 )}

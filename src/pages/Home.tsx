@@ -1,138 +1,63 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, RefreshCw, Package } from "lucide-react";
+import { ArrowRight, Shield, RefreshCw, Package, Headphones, Loader2 } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import type { Product } from "../types";
 import Lottie from "lottie-react";
 import animationBg from "../../public/lottie/welcome.json";
+import { supabase } from "../supabaseClient";
 
 const Home: React.FC = () => {
-  const mockProducts: Product[] = [
-    {
-      id: "1",
-      name: 'MacBook Pro 14"',
-      description: "Ordinateur portable puissant avec puce M3 Pro",
-      price: 574846,
-      category: "Électronique",
-      image:
-        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500",
-      stock: 15,
-      rating: 4.8,
-      reviews: 124,
-      featured: true,
-      colors: ["Space Gray", "Silver"],
-      createdAt: "2024-01-15T10:00:00Z",
-      updatedAt: "2024-01-15T10:00:00Z",
-    },
-    {
-      id: "2",
-      name: "Nike Air Max 270",
-      description: "Chaussures de sport confortables avec amorti maximal",
-      price: 150.0,
-      discount: 120.0,
-      category: "Mode",
-      image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500",
-      stock: 8,
-      rating: 4.6,
-      reviews: 89,
-      colors: ["Noir", "Blanc", "Bleu"],
-      sizes: ["38", "39", "40", "41", "42", "43", "44", "45"],
-      createdAt: "2024-01-10T10:00:00Z",
-      updatedAt: "2024-01-10T10:00:00Z",
-    },
-    {
-      id: "3",
-      name: "Sony WH-1000XM5",
-      description:
-        "Casque audio sans fil avec réduction de bruit exceptionnelle",
-      price: 399.99,
-      category: "Électronique",
-      image:
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500",
-      stock: 0,
-      rating: 4.9,
-      reviews: 256,
-      featured: true,
-      colors: ["Noir", "Argent"],
-      createdAt: "2024-01-20T10:00:00Z",
-      updatedAt: "2024-01-20T10:00:00Z",
-    },
-    {
-      id: "4",
-      name: "Adidas Ultraboost 22",
-      description: "Chaussures de course avec technologie Boost",
-      price: 180.0,
-      category: "Sports",
-      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500",
-      stock: 25,
-      rating: 4.7,
-      reviews: 167,
-      colors: ["Core Black", "Cloud White", "Solar Red"],
-      sizes: ["38", "39", "40", "41", "42", "43", "44", "45"],
-      createdAt: "2024-01-25T10:00:00Z",
-      updatedAt: "2024-01-25T10:00:00Z",
-    },
-    {
-      id: "5",
-      name: "Kindle Paperwhite",
-      description: "Liseuse étanche avec écran 300 ppi",
-      price: 129.99,
-      discount: 99.99,
-      category: "Livres",
-      image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500",
-      stock: 30,
-      rating: 4.5,
-      reviews: 203,
-      featured: true,
-      createdAt: "2024-01-18T10:00:00Z",
-      updatedAt: "2024-01-18T10:00:00Z",
-    },
-    {
-      id: "6",
-      name: "Dyson V15 Detect",
-      description: "Aspirateur sans fil avec laser et détecteur de poussière",
-      price: 699.99,
-      category: "Maison",
-      image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500",
-      stock: 12,
-      rating: 4.8,
-      reviews: 145,
-      colors: ["Gold", "Nickel"],
-      createdAt: "2024-01-22T10:00:00Z",
-      updatedAt: "2024-01-22T10:00:00Z",
-    },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const featuredProducts = mockProducts.filter((p) => p.featured);
-  const newProducts = mockProducts.slice(0, 6);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('*, category:categories(name)')
+          .order('created_at', { ascending: false });
 
-  const categories = [
-    {
-      name: "Électronique",
-      slug: "electronics",
-      image: "/categories/electronics.jfif",
-    },
-    {
-      name: "Mode",
-      slug: "fashion",
-      image:
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500",
-    },
-    {
-      name: "Maison",
-      slug: "home",
-      image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500",
-    },
-    {
-      name: "Sports",
-      slug: "sports",
-      image:
-        "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500",
-    },
-  ];
+        if (productsData) {
+          const formattedProducts = productsData.map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            discount: p.discount,
+            category: p.category?.name || "Général",
+            images: p.images,
+            stock: p.stock,
+            rating: p.rating,
+            reviews: p.reviews,
+            featured: p.featured,
+            specifications: p.specifications,
+            createdAt: p.created_at,
+            updatedAt: p.updated_at,
+          }));
+          setProducts(formattedProducts as Product[]);
+        }
+
+        const { data: categoriesData } = await supabase.from('categories').select('*');
+        if (categoriesData) {
+          setCategories(categoriesData);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const featuredProducts = products.filter((p) => p.featured).slice(0, 3);
+  const newProducts = products.slice(0, 4);
+
 
   const features = [
     {
@@ -150,7 +75,20 @@ const Home: React.FC = () => {
       title: "Emballage cadeau",
       description: "Option disponible",
     },
+    {
+      icon: Headphones, // Ajout pour équilibrer la grille de 4
+      title: "Assistance Instantanée",
+      description: "Toujours à votre écoute",
+    },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-blanc flex items-center justify-center">
+        <Loader2 className="h-12 w-12 text-bleu-saphir animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-blanc">
@@ -181,8 +119,8 @@ const Home: React.FC = () => {
                 œuvre pour vous offrir des produits de qualité au meilleur prix
                 du marché. Faites votre choix en quelques clics, profitez de la
                 flexibilité du paiement à la livraison et achetez en toute
-                sérénité grâce à notre
-                assistance instantanée toujours à votre écoute.
+                sérénité grâce à notre assistance instantanée toujours à votre
+                écoute.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link

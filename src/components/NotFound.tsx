@@ -18,7 +18,7 @@ const NotFound: React.FC = () => {
             404
           </h1>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="bg-linear-to-r from-bleu-clair via-orange-rougi to-bleu-saphir bg-clip-text text-transparent text-5xl md:text-6xl font-black">
+            <span className="animate-pulse bg-linear-to-r from-bleu-clair via-orange-rougi to-bleu-saphir bg-clip-text text-transparent text-5xl md:text-6xl font-black">
               Oups !
             </span>
           </div>

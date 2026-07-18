@@ -59,6 +59,7 @@ const ProductDetail: React.FC = () => {
             stock, 
             rating, 
             reviews, 
+            reviews_list,
             featured, 
             specifications, 
             created_at, 
@@ -72,6 +73,23 @@ const ProductDetail: React.FC = () => {
         if (error) throw error;
 
         if (data && isMounted) {
+          let parsedImages: string[] = [];
+          try {
+            if (Array.isArray(data.images)) {
+              parsedImages = data.images;
+            } else if (typeof data.images === "string") {
+              if (data.images.startsWith("[")) {
+                parsedImages = JSON.parse(data.images);
+              } else {
+                parsedImages = data.images
+                  .split(",")
+                  .map((img: string) => img.trim());
+              }
+            }
+          } catch (e) {
+            console.error("Erreur parsing images:", e);
+          }
+
           const formattedProduct = {
             id: data.id,
             name: data.name,
@@ -81,10 +99,11 @@ const ProductDetail: React.FC = () => {
             category: Array.isArray(data.category)
               ? (data.category[0] as any)?.name || "Général"
               : (data.category as any)?.name || "Général",
-            images: data.images,
+            images: parsedImages,
             stock: data.stock,
             rating: data.rating,
             reviews: data.reviews,
+            reviews_list: data.reviews_list,
             featured: data.featured,
             specifications: data.specifications,
             createdAt: data.created_at,
@@ -224,7 +243,11 @@ const ProductDetail: React.FC = () => {
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-2xl bg-gris-canon-de-fusil/5 border border-gris-canon-de-fusil/5">
               <img
-                src={product.images[selectedImage] || "/images/placeholder.png"}
+                src={
+                  product.images && product.images[selectedImage]
+                    ? product.images[selectedImage]
+                    : "/images/placeholder.png"
+                }
                 alt={product.name}
                 className="w-full h-96 object-cover transition-all duration-300"
               />
@@ -244,7 +267,7 @@ const ProductDetail: React.FC = () => {
 
               {product.images && product.images.length > 1 && (
                 <div className="absolute bottom-4 left-4 flex gap-2">
-                  {product.images.slice(0, 4).map((index: number) => (
+                  {product.images.slice(0, 4).map((_:any, index:number) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}

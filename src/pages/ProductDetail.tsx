@@ -267,18 +267,20 @@ const ProductDetail: React.FC = () => {
 
               {product.images && product.images.length > 1 && (
                 <div className="absolute bottom-4 left-4 flex gap-2">
-                  {product.images.slice(0, 4).map((_:any, index:number) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={`w-3 h-3 rounded-full border-2 transition-colors ${
-                        index === selectedImage
-                          ? "bg-blanc border-bleu-saphir"
-                          : "bg-blanc/50 border-gris-canon-de-fusil/20"
-                      }`}
-                      aria-label={`Afficher l'image ${index + 1}`}
-                    />
-                  ))}
+                  {product.images
+                    .slice(0, 4)
+                    .map((_: string, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImage(index)}
+                        className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                          index === selectedImage
+                            ? "bg-blanc border-bleu-saphir"
+                            : "bg-blanc/50 border-gris-canon-de-fusil/20"
+                        }`}
+                        aria-label={`Afficher l'image ${index + 1}`}
+                      />
+                    ))}
                 </div>
               )}
             </div>

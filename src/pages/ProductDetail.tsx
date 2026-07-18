@@ -28,6 +28,30 @@ const ProductDetail: React.FC = () => {
 
   const { addToCart } = useCart();
 
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || !product?.images || product.images.length <= 1)
+      return;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchStartX - touchEndX;
+    const swipeThreshold = 55;
+
+    if (diffX > swipeThreshold) {
+      setSelectedImage((prev) => (prev + 1) % product.images.length);
+    } else if (diffX < -swipeThreshold) {
+      setSelectedImage(
+        (prev) => (prev - 1 + product.images.length) % product.images.length,
+      );
+    }
+    setTouchStartX(null);
+  };
+
   const productColors =
     product?.specifications?.colors || product?.specifications?.Colors;
   const productSizes =
@@ -239,7 +263,11 @@ const ProductDetail: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           <div className="space-y-4">
-            <div className="relative overflow-hidden rounded-2xl bg-gris-canon-de-fusil/5 border border-gris-canon-de-fusil/5">
+            <div
+              className="relative overflow-hidden rounded-2xl touch-pan-y h-auto w-full flex items-center justify-center"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               <img
                 src={
                   product.images && product.images[selectedImage]
@@ -247,7 +275,7 @@ const ProductDetail: React.FC = () => {
                     : "/images/placeholder.png"
                 }
                 alt={product.name}
-                className="w-full h-96 object-cover transition-all duration-300"
+                className="w-full h-auto max-h-[450px] object-contain transition-all duration-300 pointer-events-none select-none"
               />
 
               <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -264,17 +292,17 @@ const ProductDetail: React.FC = () => {
               </div>
 
               {product.images && product.images.length > 1 && (
-                <div className="absolute bottom-4 left-4 flex gap-2">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-blanc/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-xs">
                   {product.images
                     .slice(0, 4)
                     .map((_: string, index: number) => (
                       <button
                         key={index}
                         onClick={() => setSelectedImage(index)}
-                        className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                        className={`w-2 h-2 rounded-full transition-all ${
                           index === selectedImage
-                            ? "bg-blanc border-bleu-saphir"
-                            : "bg-blanc/50 border-gris-canon-de-fusil/20"
+                            ? "bg-bleu-saphir w-4"
+                            : "bg-gris-canon-de-fusil/30"
                         }`}
                         aria-label={`Afficher l'image ${index + 1}`}
                       />

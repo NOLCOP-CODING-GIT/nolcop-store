@@ -11,15 +11,14 @@ import {
   ChevronRight,
   Home,
 } from "lucide-react";
-import type { Product } from "../types";
 import { useCart } from "../hooks/useCart";
 import { supabase } from "../supabaseClient";
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<number>(0); // Gère le carrousel d'images
+  const [selectedImage, setSelectedImage] = useState<number>(0);
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
@@ -29,11 +28,18 @@ const ProductDetail: React.FC = () => {
 
   const { addToCart } = useCart();
 
-  // Récupération sécurisée des couleurs et tailles depuis le JSONB de spécifications
   const productColors =
     product?.specifications?.colors || product?.specifications?.Colors;
   const productSizes =
     product?.specifications?.sizes || product?.specifications?.Sizes;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("fr-BJ", {
+      style: "currency",
+      currency: "XOF",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -41,21 +47,40 @@ const ProductDetail: React.FC = () => {
     const fetchProduct = async () => {
       try {
         const { data, error } = await supabase
-          .from('products')
-          .select('*, category:categories(name)')
-          .eq('id', id)
+          .from("products")
+          .select(
+            `
+            id, 
+            name, 
+            description, 
+            price, 
+            discount, 
+            images, 
+            stock, 
+            rating, 
+            reviews, 
+            featured, 
+            specifications, 
+            created_at, 
+            updated_at,
+            category:categories(name)
+          `,
+          )
+          .eq("id", id)
           .single();
 
         if (error) throw error;
 
         if (data && isMounted) {
-          const formattedProduct: Product = {
+          const formattedProduct = {
             id: data.id,
             name: data.name,
             description: data.description,
             price: data.price,
             discount: data.discount,
-            category: data.category?.name || "Général",
+            category: Array.isArray(data.category)
+              ? (data.category[0] as any)?.name || "Général"
+              : (data.category as any)?.name || "Général",
             images: data.images,
             stock: data.stock,
             rating: data.rating,
@@ -65,10 +90,9 @@ const ProductDetail: React.FC = () => {
             createdAt: data.created_at,
             updatedAt: data.updated_at,
           };
-          
+
           setProduct(formattedProduct);
-          
-          // Sélectionner par défaut la première couleur/taille si disponible
+
           const colors =
             formattedProduct.specifications?.colors ||
             formattedProduct.specifications?.Colors;
@@ -159,7 +183,6 @@ const ProductDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-blanc">
-      {/* Header avec breadcrumb */}
       <div className="bg-blanc border-b border-gris-canon-de-fusil/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center space-x-2 text-xs sm:text-sm text-gris-canon-de-fusil/50 font-medium">
@@ -198,17 +221,14 @@ const ProductDetail: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          {/* Images produit */}
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-2xl bg-gris-canon-de-fusil/5 border border-gris-canon-de-fusil/5">
-              {/* Image sélectionnée dynamique */}
               <img
                 src={product.images[selectedImage] || "/images/placeholder.png"}
                 alt={product.name}
                 className="w-full h-96 object-cover transition-all duration-300"
               />
 
-              {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {product.featured && (
                   <span className="bg-bleu-saphir text-blanc px-3 py-1 text-xs font-bold rounded-full shadow-sm">
@@ -222,10 +242,9 @@ const ProductDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Miniatures interactives */}
               {product.images && product.images.length > 1 && (
                 <div className="absolute bottom-4 left-4 flex gap-2">
-                  {product.images.slice(0, 4).map((_, index) => (
+                  {product.images.slice(0, 4).map((index: number) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
@@ -241,13 +260,11 @@ const ProductDetail: React.FC = () => {
               )}
             </div>
 
-            {/* Options */}
             <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-6 shadow-xs">
               <h2 className="text-lg font-bold text-gris-canon-de-fusil mb-4">
                 Options
               </h2>
 
-              {/* Color Options */}
               {productColors && productColors.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-xs font-bold text-gris-canon-de-fusil/50 uppercase tracking-wider mb-3">
@@ -275,7 +292,6 @@ const ProductDetail: React.FC = () => {
                 </div>
               )}
 
-              {/* Tailles extraites de specifications */}
               {productSizes && productSizes.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-xs font-bold text-gris-canon-de-fusil/50 uppercase tracking-wider mb-3">
@@ -299,7 +315,6 @@ const ProductDetail: React.FC = () => {
                 </div>
               )}
 
-              {/* Quantité */}
               <div className="mb-6">
                 <h3 className="text-xs font-bold text-gris-canon-de-fusil/50 uppercase tracking-wider mb-3">
                   Quantité
@@ -325,7 +340,6 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-4">
                 <button
                   onClick={handleAddToCart}
@@ -352,7 +366,6 @@ const ProductDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Informations produit */}
           <div className="space-y-6">
             <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-6 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -370,26 +383,27 @@ const ProductDetail: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-center sm:text-right shrink-0">
-                  {product.discount && (
-                    <span className="text-sm text-gris-canon-de-fusil/40 line-through mr-2 block sm:inline font-semibold">
-                      {product.price.toFixed(2)} Fcfa
+                <div className="text-left sm:text-right shrink-0 flex flex-col items-start sm:items-end justify-center">
+                  <div className="flex items-baseline gap-2">
+                    {product.discount && (
+                      <span className="text-sm text-gris-canon-de-fusil/40 line-through font-semibold whitespace-nowrap">
+                        {formatCurrency(product.price)}
+                      </span>
+                    )}
+                    <span className="text-2xl sm:text-3xl font-black text-bleu-saphir whitespace-nowrap tracking-tight">
+                      {formatCurrency(product.discount || product.price)}
                     </span>
-                  )}
-                  <span className="text-2xl sm:text-3xl font-black text-bleu-saphir">
-                    {(product.discount || product.price).toFixed(2)} Fcfa
-                  </span>
+                  </div>
                   {product.discount && (
-                    <span className="ml-2 bg-rose-50 text-rose-700 border border-rose-100 px-2 py-0.5 text-xs font-bold rounded block sm:inline-block mt-1 sm:mt-0">
-                      Économisez {(product.price - product.discount).toFixed(2)}{" "}
-                      Fcfa
+                    <span className="bg-rose-50 text-rose-700 border border-rose-100 px-2 py-0.5 text-xs font-bold rounded mt-1 whitespace-nowrap">
+                      Économisez{" "}
+                      {formatCurrency(product.price - product.discount)}
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Onglets */}
             <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl overflow-hidden shadow-xs">
               <div className="border-b border-gris-canon-de-fusil/5 bg-gris-canon-de-fusil/5/30 px-2 flex items-center justify-between">
                 <button
@@ -426,7 +440,6 @@ const ProductDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Contenu des onglets */}
               <div className="p-6">
                 {activeTab === "description" && (
                   <div className="space-y-6">
@@ -468,32 +481,55 @@ const ProductDetail: React.FC = () => {
                     <h3 className="text-sm font-extrabold text-gris-canon-de-fusil mb-4">
                       Avis clients
                     </h3>
-                    {[1, 2, 3].map((review) => (
-                      <div
-                        key={review}
-                        className="border-b border-gris-canon-de-fusil/5 pb-4 last:border-b-0 last:pb-0"
-                      >
-                        <div className="flex items-start space-x-4">
-                          <div className="w-9 h-9 bg-gris-canon-de-fusil/5 border border-gris-canon-de-fusil/10 rounded-full flex items-center justify-center text-xs font-black text-gris-canon-de-fusil/60 shrink-0">
-                            JD
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 gap-1">
-                              <div className="flex items-center text-amber-500">
-                                {renderStars(4)}
+                    {product.reviews_list &&
+                    Array.isArray(product.reviews_list) &&
+                    product.reviews_list.length > 0 ? (
+                      product.reviews_list.map((rev: any, index: number) => {
+                        const clientName =
+                          rev.user_name || rev.client || "Client Anonyme";
+                        const initials = clientName
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2);
+                        return (
+                          <div
+                            key={rev.id || index}
+                            className="border-b border-gris-canon-de-fusil/5 pb-4 last:border-b-0 last:pb-0"
+                          >
+                            <div className="flex items-start space-x-4">
+                              <div className="w-9 h-9 bg-gris-canon-de-fusil/5 border border-gris-canon-de-fusil/10 rounded-full flex items-center justify-center text-xs font-black text-gris-canon-de-fusil/60 shrink-0">
+                                {initials}
                               </div>
-                              <span className="text-[10px] font-semibold text-gris-canon-de-fusil/40">
-                                il y a {review * 5} jours
-                              </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 gap-1">
+                                  <div className="flex items-center text-amber-500">
+                                    {renderStars(rev.rating || 5)}
+                                  </div>
+                                  <span className="text-[10px] font-semibold text-gris-canon-de-fusil/40">
+                                    {rev.created_at
+                                      ? new Date(
+                                          rev.created_at,
+                                        ).toLocaleDateString("fr-BJ")
+                                      : "Récemment"}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gris-canon-de-fusil/70 leading-relaxed">
+                                  {rev.comment ||
+                                    rev.text ||
+                                    "Aucun commentaire laissé."}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-xs text-gris-canon-de-fusil/70 leading-relaxed">
-                              Excellent produit, correspond parfaitement à la
-                              description. Livraison rapide et emballage soigné.
-                            </p>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })
+                    ) : (
+                      <p className="text-xs text-gris-canon-de-fusil/50 italic py-2">
+                        Aucun avis n'a encore été laissé pour ce produit.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -503,27 +539,57 @@ const ProductDetail: React.FC = () => {
                       Spécifications techniques
                     </h3>
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {Object.entries(product.specifications)
-                        // Filtrer pour éviter d'afficher les tableaux 'colors' ou 'sizes' sous forme brute de texte
-                        .filter(
-                          ([key]) =>
-                            !["colors", "Colors", "sizes", "Sizes"].includes(
-                              key,
-                            ),
-                        )
-                        .map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="border-b border-gris-canon-de-fusil/5 pb-2"
-                          >
-                            <dt className="text-[10px] font-bold text-gris-canon-de-fusil/40 uppercase tracking-wider">
-                              {key}
-                            </dt>
-                            <dd className="text-xs font-extrabold text-gris-canon-de-fusil/80 mt-0.5">
-                              {value as string}
-                            </dd>
-                          </div>
-                        ))}
+                      {Array.isArray(product.specifications)
+                        ? product.specifications
+                            .filter(
+                              (item: any) =>
+                                item &&
+                                ![
+                                  "colors",
+                                  "Colors",
+                                  "sizes",
+                                  "Sizes",
+                                ].includes(item.name),
+                            )
+                            .map((item: any, index: number) => (
+                              <div
+                                key={index}
+                                className="border-b border-gris-canon-de-fusil/5 pb-2"
+                              >
+                                <dt className="text-[10px] font-bold text-gris-canon-de-fusil/40 uppercase tracking-wider">
+                                  {item.name}
+                                </dt>
+                                <dd className="text-xs font-extrabold text-gris-canon-de-fusil/80 mt-0.5">
+                                  {item.description}
+                                </dd>
+                              </div>
+                            ))
+                        : Object.entries(product.specifications)
+                            .filter(
+                              ([key]) =>
+                                ![
+                                  "colors",
+                                  "Colors",
+                                  "sizes",
+                                  "Sizes",
+                                ].includes(key),
+                            )
+                            .map(([key, value]) => (
+                              <div
+                                key={key}
+                                className="border-b border-gris-canon-de-fusil/5 pb-2"
+                              >
+                                <dt className="text-[10px] font-bold text-gris-canon-de-fusil/40 uppercase tracking-wider">
+                                  {key}
+                                </dt>
+                                <dd className="text-xs font-extrabold text-gris-canon-de-fusil/80 mt-0.5">
+                                  {value && typeof value === "object"
+                                    ? (value as any).description ||
+                                      JSON.stringify(value)
+                                    : String(value)}
+                                </dd>
+                              </div>
+                            ))}
                     </dl>
                   </div>
                 )}

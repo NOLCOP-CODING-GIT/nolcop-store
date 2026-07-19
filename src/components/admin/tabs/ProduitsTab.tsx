@@ -48,6 +48,14 @@ export const ProduitsTab: React.FC = () => {
     discount: 0,
   });
 
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat("fr-BJ", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(dateString));
+  };
+
   const [specifications, setSpecifications] = useState<
     { name: string; description: string }[]
   >([]);
@@ -271,8 +279,11 @@ export const ProduitsTab: React.FC = () => {
           "Image",
           "Produit",
           "Catégorie",
+          "En vedette",
+          "Promotion",
           "Prix",
           "Stock",
+          "Date création",
           "Actions",
         ]}
       >
@@ -281,9 +292,11 @@ export const ProduitsTab: React.FC = () => {
             key={p.id}
             className="hover:bg-gris-canon-de-fusil/2 transition-colors"
           >
+            {/* Référence */}
             <td className="px-6 py-4 text-xs font-black text-bleu-saphir/70">
               {formatRef(p.id)}
             </td>
+            {/* Image */}
             <td className="px-6 py-4">
               {p.images && p.images.length > 0 ? (
                 <img
@@ -307,18 +320,35 @@ export const ProduitsTab: React.FC = () => {
                 <Package className="h-5 w-5" />
               </div>
             </td>
+            {/* Produit */}
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
               {p.name}
             </td>
+            {/* Catégorie */}
             <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
               {p.categories?.name || "Sans catégorie"}
             </td>
+            {/* En vedette (booléen) */}
+            <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
+              {p.featured ? "Oui" : "Non"}
+            </td>
+            {/* Promotion / Réduction */}
+            <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
+              {p.discount ? `-${p.discount}%` : "Aucune"}
+            </td>
+            {/* Prix */}
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
               {formatCurrency(p.price)}
             </td>
+            {/* Stock */}
             <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
-              {p.stock}
+              {p.stock > 0 ? p.stock : "Rupture"}
             </td>
+            {/* Date de creation */}
+            <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
+              {formatDate(p.created_at)}
+            </td>
+            {/* Actions */}
             <td className="px-6 py-4">
               <div className="flex space-x-2">
                 <button

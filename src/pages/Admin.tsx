@@ -92,34 +92,32 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blanc">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-8">
-          Administration
-        </h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blanc text-gris-canon-de-fusil">
+      <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-8">
+        Administration
+      </h1>
 
-        <div className="border-b border-gris-canon-de-fusil/10 mb-8">
-          <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-none pb-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap cursor-pointer flex items-center space-x-2 ${
-                  activeTab === tab.id
-                    ? "border-bleu-saphir text-bleu-saphir"
-                    : "border-transparent text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Rendu dynamique du composant actif */}
-        {renderTabContent()}
+      <div className="border-b border-gris-canon-de-fusil/10 mb-8">
+        <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-none pb-1">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap cursor-pointer flex items-center space-x-2 ${
+                activeTab === tab.id
+                  ? "border-bleu-saphir text-bleu-saphir"
+                  : "border-transparent text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
       </div>
+
+      {/* Rendu dynamique du composant actif */}
+      {renderTabContent()}
     </div>
   );
 };

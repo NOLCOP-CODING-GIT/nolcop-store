@@ -65,22 +65,26 @@ const Header: React.FC = () => {
           {/* Navigation Desktop */}
           <nav className="hidden md:flex items-center space-x-8 text-gris-canon-de-fusil">
             {/* Catégories */}
-            <div className="relative group">
-              <button className="hover:text-bleu-saphir font-medium transition-colors">
-                Catégories
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 w-48 bg-blanc rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                {categories.map((category) => (
-                  <Link
-                    key={category.slug}
-                    to={`/category/${category.slug}`}
-                    className="block px-4 py-2 ..."
-                  >
-                    {category.name}
-                  </Link>
-                ))}
+            {categories && categories.length > 1 ? (
+              <div className="relative group">
+                <button className="hover:text-bleu-saphir font-medium transition-colors">
+                  Catégories
+                </button>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-48 bg-blanc rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                  {categories.map((category) => (
+                    <Link
+                      key={category.slug}
+                      to={`/category/${category.slug}`}
+                      className="block px-4 py-2 ..."
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              ""
+            )}
 
             {/* Produits */}
             <button className="hover:text-bleu-saphir font-medium transition-colors">
@@ -206,41 +210,45 @@ const Header: React.FC = () => {
                 </Link>
 
                 {/* Menu déroulant accordéon : Catégories */}
-                <div>
-                  <button
-                    onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                    className="flex items-center justify-between w-full px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors font-semibold text-left"
-                  >
-                    <span>Catégories</span>
-                    <ChevronDown
-                      className={`h-5 w-5 transition-transform duration-200 ${
-                        isCategoriesOpen ? "rotate-180" : "rotate-0"
-                      }`}
-                    />
-                  </button>
+                {categories && categories.length > 1 ? (
+                  <div>
+                    <button
+                      onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                      className="flex items-center justify-between w-full px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors font-semibold text-left"
+                    >
+                      <span>Catégories</span>
+                      <ChevronDown
+                        className={`h-5 w-5 transition-transform duration-200 ${
+                          isCategoriesOpen ? "rotate-180" : "rotate-0"
+                        }`}
+                      />
+                    </button>
 
-                  {/* Sous-menus des catégories animés */}
-                  <AnimatePresence initial={false}>
-                    {isCategoriesOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="pl-4 mt-1 space-y-1 overflow-hidden"
-                      >
-                        {categories.map((category) => (
-                          <Link
-                            key={category.slug}
-                            to={`/category/${category.slug}`}
-                            className="block px-4 py-2 ..."
-                          >
-                            {category.name}
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                    {/* Sous-menus des catégories animés */}
+                    <AnimatePresence initial={false}>
+                      {isCategoriesOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="pl-4 mt-1 space-y-1 overflow-hidden"
+                        >
+                          {categories.map((category) => (
+                            <Link
+                              key={category.slug}
+                              to={`/category/${category.slug}`}
+                              className="block px-4 py-2 ..."
+                            >
+                              {category.name}
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  ""
+                )}
 
                 {/* Section Utilisateur / Favoris */}
                 <div className="border-t border-gris-canon-de-fusil/10 pt-2 mt-2">

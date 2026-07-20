@@ -65,22 +65,26 @@ const Footer: React.FC = () => {
           </div>
 
           {/* Categories */}
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-bleu-clair mb-4">
-              Catégories
-            </h3>
-            <ul className="space-y-2 text-sm">
-              {categories.map((category) => (
-                <Link
-                  key={category.slug}
-                  to={`/category/${category.slug}`}
-                  className="block px-4 py-2 ..."
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </ul>
-          </div>
+          {categories && categories.length > 1 ? (
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-bleu-clair mb-4">
+                Catégories
+              </h3>
+              <ul className="space-y-2 text-sm">
+                {categories.map((category) => (
+                  <Link
+                    key={category.slug}
+                    to={`/category/${category.slug}`}
+                    className="block px-4 py-2 ..."
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            ""
+          )}
 
           {/* Useful Links */}
           <div>

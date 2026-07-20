@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Grid, List, Search, } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { Grid, List, Search } from "lucide-react";
 import type { Product } from "../types";
 import ProductCard from "../components/ProductCard";
-import { useCart } from "../hooks/useCart"; // Importation du hook panier
+import { useCart } from "../hooks/useCart";
 import { supabase } from "../supabaseClient";
 
 const CategoryPage: React.FC = () => {
@@ -12,7 +12,6 @@ const CategoryPage: React.FC = () => {
   const [sortBy, setSortBy] = useState("name");
   const [loading, setLoading] = useState(true);
 
-  // Récupération de l'état du panier et de la fonction d'ajout
   const { state, addToCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,27 +22,25 @@ const CategoryPage: React.FC = () => {
 
     const fetchCategoryProducts = async () => {
       if (!slug) return;
-      
+
       setLoading(true);
       try {
-        // Récupérer la catégorie par slug
         const { data: categoryData } = await supabase
-          .from('categories')
-          .select('id, name')
-          .eq('slug', slug)
+          .from("categories")
+          .select("id, name")
+          .eq("slug", slug)
           .single();
 
         if (categoryData && isMounted) {
           setCategoryName(categoryData.name);
-          
-          // Récupérer les produits de cette catégorie
+
           const { data: productsData } = await supabase
-            .from('products')
-            .select('*, category:categories(name)')
-            .eq('category_id', categoryData.id);
+            .from("products")
+            .select("*, category:categories(name)")
+            .eq("category_id", categoryData.id);
 
           if (productsData) {
-            const formattedProducts = productsData.map(p => ({
+            const formattedProducts = productsData.map((p) => ({
               id: p.id,
               name: p.name,
               description: p.description,
@@ -63,7 +60,10 @@ const CategoryPage: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération des produits de la catégorie:", error);
+        console.error(
+          "Erreur lors de la récupération des produits de la catégorie:",
+          error,
+        );
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -103,13 +103,17 @@ const CategoryPage: React.FC = () => {
     return (
       <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-5 hover:shadow-md transition-shadow duration-300">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden bg-gris-canon-de-fusil/5 rounded-xl border border-gris-canon-de-fusil/5">
-            {/* Correction : Récupération de la première image du tableau images */}
-            <img
-              src={product.images[0] || "/images/placeholder.png"}
-              alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-            />
+          <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden bg-gris-canon-de-fusil/5 rounded-xl border border-gris-canon-de-fusil/5 flex items-center justify-center">
+            <Link
+              to={`/products/${product.id}`}
+              className="w-full h-full block"
+            >
+              <img
+                src={product.images[0] || "/images/placeholder.png"}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+              />
+            </Link>
           </div>
 
           <div className="flex-1 min-w-0 space-y-2">
@@ -120,7 +124,12 @@ const CategoryPage: React.FC = () => {
             )}
 
             <h3 className="text-base sm:text-lg font-bold text-gris-canon-de-fusil leading-tight truncate">
-              {product.name}
+              <Link
+                to={`/products/${product.id}`}
+                className="hover:text-bleu-saphir transition-colors"
+              >
+                {product.name}
+              </Link>
             </h3>
 
             {product.description && (
@@ -202,7 +211,6 @@ const CategoryPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blanc">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-2">
           {categoryName}
@@ -213,10 +221,8 @@ const CategoryPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Filters and Controls */}
       <div className="mb-10">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          {/* Search */}
           <div className="flex-1 max-w-md">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gris-canon-de-fusil/40" />
@@ -228,9 +234,7 @@ const CategoryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Controls */}
           <div className="flex items-center justify-between lg:justify-end space-x-4 w-full lg:w-auto">
-            {/* Sort */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -242,7 +246,6 @@ const CategoryPage: React.FC = () => {
               <option value="rating">Meilleures notes</option>
             </select>
 
-            {/* View Mode */}
             <div className="flex items-center space-x-2 bg-gris-canon-de-fusil/10 p-1 rounded-xl border border-gris-canon-de-fusil/5">
               <button
                 onClick={() => setViewMode("grid")}
@@ -269,7 +272,6 @@ const CategoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Products Section */}
       {sortedProducts.length === 0 ? (
         <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs">
           <div className="text-gris-canon-de-fusil/20 mb-4">

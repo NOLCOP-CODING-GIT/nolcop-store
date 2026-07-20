@@ -4,6 +4,12 @@ import { supabase } from "../../../supabaseClient";
 import { Table } from "../Table";
 import { Modal } from "../Modal";
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -11,6 +17,7 @@ interface Category {
   image: string;
   description: string;
   created_at: string;
+  products?: Product[];
 }
 
 export const CategoriesTab: React.FC = () => {
@@ -40,11 +47,11 @@ export const CategoriesTab: React.FC = () => {
   const fetchCategories = async () => {
     const { data, error } = await supabase
       .from("categories")
-      .select("*")
+      .select("*, products:products!category_id(id, name, price)")
       .order("created_at", { ascending: false });
 
     if (data && !error) {
-      setCategories(data);
+      setCategories(data as Category[]);
     } else {
       console.error("Erreur lors de la récupération des catégories", error);
     }
@@ -208,7 +215,15 @@ export const CategoriesTab: React.FC = () => {
       </div>
 
       <Table
-        headers={["Ref", "Image", "Nom", "Slug", "Date création", "Actions"]}
+        headers={[
+          "Ref",
+          "Image",
+          "Nom",
+          "Slug",
+          "Produits",
+          "Date création",
+          "Actions",
+        ]}
       >
         {categories.map((category) => (
           <tr
@@ -225,7 +240,6 @@ export const CategoriesTab: React.FC = () => {
                   alt={category.name}
                   className="w-10 h-10 object-cover rounded-lg bg-gray-100"
                   onError={(e) => {
-                    // En cas d'erreur 404, on cache l'image cassée et on affiche le conteneur de remplacement
                     e.currentTarget.style.display = "none";
                     const fallback = e.currentTarget
                       .nextElementSibling as HTMLElement;
@@ -234,7 +248,6 @@ export const CategoriesTab: React.FC = () => {
                 />
               ) : null}
 
-              {/* Ce bloc s'affiche si l'URL est absente OU si l'image ci-dessus échoue (404) */}
               <div
                 className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400"
                 style={{ display: category.image ? "none" : "flex" }}
@@ -247,6 +260,24 @@ export const CategoriesTab: React.FC = () => {
             </td>
             <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
               {category.slug}
+            </td>
+            <td className="px-6 py-4 text-sm">
+              {category.products && category.products.length > 0 ? (
+                <div className="flex flex-wrap gap-1 max-w-xs">
+                  {category.products.map((p) => (
+                    <span
+                      key={p.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-bleu-saphir/10 text-bleu-saphir"
+                    >
+                      {p.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-xs text-gray-400 italic">
+                  Aucun produit
+                </span>
+              )}
             </td>
             <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
               {formatDate(category.created_at)}
@@ -272,7 +303,7 @@ export const CategoriesTab: React.FC = () => {
         {categories.length === 0 && (
           <tr>
             <td
-              colSpan={6}
+              colSpan={7}
               className="px-6 py-8 text-center text-sm text-gris-canon-de-fusil/60"
             >
               Aucune catégorie trouvée.

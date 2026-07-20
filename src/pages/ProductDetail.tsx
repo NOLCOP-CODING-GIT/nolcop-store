@@ -245,7 +245,12 @@ const ProductDetail: React.FC = () => {
             {product.category && (
               <>
                 <Link
-                  to={`/category/${product.category.toLowerCase()}`}
+                  to={`/category/${product.category
+                    .toLowerCase()
+                    .trim()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[\s\W-]+/g, "-")}`}
                   className="hover:text-bleu-saphir transition-colors duration-200 capitalize"
                 >
                   {product.category}

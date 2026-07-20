@@ -8,10 +8,10 @@ import {
   AlertCircle,
   Eye,
   Lock,
-  ArrowRight,
   X,
   MapPin,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import type { Order } from "../types";
@@ -26,6 +26,10 @@ const Orders: React.FC = () => {
   const [selectedOrderForTracking, setSelectedOrderForTracking] =
     useState<Order | null>(null);
 
+  // État pour la suppression de commande
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
       style: "currency",
@@ -34,18 +38,18 @@ const Orders: React.FC = () => {
     }).format(price);
   };
 
-  // Données de démo conformes à ton interface Order stricte
   React.useEffect(() => {
     let isMounted = true;
 
     const fetchOrders = async () => {
       if (!user?.id) return;
-      
+
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('orders')
-          .select(`
+          .from("orders")
+          .select(
+            `
             *,
             order_items (
               quantity,
@@ -64,9 +68,10 @@ const Orders: React.FC = () => {
                 updated_at
               )
             )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          `,
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
 
         if (error) throw error;
 
@@ -82,7 +87,7 @@ const Orders: React.FC = () => {
               street: order.shipping_address,
               city: order.shipping_city,
               country: "Bénin",
-              isDefault: false
+              isDefault: false,
             },
             createdAt: order.created_at,
             updatedAt: order.updated_at,
@@ -98,12 +103,12 @@ const Orders: React.FC = () => {
                 rating: item.product.rating,
                 reviews: item.product.reviews,
                 createdAt: item.product.created_at,
-                updatedAt: item.product.updated_at
+                updatedAt: item.product.updated_at,
               },
-              quantity: item.quantity
-            }))
+              quantity: item.quantity,
+            })),
           }));
-          
+
           setOrders(formattedOrders);
         }
       } catch (error) {
@@ -119,6 +124,28 @@ const Orders: React.FC = () => {
       isMounted = false;
     };
   }, [user]);
+
+  const handleDeleteOrder = async () => {
+    if (!deletingOrderId) return;
+    setIsDeleting(true);
+
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", deletingOrderId);
+
+      if (error) throw error;
+
+      setOrders((prev) => prev.filter((o) => o.id !== deletingOrderId));
+      setDeletingOrderId(null);
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+      alert("Impossible de supprimer cette commande.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const getStatusInfo = (status: Order["status"]) => {
     switch (status) {
@@ -220,7 +247,6 @@ const Orders: React.FC = () => {
     );
   }
 
-  // Calcul des étapes pour le modal de suivi
   const trackingSteps = [
     { label: "Validée", desc: "Commande reçue" },
     { label: "Préparation", desc: "Emballage en cours" },
@@ -264,11 +290,10 @@ const Orders: React.FC = () => {
             dès aujourd'hui.
           </p>
           <Link
-            to="/"
+            to="/products"
             className="inline-flex items-center justify-center px-6 py-3 bg-bleu-saphir hover:bg-bleu-saphir/90 text-blanc text-sm font-bold rounded-xl transition-all duration-200 cursor-pointer shadow-xs gap-2"
           >
             <span>Découvrir nos produits</span>
-            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       ) : (
@@ -306,12 +331,22 @@ const Orders: React.FC = () => {
                         <StatusIcon className="h-3.5 w-3.5 mr-1.5 shrink-0" />
                         {statusInfo.label}
                       </span>
-                      <button
-                        onClick={() => setSelectedOrderForTracking(order)}
-                        className="p-2 text-gris-canon-de-fusil/40 hover:text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => setSelectedOrderForTracking(order)}
+                          className="p-2 text-gris-canon-de-fusil/40 hover:text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer"
+                          title="Détails"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingOrderId(order.id)}
+                          className="p-2 text-gris-canon-de-fusil/40 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                          title="Supprimer la commande"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -424,7 +459,6 @@ const Orders: React.FC = () => {
 
                 {/* Contenu Modal */}
                 <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-                  {/* Infos rapides */}
                   <div className="grid grid-cols-2 gap-4 bg-gris-canon-de-fusil/5 p-4 rounded-xl text-xs">
                     <div className="flex items-start gap-2">
                       <MapPin className="h-4 w-4 text-bleu-saphir shrink-0 mt-0.5" />
@@ -457,7 +491,6 @@ const Orders: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Arbre d'étapes (Stepper) */}
                   {selectedOrderForTracking.status === "cancelled" ? (
                     <div className="flex items-center gap-3 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">
                       <AlertCircle className="h-5 w-5 shrink-0" />
@@ -478,7 +511,6 @@ const Orders: React.FC = () => {
                             key={idx}
                             className="relative flex items-start gap-4 text-xs"
                           >
-                            {/* Bulle d'indicateur d'étape */}
                             <div
                               className={`absolute -left-[21px] h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-300 bg-blanc z-10 ${
                                 isCompleted
@@ -491,7 +523,6 @@ const Orders: React.FC = () => {
                               )}
                             </div>
 
-                            {/* Textes d'étapes */}
                             <div className="flex-1">
                               <h4
                                 className={`font-bold ${isCurrent ? "text-bleu-saphir text-sm" : isCompleted ? "text-gris-canon-de-fusil" : "text-gris-canon-de-fusil/40"}`}
@@ -509,7 +540,6 @@ const Orders: React.FC = () => {
                   )}
                 </div>
 
-                {/* Footer Modal */}
                 <div className="p-4 border-t border-gris-canon-de-fusil/5 bg-gris-canon-de-fusil/2 flex justify-end">
                   <button
                     onClick={() => setSelectedOrderForTracking(null)}
@@ -522,6 +552,43 @@ const Orders: React.FC = () => {
             </div>
           );
         })()}
+
+      {/* MODAL DE CONFIRMATION DE SUPPRESSION */}
+      {deletingOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
+          <div className="bg-blanc max-w-sm w-full rounded-2xl shadow-xl border border-gris-canon-de-fusil/5 overflow-hidden p-6 space-y-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-12 w-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-gris-canon-de-fusil mb-2">
+                Supprimer cette commande ?
+              </h3>
+              <p className="text-xs text-gris-canon-de-fusil/60 leading-relaxed">
+                Cette action supprime définitivement l'historique de cette
+                commande.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingOrderId(null)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-200 transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteOrder}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 transition-colors cursor-pointer flex justify-center items-center"
+              >
+                {isDeleting ? "Suppression..." : "Confirmer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

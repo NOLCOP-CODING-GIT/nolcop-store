@@ -370,7 +370,7 @@ export const ProduitsTab: React.FC = () => {
         {products.length === 0 && (
           <tr>
             <td
-              colSpan={7}
+              colSpan={10}
               className="px-6 py-8 text-center text-sm text-gris-canon-de-fusil/60"
             >
               Aucun produit trouvé.

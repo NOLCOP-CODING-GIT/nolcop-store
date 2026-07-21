@@ -1,7 +1,7 @@
 import React from "react";
 const Terms: React.FC = () => {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil">
       <div className="mb-8 border-b border-gris-canon-de-fusil/10 pb-4">
         <h1 className="text-2xl font-bold tracking-tight">
           Conditions Générales de Vente (CGV)

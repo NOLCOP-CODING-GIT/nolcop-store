@@ -237,6 +237,10 @@ const Header: React.FC = () => {
                             <Link
                               key={category.slug}
                               to={`/category/${category.slug}`}
+                              onClick={() => {
+                                setIsMenuOpen(false);
+                                setIsCategoriesOpen(false);
+                              }}
                               className="block px-4 py-2 ..."
                             >
                               {category.name}

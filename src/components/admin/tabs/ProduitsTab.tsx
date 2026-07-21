@@ -48,6 +48,15 @@ export const ProduitsTab: React.FC = () => {
     discount: 0,
   });
 
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    category_id: "",
+    price: "",
+    stock: "",
+    description: "",
+    images: "",
+  });
+
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat("fr-BJ", {
       day: "2-digit",
@@ -159,6 +168,14 @@ export const ProduitsTab: React.FC = () => {
     setSpecifications([{ name: "", description: "" }]);
     setImageFiles([]);
     setExistingImages([]);
+    setFormErrors({
+      name: "",
+      category_id: "",
+      price: "",
+      stock: "",
+      description: "",
+      images: "",
+    });
     setIsFormModalOpen(true);
   };
 
@@ -181,11 +198,47 @@ export const ProduitsTab: React.FC = () => {
     );
     setImageFiles([]);
     setExistingImages(product.images || []);
+    setFormErrors({
+      name: "",
+      category_id: "",
+      price: "",
+      stock: "",
+      description: "",
+      images: "",
+    });
     setIsFormModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const hasImages = existingImages.length > 0 || imageFiles.length > 0;
+
+    const errors = {
+      name: !formData.name.trim() ? "Le nom du produit est obligatoire." : "",
+      category_id: !formData.category_id
+        ? "Veuillez sélectionner une catégorie."
+        : "",
+      price:
+        !formData.price || parseFloat(formData.price) <= 0
+          ? "Le prix doit être supérieur à 0."
+          : "",
+      stock:
+        formData.stock === "" || parseInt(formData.stock, 10) < 0
+          ? "Le stock doit être supérieur ou égal à 0."
+          : "",
+      description: !formData.description.trim()
+        ? "La description est obligatoire."
+        : "",
+      images: !hasImages ? "Au moins une image est obligatoire." : "",
+    };
+
+    setFormErrors(errors);
+
+    if (Object.values(errors).some((err) => err !== "")) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -292,11 +345,9 @@ export const ProduitsTab: React.FC = () => {
             key={p.id}
             className="hover:bg-gris-canon-de-fusil/2 transition-colors"
           >
-            {/* Référence */}
             <td className="px-6 py-4 text-xs font-black text-bleu-saphir/70">
               {formatRef(p.id)}
             </td>
-            {/* Image */}
             <td className="px-6 py-4">
               {p.images && p.images.length > 0 ? (
                 <img
@@ -320,35 +371,27 @@ export const ProduitsTab: React.FC = () => {
                 <Package className="h-5 w-5" />
               </div>
             </td>
-            {/* Produit */}
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
               {p.name}
             </td>
-            {/* Catégorie */}
             <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
               {p.categories?.name || "Sans catégorie"}
             </td>
-            {/* En vedette (booléen) */}
             <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
               {p.featured ? "Oui" : "Non"}
             </td>
-            {/* Promotion / Réduction */}
             <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
               {p.discount ? `-${p.discount}%` : "Aucune"}
             </td>
-            {/* Prix */}
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
               {formatCurrency(p.price)}
             </td>
-            {/* Stock */}
             <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
               {p.stock > 0 ? p.stock : "Rupture"}
             </td>
-            {/* Date de creation */}
             <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
               {formatDate(p.created_at)}
             </td>
-            {/* Actions */}
             <td className="px-6 py-4">
               <div className="flex space-x-2">
                 <button
@@ -388,33 +431,49 @@ export const ProduitsTab: React.FC = () => {
         <form
           onSubmit={handleSubmit}
           className="space-y-4 max-h-[80vh] overflow-y-auto px-1"
+          noValidate
         >
           <div>
             <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-              Nom du produit
+              Nom du produit *
             </label>
             <input
               type="text"
-              required
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-semibold"
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                if (formErrors.name) setFormErrors({ ...formErrors, name: "" });
+              }}
+              className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none text-sm font-semibold ${
+                formErrors.name
+                  ? "border-rose-500 focus:border-rose-500"
+                  : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir"
+              }`}
               placeholder="Ex: PC Portable Asus"
             />
+            {formErrors.name && (
+              <p className="mt-1 text-xs text-rose-600 font-semibold">
+                {formErrors.name}
+              </p>
+            )}
           </div>
 
           <div>
             <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-              Catégorie
+              Catégorie *
             </label>
             <select
               value={formData.category_id}
-              onChange={(e) =>
-                setFormData({ ...formData, category_id: e.target.value })
-              }
-              className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-semibold bg-white"
+              onChange={(e) => {
+                setFormData({ ...formData, category_id: e.target.value });
+                if (formErrors.category_id)
+                  setFormErrors({ ...formErrors, category_id: "" });
+              }}
+              className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none text-sm font-semibold bg-white ${
+                formErrors.category_id
+                  ? "border-rose-500 focus:border-rose-500"
+                  : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir"
+              }`}
             >
               <option value="">Sélectionner une catégorie</option>
               {categories.map((c) => (
@@ -423,38 +482,63 @@ export const ProduitsTab: React.FC = () => {
                 </option>
               ))}
             </select>
+            {formErrors.category_id && (
+              <p className="mt-1 text-xs text-rose-600 font-semibold">
+                {formErrors.category_id}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-                Prix (XOF)
+                Prix (XOF) *
               </label>
               <input
                 type="number"
                 min="0"
-                required
                 value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-                className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-semibold"
+                onChange={(e) => {
+                  setFormData({ ...formData, price: e.target.value });
+                  if (formErrors.price)
+                    setFormErrors({ ...formErrors, price: "" });
+                }}
+                className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none text-sm font-semibold ${
+                  formErrors.price
+                    ? "border-rose-500 focus:border-rose-500"
+                    : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir"
+                }`}
               />
+              {formErrors.price && (
+                <p className="mt-1 text-xs text-rose-600 font-semibold">
+                  {formErrors.price}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-                Stock
+                Stock *
               </label>
               <input
                 type="number"
                 min="0"
-                required
                 value={formData.stock}
-                onChange={(e) =>
-                  setFormData({ ...formData, stock: e.target.value })
-                }
-                className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-semibold"
+                onChange={(e) => {
+                  setFormData({ ...formData, stock: e.target.value });
+                  if (formErrors.stock)
+                    setFormErrors({ ...formErrors, stock: "" });
+                }}
+                className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none text-sm font-semibold ${
+                  formErrors.stock
+                    ? "border-rose-500 focus:border-rose-500"
+                    : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir"
+                }`}
               />
+              {formErrors.stock && (
+                <p className="mt-1 text-xs text-rose-600 font-semibold">
+                  {formErrors.stock}
+                </p>
+              )}
             </div>
           </div>
 
@@ -496,22 +580,32 @@ export const ProduitsTab: React.FC = () => {
 
           <div>
             <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-              Description
+              Description *
             </label>
             <textarea
               rows={3}
-              required
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-semibold resize-none"
+              onChange={(e) => {
+                setFormData({ ...formData, description: e.target.value });
+                if (formErrors.description)
+                  setFormErrors({ ...formErrors, description: "" });
+              }}
+              className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none text-sm font-semibold resize-none ${
+                formErrors.description
+                  ? "border-rose-500 focus:border-rose-500"
+                  : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir"
+              }`}
             />
+            {formErrors.description && (
+              <p className="mt-1 text-xs text-rose-600 font-semibold">
+                {formErrors.description}
+              </p>
+            )}
           </div>
 
           <div>
             <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-              Images du produit
+              Images du produit *
             </label>
             {existingImages.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
@@ -541,11 +635,24 @@ export const ProduitsTab: React.FC = () => {
               type="file"
               multiple
               accept="image/*"
-              onChange={(e) =>
-                e.target.files && setImageFiles(Array.from(e.target.files))
-              }
-              className="w-full text-xs font-semibold text-gris-canon-de-fusil/60 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-bleu-saphir file:text-blanc hover:file:bg-bleu-saphir/90"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setImageFiles(Array.from(e.target.files));
+                  if (formErrors.images)
+                    setFormErrors({ ...formErrors, images: "" });
+                }
+              }}
+              className={`w-full text-xs font-semibold text-gris-canon-de-fusil/60 p-2 border rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-bleu-saphir file:text-blanc hover:file:bg-bleu-saphir/90 ${
+                formErrors.images
+                  ? "border-rose-500"
+                  : "border-gris-canon-de-fusil/10"
+              }`}
             />
+            {formErrors.images && (
+              <p className="mt-1 text-xs text-rose-600 font-semibold">
+                {formErrors.images}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 border-t pt-4">

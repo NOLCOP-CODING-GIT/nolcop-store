@@ -92,7 +92,7 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blanc text-gris-canon-de-fusil">
+    <div className="mx-auto px-4 py-8 bg-blanc">
       <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-8">
         Administration
       </h1>

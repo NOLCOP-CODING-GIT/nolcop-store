@@ -105,7 +105,7 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc relative">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc relative">
       {successMessage && (
         <div className=" bg-vert-jungle mb-3 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5" />

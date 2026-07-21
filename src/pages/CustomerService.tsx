@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const CustomerService: React.FC = () => {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil space-y-12">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil space-y-12">
       <div className="text-center max-w-xl mx-auto space-y-2">
         <Headphones className="h-12 w-12 text-bleu-saphir mx-auto" />
         <h1 className="text-3xl font-bold tracking-tight">

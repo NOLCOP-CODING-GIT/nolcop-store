@@ -3,7 +3,7 @@ import { ShieldCheck, Users, Target } from "lucide-react";
 
 const About: React.FC = () => {
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil">
       <div className="text-center max-w-2xl mx-auto mb-16">
         <h1 className="text-4xl font-extrabold tracking-tight mb-4">
           À propos de{" "}

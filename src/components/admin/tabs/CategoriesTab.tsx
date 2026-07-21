@@ -40,6 +40,11 @@ export const CategoriesTab: React.FC = () => {
     description: "",
   });
 
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    image: "",
+  });
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -83,24 +88,22 @@ export const CategoriesTab: React.FC = () => {
 
     setLoading(true);
     try {
-      // 1. Création d'un nom de fichier unique
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `categories/${fileName}`;
 
-      // 2. Upload dans le bucket 'categories'
       const { error: uploadError } = await supabase.storage
         .from("categories")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // 3. Récupération de l'URL publique
       const {
         data: { publicUrl },
       } = supabase.storage.from("categories").getPublicUrl(filePath);
 
       setFormData({ ...formData, image: publicUrl });
+      setFormErrors({ ...formErrors, image: "" });
     } catch (error) {
       console.error("Erreur upload:", error);
       alert("Erreur lors de l'upload de l'image.");
@@ -110,7 +113,6 @@ export const CategoriesTab: React.FC = () => {
   };
 
   const formatRef = (id: string) => {
-    // Génère une référence type CAT + 5 premiers caractères de l'UUID
     return `CAT${id.split("-")[0].substring(0, 5).toUpperCase()}`;
   };
 
@@ -128,6 +130,7 @@ export const CategoriesTab: React.FC = () => {
     setIsEditing(false);
     setCurrentCategoryId(null);
     setFormData({ name: "", slug: "", image: "", description: "" });
+    setFormErrors({ name: "", image: "" });
     setIsFormModalOpen(true);
   };
 
@@ -140,11 +143,26 @@ export const CategoriesTab: React.FC = () => {
       image: category.image,
       description: category.description || "",
     });
+    setFormErrors({ name: "", image: "" });
     setIsFormModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors = {
+      name: !formData.name.trim()
+        ? "Le nom de la catégorie est obligatoire."
+        : "",
+      image: !formData.image ? "Une image de catégorie est obligatoire." : "",
+    };
+
+    setFormErrors(errors);
+
+    if (errors.name || errors.image) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -318,19 +336,30 @@ export const CategoriesTab: React.FC = () => {
         onClose={() => !loading && setIsFormModalOpen(false)}
         title={isEditing ? "Modifier la catégorie" : "Ajouter une catégorie"}
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
             <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-              Nom de la catégorie
+              Nom de la catégorie *
             </label>
             <input
               type="text"
-              required
               value={formData.name}
-              onChange={handleNameChange}
-              className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-semibold"
+              onChange={(e) => {
+                handleNameChange(e);
+                if (formErrors.name) setFormErrors({ ...formErrors, name: "" });
+              }}
+              className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none text-sm font-semibold ${
+                formErrors.name
+                  ? "border-rose-500 focus:border-rose-500"
+                  : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir"
+              }`}
               placeholder="Ex: Informatique"
             />
+            {formErrors.name && (
+              <p className="mt-1 text-xs text-rose-600 font-semibold">
+                {formErrors.name}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
@@ -338,7 +367,6 @@ export const CategoriesTab: React.FC = () => {
             </label>
             <input
               type="text"
-              required
               readOnly
               value={formData.slug}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none text-sm font-medium text-gray-500 cursor-not-allowed"
@@ -346,7 +374,7 @@ export const CategoriesTab: React.FC = () => {
           </div>
           <div>
             <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-              Image de la catégorie
+              Image de la catégorie *
             </label>
 
             {/* Prévisualisation */}
@@ -364,9 +392,22 @@ export const CategoriesTab: React.FC = () => {
             <input
               type="file"
               accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full text-xs font-semibold text-gris-canon-de-fusil/60 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-bleu-saphir file:text-blanc hover:file:bg-bleu-saphir/90"
+              onChange={(e) => {
+                handleImageUpload(e);
+                if (formErrors.image)
+                  setFormErrors({ ...formErrors, image: "" });
+              }}
+              className={`w-full text-xs font-semibold text-gris-canon-de-fusil/60 p-2 border rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-bleu-saphir file:text-blanc hover:file:bg-bleu-saphir/90 ${
+                formErrors.image
+                  ? "border-rose-500"
+                  : "border-gris-canon-de-fusil/10"
+              }`}
             />
+            {formErrors.image && (
+              <p className="mt-1 text-xs text-rose-600 font-semibold">
+                {formErrors.image}
+              </p>
+            )}
 
             {/* Champ caché pour stocker l'URL dans la DB */}
             <input type="hidden" value={formData.image} />

@@ -3,7 +3,7 @@ import { Truck, RefreshCw, Box } from "lucide-react";
 
 const Shipping: React.FC = () => {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil space-y-12">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil space-y-12">
       <div className="text-left">
         <h1 className="text-2xl font-bold tracking-tight mb-2">
           Livraisons & Retours

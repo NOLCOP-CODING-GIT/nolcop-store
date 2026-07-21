@@ -3,7 +3,7 @@ import { CreditCard, ShieldCheck, Lock, Smartphone } from "lucide-react";
 
 const Payment: React.FC = () => {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil text-center space-y-8">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil text-center space-y-8">
       <div className="max-w-xl mx-auto space-y-3">
         <Lock className="h-12 w-12 text-bleu-saphir mx-auto" />
         <h1 className="text-3xl font-bold tracking-tight">

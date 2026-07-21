@@ -24,7 +24,7 @@ const Faq: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-blanc text-gris-canon-de-fusil">
       <div className="text-center mb-12">
         <HelpCircle className="h-12 w-12 text-bleu-saphir mx-auto mb-3" />
         <h1 className="text-3xl font-bold tracking-tight">

@@ -79,7 +79,7 @@ const Contact: React.FC = () => {
         <div className="lg:col-span-2">
           <form
             onSubmit={handleSubmit}
-            className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-sm p-8 space-y-6"
+            className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-sm p-4 space-y-6"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>

@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, AlertTriangle, Package } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  AlertTriangle,
+  Package,
+  Search,
+  Filter,
+} from "lucide-react";
 import { supabase } from "../../../supabaseClient";
 import { Table } from "../Table";
 import { Modal } from "../Modal";
@@ -27,6 +35,10 @@ interface Product {
 export const ProduitsTab: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("");
+  const [sortKey, setSortKey] = useState<string | null>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(false);
 
   // Modales
@@ -92,8 +104,6 @@ export const ProduitsTab: React.FC = () => {
     if (data && !error) setCategories(data);
   };
 
-  // --- Formatages & Helpers ---
-
   const formatRef = (id: string) => {
     return `PROD${id.split("-")[0].substring(0, 5).toUpperCase()}`;
   };
@@ -105,6 +115,80 @@ export const ProduitsTab: React.FC = () => {
       maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = (product.name || "")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    const matchesCategory = selectedCategoryFilter
+      ? product.category_id === selectedCategoryFilter
+      : true;
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (!sortKey) return 0;
+
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortKey) {
+      case "id":
+        aValue = formatRef(a.id);
+        bValue = formatRef(b.id);
+        break;
+      case "name":
+        aValue = a.name || "";
+        bValue = b.name || "";
+        break;
+      case "category":
+        aValue = a.categories?.name || "";
+        bValue = b.categories?.name || "";
+        break;
+      case "featured":
+        aValue = a.featured ? 1 : 0;
+        bValue = b.featured ? 1 : 0;
+        break;
+      case "discount":
+        aValue = a.discount || 0;
+        bValue = b.discount || 0;
+        break;
+      case "price":
+        aValue = a.price || 0;
+        bValue = b.price || 0;
+        break;
+      case "stock":
+        aValue = a.stock || 0;
+        bValue = b.stock || 0;
+        break;
+      case "created_at":
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
+        break;
+      default:
+        return 0;
+    }
+
+    if (typeof aValue === "string") {
+      const res = aValue.localeCompare(bValue, "fr", { sensitivity: "base" });
+      return sortDirection === "asc" ? res : -res;
+    }
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
 
   const addSpec = () => {
     setSpecifications([...specifications, { name: "", description: "" }]);
@@ -314,33 +398,65 @@ export const ProduitsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gris-canon-de-fusil">
           Gestion des produits
         </h2>
-        <button
-          onClick={openAddModal}
-          className="flex items-center px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-all font-semibold text-sm cursor-pointer shadow-xs"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Ajouter un produit
-        </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gris-canon-de-fusil/40" />
+            <input
+              type="text"
+              placeholder="Rechercher par nom..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-white border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-medium w-full sm:w-56"
+            />
+          </div>
+
+          <div className="relative">
+            <Filter className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gris-canon-de-fusil/40" />
+            <select
+              value={selectedCategoryFilter}
+              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-white border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-medium w-full sm:w-48 appearance-none cursor-pointer"
+            >
+              <option value="">Toutes les catégories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={openAddModal}
+            className="flex items-center justify-center px-4 py-2 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-all font-semibold text-sm cursor-pointer shadow-xs whitespace-nowrap"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Ajouter un produit
+          </button>
+        </div>
       </div>
 
       <Table
         headers={[
-          "Ref",
-          "Image",
-          "Produit",
-          "Catégorie",
-          "En vedette",
-          "Promotion",
-          "Prix",
-          "Stock",
-          "Date création",
-          "Actions",
+          { label: "Ref", key: "id", sortable: true },
+          { label: "Image", sortable: false },
+          { label: "Produit", key: "name", sortable: true },
+          { label: "Catégorie", key: "category", sortable: true },
+          { label: "En vedette", key: "featured", sortable: true },
+          { label: "Promotion", key: "discount", sortable: true },
+          { label: "Prix", key: "price", sortable: true },
+          { label: "Stock", key: "stock", sortable: true },
+          { label: "Date création", key: "created_at", sortable: true },
+          { label: "Actions", sortable: false },
         ]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSort={handleSort}
       >
-        {products.map((p) => (
+        {sortedProducts.map((p) => (
           <tr
             key={p.id}
             className="hover:bg-gris-canon-de-fusil/2 transition-colors"
@@ -410,7 +526,7 @@ export const ProduitsTab: React.FC = () => {
             </td>
           </tr>
         ))}
-        {products.length === 0 && (
+        {sortedProducts.length === 0 && (
           <tr>
             <td
               colSpan={10}

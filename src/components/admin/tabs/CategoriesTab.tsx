@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, AlertTriangle, Package } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  AlertTriangle,
+  Package,
+  Search,
+} from "lucide-react";
 import { supabase } from "../../../supabaseClient";
 import { Table } from "../Table";
 import { Modal } from "../Modal";
@@ -22,6 +29,9 @@ interface Category {
 
 export const CategoriesTab: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortKey, setSortKey] = useState<string | null>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(false);
 
   // Modales
@@ -61,6 +71,72 @@ export const CategoriesTab: React.FC = () => {
       console.error("Erreur lors de la récupération des catégories", error);
     }
   };
+
+  const formatRef = (id: string) => {
+    return `CAT${id.split("-")[0].substring(0, 5).toUpperCase()}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat("fr-BJ", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(dateString));
+  };
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const filteredCategories = categories.filter((category) =>
+    (category.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const sortedCategories = [...filteredCategories].sort((a, b) => {
+    if (!sortKey) return 0;
+
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortKey) {
+      case "id":
+        aValue = formatRef(a.id);
+        bValue = formatRef(b.id);
+        break;
+      case "name":
+        aValue = a.name || "";
+        bValue = b.name || "";
+        break;
+      case "slug":
+        aValue = a.slug || "";
+        bValue = b.slug || "";
+        break;
+      case "products_count":
+        aValue = a.products ? a.products.length : 0;
+        bValue = b.products ? b.products.length : 0;
+        break;
+      case "created_at":
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
+        break;
+      default:
+        return 0;
+    }
+
+    if (typeof aValue === "string") {
+      const res = aValue.localeCompare(bValue, "fr", { sensitivity: "base" });
+      return sortDirection === "asc" ? res : -res;
+    }
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
 
   // --- Helpers pour le formatage ---
 
@@ -110,18 +186,6 @@ export const CategoriesTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatRef = (id: string) => {
-    return `CAT${id.split("-")[0].substring(0, 5).toUpperCase()}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat("fr-BJ", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(dateString));
   };
 
   // --- Gestion du Formulaire (Ajout / Modification) ---
@@ -220,105 +284,120 @@ export const CategoriesTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gris-canon-de-fusil">
           Gestion des Catégories
         </h2>
-        <button
-          onClick={openAddModal}
-          className="flex items-center px-4 py-2.5 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-all font-semibold text-sm cursor-pointer shadow-xs"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Ajouter une catégorie
-        </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gris-canon-de-fusil/40" />
+            <input
+              type="text"
+              placeholder="Rechercher par nom..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-white border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir text-sm font-medium w-full sm:w-64"
+            />
+          </div>
+          <button
+            onClick={openAddModal}
+            className="flex items-center justify-center px-4 py-2 bg-bleu-saphir text-blanc rounded-xl hover:bg-bleu-saphir/90 transition-all font-semibold text-sm cursor-pointer shadow-xs whitespace-nowrap"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Ajouter une catégorie
+          </button>
+        </div>
       </div>
 
       <Table
         headers={[
-          "Ref",
-          "Image",
-          "Nom",
-          "Slug",
-          "Produits",
-          "Date création",
-          "Actions",
+          { label: "Ref", key: "id", sortable: true },
+          { label: "Image", sortable: false },
+          { label: "Nom", key: "name", sortable: true },
+          { label: "Slug", key: "slug", sortable: true },
+          {
+            label: "Nombre de produits",
+            key: "products_count",
+            sortable: true,
+          },
+          { label: "Date création", key: "created_at", sortable: true },
+          { label: "Actions", sortable: false },
         ]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSort={handleSort}
       >
-        {categories.map((category) => (
-          <tr
-            key={category.id}
-            className="hover:bg-gris-canon-de-fusil/2 transition-colors"
-          >
-            <td className="px-6 py-4 text-xs font-black text-bleu-saphir/70">
-              {formatRef(category.id)}
-            </td>
-            <td className="px-6 py-4">
-              {category.image ? (
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-10 h-10 object-cover rounded-lg bg-gray-100"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    const fallback = e.currentTarget
-                      .nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-              ) : null}
+        {sortedCategories.map((category) => {
+          const productCount = category.products ? category.products.length : 0;
+          return (
+            <tr
+              key={category.id}
+              className="hover:bg-gris-canon-de-fusil/2 transition-colors"
+            >
+              <td className="px-6 py-4 text-xs font-black text-bleu-saphir/70">
+                {formatRef(category.id)}
+              </td>
+              <td className="px-6 py-4">
+                {category.image ? (
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-10 h-10 object-cover rounded-lg bg-gray-100"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const fallback = e.currentTarget
+                        .nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = "flex";
+                    }}
+                  />
+                ) : null}
 
-              <div
-                className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400"
-                style={{ display: category.image ? "none" : "flex" }}
-              >
-                <Package className="h-5 w-5" />
-              </div>
-            </td>
-            <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-              {category.name}
-            </td>
-            <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
-              {category.slug}
-            </td>
-            <td className="px-6 py-4 text-sm">
-              {category.products && category.products.length > 0 ? (
-                <div className="flex flex-wrap gap-1 max-w-xs">
-                  {category.products.map((p) => (
-                    <span
-                      key={p.id}
-                      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-bleu-saphir/10 text-bleu-saphir"
-                    >
-                      {p.name}
-                    </span>
-                  ))}
+                <div
+                  className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400"
+                  style={{ display: category.image ? "none" : "flex" }}
+                >
+                  <Package className="h-5 w-5" />
                 </div>
-              ) : (
-                <span className="text-xs text-gray-400 italic">
-                  Aucun produit
+              </td>
+              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+                {category.name}
+              </td>
+              <td className="px-6 py-4 text-sm font-medium text-gris-canon-de-fusil/60">
+                {category.slug}
+              </td>
+              <td className="px-6 py-4 text-sm font-bold">
+                <span
+                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                    productCount > 0
+                      ? "bg-bleu-saphir/10 text-bleu-saphir"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {productCount} {productCount > 1 ? "produits" : "produit"}
                 </span>
-              )}
-            </td>
-            <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
-              {formatDate(category.created_at)}
-            </td>
-            <td className="px-6 py-4">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => openEditModal(category)}
-                  className="text-bleu-saphir p-1.5 hover:bg-bleu-saphir/5 rounded-lg cursor-pointer transition-colors"
-                >
-                  <Edit className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => openDeleteModal(category.id)}
-                  className="text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        ))}
-        {categories.length === 0 && (
+              </td>
+              <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
+                {formatDate(category.created_at)}
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => openEditModal(category)}
+                    className="text-bleu-saphir p-1.5 hover:bg-bleu-saphir/5 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal(category.id)}
+                    className="text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+        {sortedCategories.length === 0 && (
           <tr>
             <td
               colSpan={7}

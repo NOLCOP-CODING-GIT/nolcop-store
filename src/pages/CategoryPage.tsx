@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Grid, List, Search } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { Search } from "lucide-react";
 import type { Product } from "../types";
 import ProductCard from "../components/ProductCard";
-import { useCart } from "../hooks/useCart";
 import { supabase } from "../supabaseClient";
 
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("name");
   const [loading, setLoading] = useState(true);
-
-  const { state, addToCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categoryName, setCategoryName] = useState<string>("");
@@ -78,6 +74,10 @@ const CategoryPage: React.FC = () => {
 
   const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
+      case "price-asc":
+        return a.price - b.price;
+      case "price-desc":
+        return b.price - a.price;
       case "rating":
         return b.rating - a.rating;
       case "name":
@@ -85,109 +85,6 @@ const CategoryPage: React.FC = () => {
         return a.name.localeCompare(b.name);
     }
   });
-
-  const ProductListItem = ({ product }: { product: Product }) => {
-    const isAlreadyInCart = state.items.some(
-      (item) => item.product.id === product.id,
-    );
-    const inStock = product.stock !== undefined ? product.stock > 0 : true;
-
-    const formatPrice = (price: number) => {
-      return new Intl.NumberFormat("fr-BJ", {
-        style: "currency",
-        currency: "XOF",
-        maximumFractionDigits: 0,
-      }).format(price);
-    };
-
-    return (
-      <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-5 hover:shadow-md transition-shadow duration-300">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden bg-gris-canon-de-fusil/5 rounded-xl border border-gris-canon-de-fusil/5 flex items-center justify-center">
-            <Link
-              to={`/products/${product.id}`}
-              className="w-full h-full block"
-            >
-              <img
-                src={product.images[0] || "/images/placeholder.png"}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-              />
-            </Link>
-          </div>
-
-          <div className="flex-1 min-w-0 space-y-2">
-            {product.category && (
-              <span className="inline-block text-[10px] font-black uppercase tracking-wider text-bleu-saphir/60 bg-bleu-saphir/5 px-2.5 py-1 rounded-md">
-                {product.category}
-              </span>
-            )}
-
-            <h3 className="text-base sm:text-lg font-bold text-gris-canon-de-fusil leading-tight truncate">
-              <Link
-                to={`/products/${product.id}`}
-                className="hover:text-bleu-saphir transition-colors"
-              >
-                {product.name}
-              </Link>
-            </h3>
-
-            {product.description && (
-              <p className="text-xs sm:text-sm text-gris-canon-de-fusil/60 line-clamp-2 leading-relaxed">
-                {product.description}
-              </p>
-            )}
-
-            <div className="flex items-center space-x-1.5">
-              <div className="flex items-center text-amber-500">
-                {[...Array(5)].map((_, i) => (
-                  <svg
-                    key={i}
-                    className={`h-3.5 w-3.5 ${
-                      i < Math.floor(product.rating)
-                        ? "fill-current"
-                        : "text-gris-canon-de-fusil/20"
-                    }`}
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <span className="text-[11px] font-bold text-gris-canon-de-fusil/50">
-                {product.rating} ({product.reviews} avis)
-              </span>
-            </div>
-          </div>
-
-          <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-gris-canon-de-fusil/5 shrink-0">
-            <div className="sm:text-right">
-              <p className="text-xl sm:text-2xl font-black text-bleu-saphir">
-                {formatPrice(product.price)}
-              </p>
-            </div>
-            <button
-              disabled={isAlreadyInCart || !inStock}
-              onClick={() => addToCart(product as any, 1)}
-              className={`px-5 py-2.5 rounded-xl transition-colors shadow-xs text-xs font-bold whitespace-nowrap ${
-                !inStock
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : isAlreadyInCart
-                    ? "bg-green-100 text-green-600 border border-green-200 cursor-not-allowed"
-                    : "bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 cursor-pointer"
-              }`}
-            >
-              {isAlreadyInCart
-                ? "Déjà au panier"
-                : !inStock
-                  ? "Rupture de stock"
-                  : "Ajouter au panier"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -245,29 +142,6 @@ const CategoryPage: React.FC = () => {
               <option value="price-desc">Prix décroissant</option>
               <option value="rating">Meilleures notes</option>
             </select>
-
-            <div className="flex items-center space-x-2 bg-gris-canon-de-fusil/10 p-1 rounded-xl border border-gris-canon-de-fusil/5">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-lg transition-all cursor-pointer ${
-                  viewMode === "grid"
-                    ? "bg-blanc text-bleu-saphir shadow-xs font-bold"
-                    : "text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
-                }`}
-              >
-                <Grid className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 rounded-lg transition-all cursor-pointer ${
-                  viewMode === "list"
-                    ? "bg-blanc text-bleu-saphir shadow-xs font-bold"
-                    : "text-gris-canon-de-fusil/40 hover:text-gris-canon-de-fusil/70"
-                }`}
-              >
-                <List className="h-5 w-5" />
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -285,20 +159,10 @@ const CategoryPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
-          }
-        >
-          {sortedProducts.map((product) =>
-            viewMode === "grid" ? (
-              <ProductCard key={product.id} product={product} />
-            ) : (
-              <ProductListItem key={product.id} product={product} />
-            ),
-          )}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
+          {sortedProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
         </div>
       )}
     </div>

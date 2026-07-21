@@ -299,7 +299,7 @@ const ProductDetail: React.FC = () => {
               {product.images && product.images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-blanc/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-xs">
                   {product.images
-                    .slice(0, 4)
+                    .slice(0, product.images.length)
                     .map((_: string, index: number) => (
                       <button
                         key={index}

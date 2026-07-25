@@ -42,7 +42,7 @@ const Checkout: React.FC = () => {
       navigate("/login");
       return;
     }
-    
+
     if (state.items.length === 0) {
       alert("Votre panier est vide.");
       return;
@@ -51,45 +51,50 @@ const Checkout: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1. Créer la commande
       const { data: orderData, error: orderError } = await supabase
-        .from('orders')
+        .from("orders")
         .insert({
           user_id: user.id,
           total: total,
-          status: 'pending',
+          status: "pending",
           payment_method: paymentMethod,
           shipping_first_name: shippingInfo.firstName,
           shipping_last_name: shippingInfo.lastName,
           shipping_address: shippingInfo.address,
-          shipping_city: 'Cotonou', // Valeur par défaut
-          shipping_phone: shippingInfo.phone
+          shipping_city: "Cotonou",
+          shipping_phone: shippingInfo.phone,
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // 2. Créer les éléments de la commande
-      const orderItems = state.items.map(item => ({
-        order_id: orderData.id,
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price_at_time: item.product.price,
-        specifications: { color: item.selectedColor, size: item.selectedSize }
-      }));
+      const orderItems = state.items.map((item) => {
+        const priceAtTime = item.product.discount
+          ? item.product.price * (1 - item.product.discount / 100)
+          : item.product.price;
+
+        return {
+          order_id: orderData.id,
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price_at_time: priceAtTime,
+          specifications: {
+            color: item.selectedColor,
+            size: item.selectedSize,
+          },
+        };
+      });
 
       const { error: itemsError } = await supabase
-        .from('order_items')
+        .from("order_items")
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
 
-      // 3. Vider le panier et rediriger
       clearCart();
       alert("Commande effectuée avec succès !");
-      navigate('/orders');
-
+      navigate("/orders");
     } catch (err) {
       console.error("Erreur lors de la création de la commande :", err);
       alert("Une erreur est survenue lors du traitement de votre commande.");
@@ -105,12 +110,10 @@ const Checkout: React.FC = () => {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Formulaires d'expédition et paiement */}
         <form
           onSubmit={handlePaymentSubmit}
           className="lg:col-span-2 space-y-6"
         >
-          {/* Section 1 : Livraison */}
           <div className="bg-blanc border border-gris-canon-de-fusil/5 shadow-sm rounded-2xl p-6 space-y-4">
             <h2 className="text-lg font-semibold flex items-center mb-2">
               <Truck className="h-5 w-5 mr-2 text-bleu-saphir" />
@@ -159,7 +162,6 @@ const Checkout: React.FC = () => {
             />
           </div>
 
-          {/* Section 2 : Méthode de paiement */}
           <div className="bg-blanc border border-gris-canon-de-fusil/5 shadow-sm rounded-2xl p-6 space-y-4">
             <h2 className="text-lg font-semibold flex items-center mb-4">
               <ShieldCheck className="h-5 w-5 mr-2 text-bleu-saphir" />
@@ -220,7 +222,6 @@ const Checkout: React.FC = () => {
               </button>
             </div>
 
-            {/* Champs spécifiques selon la méthode */}
             {paymentMethod === "credit_card" && (
               <div className="space-y-3 pt-4 border-t border-gris-canon-de-fusil/5">
                 <input
@@ -277,39 +278,47 @@ const Checkout: React.FC = () => {
             disabled={loading}
             className="w-full flex items-center justify-center px-6 py-3.5 bg-bleu-saphir text-blanc rounded-xl font-bold hover:opacity-90 shadow-md transition-all cursor-pointer text-base disabled:opacity-50"
           >
-            {loading ? "Traitement en cours..." : `Procéder au paiement de ${formatPrice(total)}`}
+            {loading
+              ? "Traitement en cours..."
+              : `Procéder au paiement de ${formatPrice(total)}`}
             {!loading && <ArrowRight className="h-5 w-5 ml-2" />}
           </button>
         </form>
 
-        {/* Colonne latérale : Résumé de commande simplifié */}
         <div className="lg:col-span-1">
           <div className="bg-blanc border border-gris-canon-de-fusil/5 shadow-sm rounded-2xl p-6 sticky top-4 space-y-4">
             <h2 className="text-lg font-semibold">Vos articles</h2>
 
             <div className="divide-y divide-gris-canon-de-fusil/10 max-h-60 overflow-y-auto pr-1">
-              {state.items.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-                >
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={item.product.images[0]}
-                      alt={item.product.name}
-                      className="w-12 h-12 rounded-lg object-cover bg-gris-canon-de-fusil/5"
-                    />
-                    <div>
-                      <h4 className="text-sm font-semibold text-gris-canon-de-fusil line-clamp-1">
-                        {item.product.name}
-                      </h4>
-                      <p className="text-xs text-gris-canon-de-fusil/50">
-                        Qté : {item.quantity}
-                      </p>
+              {state.items.map((item, index) => {
+                const effectiveUnitPrice = item.product.discount
+                  ? item.product.price * (1 - item.product.discount / 100)
+                  : item.product.price;
+
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={item.product.images[0]}
+                        alt={item.product.name}
+                        className="w-12 h-12 rounded-lg object-cover bg-gris-canon-de-fusil/5"
+                      />
+                      <div>
+                        <h4 className="text-sm font-semibold text-gris-canon-de-fusil line-clamp-1">
+                          {item.product.name}
+                        </h4>
+                        <p className="text-xs text-gris-canon-de-fusil/50">
+                          Qté : {item.quantity} x{" "}
+                          {formatPrice(effectiveUnitPrice)}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-gris-canon-de-fusil/10 pt-4 space-y-2 text-sm">

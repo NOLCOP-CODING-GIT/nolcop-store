@@ -257,7 +257,7 @@ const Orders: React.FC = () => {
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-gris-canon-de-fusil/5 mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 gap-4">
         <div className="flex items-center">
           <div className="h-12 w-12 bg-bleu-saphir/5 text-bleu-saphir rounded-xl flex items-center justify-center mr-4 shrink-0">
             <Package className="h-6 w-6" />
@@ -278,7 +278,7 @@ const Orders: React.FC = () => {
 
       {/* Empty State */}
       {orders.length === 0 ? (
-        <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs max-w-md mx-auto">
+        <div className="text-center py-16 bg-blanc rounded-2xl shadow-xs max-w-md mx-auto">
           <div className="h-16 w-16 bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <Package className="h-8 w-8" />
           </div>
@@ -500,7 +500,7 @@ const Orders: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="relative pl-6 space-y-6 before:absolute before:bottom-2 before:top-2 before:left-[11px] before:w-0.5 before:bg-gris-canon-de-fusil/10">
+                    <div className="relative pl-6 space-y-6 before:absolute before:bottom-2 before:top-2 before:left-2.75 before:w-0.5 before:bg-gris-canon-de-fusil/10">
                       {trackingSteps.map((step, idx) => {
                         const stepNum = idx + 1;
                         const isCompleted = currentStep >= stepNum;
@@ -512,7 +512,7 @@ const Orders: React.FC = () => {
                             className="relative flex items-start gap-4 text-xs"
                           >
                             <div
-                              className={`absolute -left-[21px] h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-300 bg-blanc z-10 ${
+                              className={`absolute -left-5.25 h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-300 bg-blanc z-10 ${
                                 isCompleted
                                   ? "border-bleu-saphir bg-bleu-saphir text-blanc"
                                   : "border-gris-canon-de-fusil/20"

@@ -14,14 +14,14 @@ interface CartContextType {
     product: Product,
     quantity?: number,
     color?: string,
-    size?: string
+    size?: string,
   ) => void;
   removeFromCart: (productId: string, color?: string, size?: string) => void;
   updateQuantity: (
     productId: string,
     quantity: number,
     color?: string,
-    size?: string
+    size?: string,
   ) => void;
   clearCart: () => void;
 }
@@ -51,6 +51,12 @@ type CartAction =
     }
   | { type: "CLEAR_CART" };
 
+const getEffectivePrice = (product: Product) => {
+  return product.discount
+    ? product.price * (1 - product.discount / 100)
+    : product.price;
+};
+
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case "ADD_TO_CART": {
@@ -59,7 +65,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         (item) =>
           item.product.id === product.id &&
           item.selectedColor === color &&
-          item.selectedSize === size
+          item.selectedSize === size,
       );
 
       let newItems: CartItem[];
@@ -75,8 +81,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       }
 
       const total = newItems.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0
+        (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
+        0,
       );
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -91,12 +97,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
             item.product.id === productId &&
             item.selectedColor === color &&
             item.selectedSize === size
-          )
+          ),
       );
 
       const total = newItems.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0
+        (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
+        0,
       );
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -117,8 +123,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       });
 
       const total = newItems.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0
+        (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
+        0,
       );
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -150,7 +156,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     product: Product,
     quantity = 1,
     color?: string,
-    size?: string
+    size?: string,
   ) => {
     dispatch({
       type: "ADD_TO_CART",
@@ -166,7 +172,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     productId: string,
     quantity: number,
     color?: string,
-    size?: string
+    size?: string,
   ) => {
     if (quantity <= 0) {
       removeFromCart(productId, color, size);

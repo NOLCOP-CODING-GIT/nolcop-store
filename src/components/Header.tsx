@@ -92,12 +92,16 @@ const Header: React.FC = () => {
             </button>
 
             {/* Wishlist */}
-            <Link
-              to="/wishlist"
-              className="text-gris-canon-de-fusil hover:text-bleu-saphir transition-colors"
-            >
-              <Heart className="h-6 w-6" />
-            </Link>
+            {user ? (
+              <button
+                onClick={() => navigate(user ? "/wishlist" : "/login")}
+                className="text-gris-canon-de-fusil hover:text-bleu-saphir transition-colors cursor-pointer"
+              >
+                <Heart className="h-6 w-6" />
+              </button>
+            ) : (
+              ""
+            )}
 
             {/* Panier */}
             <Link
@@ -254,19 +258,17 @@ const Header: React.FC = () => {
                   ""
                 )}
 
-                {/* Section Utilisateur / Favoris */}
+                {/* Section Utilisateur */}
                 <div className="border-t border-gris-canon-de-fusil/10 pt-2 mt-2">
-                  <Link
-                    to="/wishlist"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
-                  >
-                    <Heart className="h-5 w-5" />
-                    <span>Favoris</span>
-                  </Link>
-
                   {user ? (
                     <>
+                      <Link
+                        to="/wishlist"
+                        className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
+                      >
+                        <Heart className="h-5 w-5" />
+                        <span>Favoris</span>
+                      </Link>
                       <Link
                         to="/profile"
                         onClick={() => setIsMenuOpen(false)}

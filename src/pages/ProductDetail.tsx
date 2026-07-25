@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ShoppingCart,
   Heart,
@@ -17,6 +17,7 @@ import {
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../supabaseClient";
+import { useWishlist } from "../hooks/useWishlist";
 
 interface ReviewItem {
   id: string;
@@ -31,6 +32,7 @@ interface ReviewItem {
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<any | null>(null);
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,8 @@ const ProductDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "description" | "reviews" | "specs"
   >("description");
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const isFavorite = product ? isInWishlist(product.id) : false;
 
   // État du formulaire d'avis
   const [newRating, setNewRating] = useState<number>(5);
@@ -87,6 +91,16 @@ const ProductDetail: React.FC = () => {
       maximumFractionDigits: 0,
     }).format(validAmount);
   }
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    toggleWishlist(product.id);
+  };
 
   const fetchReviews = async (productId: string) => {
     try {
@@ -221,6 +235,11 @@ const ProductDetail: React.FC = () => {
     e.preventDefault();
     setReviewMessage(null);
 
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
     if (!newComment.trim()) {
       setReviewMessage({
         type: "error",
@@ -336,15 +355,11 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const finalPrice =
-    product.discount > 0 && product.discount < product.price
-      ? product.discount
-      : product.price;
-
-  const discountPercentage =
-    product.discount > 0 && product.discount < product.price
-      ? Math.round(((product.price - product.discount) / product.price) * 100)
-      : 0;
+  const discountPercentage = product.discount || 0;
+  const displayPrice = product.discount
+    ? product.price * (1 - product.discount / 100)
+    : product.price;
+  const originalPrice = product.price;
 
   return (
     <div className="min-h-screen bg-blanc">
@@ -485,13 +500,13 @@ const ProductDetail: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex items-baseline gap-3 pt-2 border-t border-gris-canon-de-fusil/5">
-                <span className="text-2xl sm:text-3xl font-black text-bleu-saphir tracking-tight">
-                  {formatCurrency(finalPrice)}
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1.5 min-w-0">
+                <span className="text-lg text-bleu-saphir sm:text-base md:text-lg font-bold truncate">
+                  {formatCurrency(displayPrice)}
                 </span>
                 {discountPercentage > 0 && (
-                  <span className="text-sm sm:text-base text-gris-canon-de-fusil/40 line-through font-semibold">
-                    {formatCurrency(product.price)}
+                  <span className="text-[10px] sm:text-xs text-gris-canon-de-fusil/40 line-through truncate">
+                    {formatCurrency(originalPrice)}
                   </span>
                 )}
               </div>
@@ -529,7 +544,7 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <button
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
@@ -546,10 +561,19 @@ const ProductDetail: React.FC = () => {
                 </button>
 
                 <button
-                  className="p-3.5 rounded-xl border border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/40 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition-colors cursor-pointer"
-                  title="Ajouter aux favoris"
+                  onClick={handleToggleWishlist}
+                  className={`h-10 w-10 flex justify-center items-center rounded-full shadow-md transition-colors cursor-pointer ${
+                    isFavorite
+                      ? "bg-rose-500 text-blanc"
+                      : "bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10"
+                  }`}
+                  aria-label={
+                    isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"
+                  }
                 >
-                  <Heart className="h-5 w-5" />
+                  <Heart
+                    className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`}
+                  />
                 </button>
               </div>
             </div>

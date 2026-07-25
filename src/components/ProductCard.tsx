@@ -1,11 +1,12 @@
-// Remplacez tout le contenu de ProductCard.tsx par ce code :
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Heart, ShoppingCart, Eye, Check } from "lucide-react";
 import type { Product } from "../types";
 import { useCart } from "../hooks/useCart";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { useWishlist } from "../hooks/useWishlist";
+import { useAuth } from "../hooks/useAuth";
 
 interface ProductCardProps {
   product: Product;
@@ -20,10 +21,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [selectedImage, setSelectedImage] = useState(0);
   const isMobile = useIsMobile();
   const { state, addToCart } = useCart();
+  const { user } = useAuth();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const navigate = useNavigate();
 
   const isAlreadyInCart = state.items.some(
     (item) => item.product.id === product.id,
   );
+  const isFavorite = isInWishlist(product.id);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
@@ -44,6 +49,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    toggleWishlist(product.id);
   };
 
   const discountPercentage = product.discount || 0;
@@ -146,10 +161,19 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <Eye className="h-3.5 w-3.5" />
         </button>
         <button
-          className="bg-blanc p-1.5 rounded-full shadow-md hover:bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil transition-colors cursor-pointer"
-          aria-label="Ajouter aux favoris"
+          onClick={handleToggleWishlist}
+          className={`p-1.5 rounded-full shadow-md transition-colors cursor-pointer ${
+            isFavorite
+              ? "bg-rose-500 text-blanc"
+              : "bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10"
+          }`}
+          aria-label={
+            isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"
+          }
         >
-          <Heart className="h-3.5 w-3.5" />
+          <Heart
+            className={`h-3.5 w-3.5 ${isFavorite ? "fill-current" : ""}`}
+          />
         </button>
       </motion.div>
 

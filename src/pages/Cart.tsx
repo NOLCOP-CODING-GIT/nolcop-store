@@ -14,7 +14,6 @@ const Cart: React.FC = () => {
     }).format(price);
   };
 
-  // Ajouter des produits de démo au panier s'il est vide
   useEffect(() => {
     if (state.items.length === 0) {
       // Ajouter les produits au panier
@@ -27,6 +26,12 @@ const Cart: React.FC = () => {
     } else {
       removeFromCart(id);
     }
+  };
+
+  const getItemUnitPrice = (product: any) => {
+    return product.discount
+      ? product.price * (1 - product.discount / 100)
+      : product.price;
   };
 
   const subtotal = state.total;
@@ -63,108 +68,100 @@ const Cart: React.FC = () => {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          {state.items.map((item) => (
-            <div
-              key={`${item.product.id}-${item.selectedColor || ""}-${item.selectedSize || ""}`}
-              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gris-canon-de-fusil/5 hover:border-gris-canon-de-fusil/10 transition-all gap-4 bg-blanc"
-            >
-              {/* Partie Gauche : Image + Infos Médias */}
-              <div className="flex items-center space-x-4 flex-1">
-                <img
-                  src={item.product.images[0]}
-                  alt={item.product.name}
-                  className="w-24 h-24 sm:w-20 sm:h-20 object-cover rounded-lg bg-gris-canon-de-fusil/5 shrink-0"
-                />
+          {state.items.map((item) => {
+            const unitPrice = getItemUnitPrice(item.product);
 
-                <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-gris-canon-de-fusil line-clamp-1">
-                    {item.product.name}
-                  </h3>
-                  <p className="text-xs font-medium text-bleu-clair">
-                    {item.product.category}
-                  </p>
+            return (
+              <div
+                key={`${item.product.id}-${item.selectedColor || ""}-${item.selectedSize || ""}`}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gris-canon-de-fusil/5 hover:border-gris-canon-de-fusil/10 transition-all gap-4 bg-blanc"
+              >
+                <div className="flex items-center space-x-4 flex-1">
+                  <img
+                    src={item.product.images[0]}
+                    alt={item.product.name}
+                    className="w-24 h-24 sm:w-20 sm:h-20 object-cover rounded-lg bg-gris-canon-de-fusil/5 shrink-0"
+                  />
 
-                  {/* Options (Taille/Couleur) disposées en badges horizontaux */}
-                  {(item.selectedColor || item.selectedSize) && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {item.selectedColor && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/80 border border-gris-canon-de-fusil/10">
-                          Couleur : {item.selectedColor}
-                        </span>
-                      )}
-                      {item.selectedSize && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/80 border border-gris-canon-de-fusil/10">
-                          Taille : {item.selectedSize}
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-gris-canon-de-fusil line-clamp-1">
+                      {item.product.name}
+                    </h3>
+                    <p className="text-xs font-medium text-bleu-clair">
+                      {item.product.category}
+                    </p>
+
+                    <div className="sm:hidden pt-1">
+                      <p className="text-sm font-bold text-bleu-saphir">
+                        {formatPrice(unitPrice)}
+                      </p>
+                      {(item.product.discount ?? 0) > 0 && (
+                        <span className="text-xs text-gris-canon-de-fusil/40 line-through">
+                          {formatPrice(item.product.price)}
                         </span>
                       )}
                     </div>
-                  )}
+                  </div>
+                </div>
 
-                  <p className="text-sm font-bold text-bleu-saphir sm:hidden pt-1">
-                    {formatPrice(item.product.price)}
-                  </p>
+                <div className="flex items-center justify-between sm:justify-end sm:space-x-8 border-t sm:border-t-0 pt-3 sm:pt-0 border-gris-canon-de-fusil/5">
+                  <div className="hidden sm:block text-center min-w-17.5">
+                    <p className="text-xs text-gris-canon-de-fusil/40">Prix</p>
+                    <p className="text-sm font-semibold text-gris-canon-de-fusil">
+                      {formatPrice(unitPrice)}
+                    </p>
+                    {(item.product.discount ?? 0) > 0 && (
+                      <p className="text-[10px] text-gris-canon-de-fusil/40 line-through">
+                        {formatPrice(item.product.price)}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center bg-gris-canon-de-fusil/5 rounded-lg p-1 border border-gris-canon-de-fusil/5">
+                    <button
+                      onClick={() =>
+                        handleQuantityChange(item.product.id, item.quantity - 1)
+                      }
+                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-8 text-center text-sm font-semibold text-gris-canon-de-fusil">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() =>
+                        handleQuantityChange(item.product.id, item.quantity + 1)
+                      }
+                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="text-right min-w-20">
+                    <p className="text-xs sm:hidden text-gris-canon-de-fusil/40">
+                      Sous-total
+                    </p>
+                    <p className="text-base font-bold text-gris-canon-de-fusil">
+                      {formatPrice(unitPrice * item.quantity)}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => removeFromCart(item.product.id)}
+                    className="text-gris-canon-de-fusil/40 hover:text-orange-rougi p-2 rounded-lg hover:bg-orange-rougi/5 transition-all"
+                    aria-label="Supprimer l'article"
+                  >
+                    <Trash2 className="h-4 text-rouge-ecarlate w-4" />
+                  </button>
                 </div>
               </div>
-
-              {/* Partie Droite : Actions (Quantité + Prix Total + Poubelle) */}
-              <div className="flex items-center justify-between sm:justify-end sm:space-x-8 border-t sm:border-t-0 pt-3 sm:pt-0 border-gris-canon-de-fusil/5">
-                {/* Prix unitaire caché sur mobile car déjà affiché en haut, visible sur Desktop */}
-                <div className="hidden sm:block text-center min-w-[70px]">
-                  <p className="text-xs text-gris-canon-de-fusil/40">Prix</p>
-                  <p className="text-sm font-semibold text-gris-canon-de-fusil">
-                    {formatPrice(item.product.price)}
-                  </p>
-                </div>
-
-                {/* Sélecteur de quantité stylisé */}
-                <div className="flex items-center bg-gris-canon-de-fusil/5 rounded-lg p-1 border border-gris-canon-de-fusil/5">
-                  <button
-                    onClick={() =>
-                      handleQuantityChange(item.product.id, item.quantity - 1)
-                    }
-                    className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all"
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="w-8 text-center text-sm font-semibold text-gris-canon-de-fusil">
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() =>
-                      handleQuantityChange(item.product.id, item.quantity + 1)
-                    }
-                    className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                {/* Prix Total pour la ligne */}
-                <div className="text-right min-w-[80px]">
-                  <p className="text-xs sm:hidden text-gris-canon-de-fusil/40">
-                    Sous-total
-                  </p>
-                  <p className="text-base font-bold text-gris-canon-de-fusil">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </p>
-                </div>
-
-                {/* Bouton de suppression */}
-                <button
-                  onClick={() => removeFromCart(item.product.id)}
-                  className="text-gris-canon-de-fusil/40 hover:text-orange-rougi p-2 rounded-lg hover:bg-orange-rougi/5 transition-all"
-                  aria-label="Supprimer l'article"
-                >
-                  <Trash2 className="h-4 text-rouge-ecarlate w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-blanc rounded-lg shadow-md p-6 sticky top-4 border border-gris-canon-de-fusil/5">
             <h2 className="text-xl font-semibold text-gris-canon-de-fusil mb-4">
@@ -193,7 +190,6 @@ const Cart: React.FC = () => {
               </div>
             </div>
 
-            {/* Promo Code */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                 Code promo
@@ -212,7 +208,6 @@ const Cart: React.FC = () => {
               </div>
             </div>
 
-            {/* Checkout Button */}
             <Link
               to="/checkout"
               className="w-full flex items-center justify-center px-6 py-3 bg-bleu-saphir text-blanc rounded-lg font-semibold hover:opacity-90 shadow-md transition-all mb-4"
@@ -221,7 +216,6 @@ const Cart: React.FC = () => {
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
 
-            {/* Security Info */}
             <div className="text-left text-xs text-gris-canon-de-fusil/50 space-y-1 pt-2 border-t border-gris-canon-de-fusil/5">
               <p>🔒 Paiement sécurisé et crypté</p>
               <p>📦 Livraison sous 2-3 jours ouvrés</p>

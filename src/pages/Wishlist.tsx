@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, Trash2, ShoppingCart, AlertCircle, Check } from "lucide-react";
+import { Heart, AlertCircle } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { useCart } from "../hooks/useCart";
 import { supabase } from "../supabaseClient";
+
 import type { Product } from "../types";
+import WishlistCard from "../components/WishlistCard";
 
 const Wishlist: React.FC = () => {
   const { user } = useAuth();
-  const { state: cartState, addToCart } = useCart();
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,14 +68,6 @@ const Wishlist: React.FC = () => {
     } catch (error) {
       console.error("Erreur lors de la suppression du favori", error);
     }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("fr-BJ", {
-      style: "currency",
-      currency: "XOF",
-      maximumFractionDigits: 0,
-    }).format(price);
   };
 
   if (!user) {
@@ -147,7 +139,7 @@ const Wishlist: React.FC = () => {
       </div>
 
       {wishlist.length === 0 ? (
-        <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs max-w-xl mx-auto px-4">
+        <div className="text-center py-16 bg-blanc rounded-2xl shadow-xs max-w-xl mx-auto px-4">
           <div className="text-gris-canon-de-fusil/20 mb-4">
             <Heart className="h-14 w-14 mx-auto" />
           </div>
@@ -166,84 +158,14 @@ const Wishlist: React.FC = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {wishlist.map((item) => {
-            const isAlreadyInCart = cartState.items.some(
-              (cartItem) => cartItem.product.id === item.id,
-            );
-            const inStock = item.stock !== undefined ? item.stock > 0 : true;
-
-            return (
-              <div
-                key={item.id}
-                className="bg-blanc rounded-2xl border border-gris-canon-de-fusil/5 shadow-xs overflow-hidden group hover:border-gris-canon-de-fusil/10 transition-all duration-300"
-              >
-                <div className="relative aspect-video sm:aspect-square md:aspect-video w-full overflow-hidden bg-gris-canon-de-fusil/5">
-                  <img
-                    src={item.images?.[0] || "/images/placeholder.png"}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <button
-                    onClick={() => removeFromWishlist(item.id)}
-                    className="absolute top-3 right-3 p-2 bg-blanc text-rose-600 rounded-xl shadow-sm border border-gris-canon-de-fusil/5 hover:bg-rose-500/5 transition-all cursor-pointer"
-                    title="Supprimer des favoris"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <div className="p-5 space-y-4">
-                  <div>
-                    <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider text-bleu-saphir/60 bg-bleu-saphir/5 px-2.5 py-1 rounded-md mb-1">
-                      {item.category}
-                    </span>
-                    <h3 className="text-base sm:text-lg font-black text-gris-canon-de-fusil line-clamp-1">
-                      {item.name}
-                    </h3>
-                  </div>
-
-                  <p className="text-xl sm:text-2xl font-black text-bleu-saphir">
-                    {formatPrice(item.price)}
-                  </p>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      disabled={isAlreadyInCart || !inStock}
-                      onClick={() => addToCart(item, 1)}
-                      className={`flex-1 flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs ${
-                        !inStock
-                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : isAlreadyInCart
-                            ? "bg-green-100 text-green-600 border border-green-200 cursor-not-allowed"
-                            : "bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 cursor-pointer"
-                      }`}
-                    >
-                      {isAlreadyInCart ? (
-                        <>
-                          <Check className="h-4 w-4 mr-1.5" />
-                          Au panier
-                        </>
-                      ) : !inStock ? (
-                        "En rupture"
-                      ) : (
-                        <>
-                          <ShoppingCart className="h-4 w-4 mr-1.5" />
-                          Ajouter
-                        </>
-                      )}
-                    </button>
-                    <Link
-                      to={`/products/${item.id}`}
-                      className="flex-1 flex items-center justify-center px-4 py-2.5 border border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/70 hover:bg-gris-canon-de-fusil/5 rounded-xl text-xs font-bold transition-all text-center"
-                    >
-                      Détails
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
+          {wishlist.map((product) => (
+            <WishlistCard
+              key={product.id}
+              product={product}
+              onRemove={removeFromWishlist}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -44,23 +44,31 @@ const Footer: React.FC = () => {
             </p>
 
             {/* Social Media */}
-            <div className="flex space-x-3">
-              <a
-                href="https://instagram.com"
+            <div className="flex items-center space-x-3">
+              <Link
+                to="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
               >
                 <img src="/instagram.png" className="h-auto w-7" />
-              </a>
-              <a
-                href="https://wa.me/2290140585835?text=Bonjour%20je%20souhaite%20avoir%20des%20informations"
+              </Link>
+              <Link
+                to="https://wa.me/2290140585835?text=Bonjour%20je%20souhaite%20avoir%20des%20informations"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
               >
                 <img src="/whatsapp.png" className="h-auto w-7" />
-              </a>
+              </Link>
+              <Link
+                to="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+              >
+                <img src="/youtube.png" className="h-auto w-7" />
+              </Link>
             </div>
           </div>
 
@@ -132,21 +140,35 @@ const Footer: React.FC = () => {
               <Mail className="h-5 w-5 text-bleu-clair" />
               <div>
                 <p className="text-xs text-blanc/50">Email</p>
-                <p className="text-sm text-blanc">nolcopcoding@gmail.com</p>
+                <Link
+                  to="mailto:nolcopcoding@gmail.com"
+                  className="text-sm text-blanc"
+                >
+                  nolcopcoding@gmail.com
+                </Link>
               </div>
             </div>
             <div className="flex items-center space-x-3">
               <Phone className="h-5 w-5 text-bleu-clair" />
               <div>
                 <p className="text-xs text-blanc/50">Téléphone</p>
-                <p className="text-sm text-blanc">+229 01 40 58 58 35</p>
+                <Link to="tel:+2290140585835" className="text-sm text-blanc">
+                  +229 01 40 58 58 35
+                </Link>
               </div>
             </div>
             <div className="flex items-center space-x-3">
               <MapPin className="h-5 w-5 text-bleu-clair" />
               <div>
                 <p className="text-xs text-blanc/50">Adresse</p>
-                <p className="text-sm text-blanc">Cotonou, Bénin - Segbeya</p>
+                <Link
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  to="https://maps.app.goo.gl/bykr9ajj4ciTZFdq7"
+                  className="text-sm text-blanc"
+                >
+                  Cotonou, Bénin - Segbeya
+                </Link>
               </div>
             </div>
           </div>
@@ -182,8 +204,16 @@ const Footer: React.FC = () => {
         {/* Bas de page : Copyright & Liens Légaux */}
         <div className="border-t border-blanc/10 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-blanc/50">
           <p className="text-center md:text-left">
-            &copy; {currentYear} Nolcop Store. Développé par Nolcop Coding. Tous
-            droits réservés.
+            &copy; {currentYear} Nolcop Store. Développé par{" "}
+            <Link
+              to="https://nolcop.unaux.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-orange-rougi font-bold"
+            >
+              Nolcop Coding
+            </Link>
+            . Tous droits réservés.
           </p>
 
           {/* Nouveaux Menus ajoutés en bas */}

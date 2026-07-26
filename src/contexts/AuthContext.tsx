@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
       } else {
         // 2. Sinon, vérifier si un utilisateur simple est connecté via notre token local sécurisé
-        const userId = sessionStorage.getItem("nolcop_session");
+        const userId = localStorage.getItem("nolcop_session");
         if (userId) {
           const { data: profile } = await supabase
             .from("users")
@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
               updatedAt: profile.updated_at,
             } as User);
           } else {
-            sessionStorage.removeItem("nolcop_session");
+            localStorage.removeItem("nolcop_session");
           }
         }
       }
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             } as User);
           }
         } else if (event === "SIGNED_OUT") {
-          if (!sessionStorage.getItem("nolcop_session")) {
+          if (!localStorage.getItem("nolcop_session")) {
             setUser(null);
           }
         }
@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           updatedAt: userData.updated_at,
         } as User);
 
-        sessionStorage.setItem("nolcop_session", userData.id);
+        localStorage.setItem("nolcop_session", userData.id);
         return { success: true };
       }
 
@@ -214,7 +214,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         updatedAt: userData.updated_at,
       } as User);
 
-      sessionStorage.setItem("nolcop_session", userData.id);
+      localStorage.setItem("nolcop_session", userData.id);
 
       return { success: true, message: "Inscription réussie" };
     } catch (err: any) {
@@ -233,7 +233,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     await supabase.auth.signOut();
 
     // Déconnexion Utilisateur Simple
-    sessionStorage.removeItem("nolcop_session");
+    localStorage.removeItem("nolcop_session");
     setUser(null);
     setLoading(false);
   };

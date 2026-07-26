@@ -264,6 +264,7 @@ const Header: React.FC = () => {
                     <>
                       <Link
                         to="/wishlist"
+                        onClick={() => setIsMenuOpen(false)}
                         className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
                       >
                         <Heart className="h-5 w-5" />

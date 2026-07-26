@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "../hooks/useCart";
+import { useAuth } from "../hooks/useAuth";
 
 const Cart: React.FC = () => {
+  const { user } = useAuth();
   const { state, updateQuantity, removeFromCart, addToCart } = useCart();
   const [promoCode, setPromoCode] = useState("");
   const formatPrice = (price: number) => {
@@ -209,16 +211,20 @@ const Cart: React.FC = () => {
             </div>
 
             <Link
-              to="/checkout"
-              className="w-full flex items-center justify-center px-6 py-3 bg-bleu-saphir text-blanc rounded-lg font-semibold hover:opacity-90 shadow-md transition-all mb-4"
+              to={user ? "/checkout" : "/login"}
+              className={
+                user
+                  ? "w-full flex items-center justify-center px-6 py-3 bg-bleu-saphir text-blanc rounded-lg font-semibold hover:opacity-90 shadow-md transition-all mb-4"
+                  : "w-full flex items-center justify-center px-6 py-3 bg-gris-canon-de-fusil text-blanc rounded-lg font-semibold cursor-not-allowed opacity-50 mb-4"
+              }
             >
-              Passer la commande
+              {user ? "Passer la commande" : "Veuillez vous connecter"}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
 
-            <div className="text-left text-xs text-gris-canon-de-fusil/50 space-y-1 pt-2 border-t border-gris-canon-de-fusil/5">
-              <p>🔒 Paiement sécurisé et crypté</p>
-              <p>📦 Livraison sous 2-3 jours ouvrés</p>
+            <div className="text-left text-xs text-orange-rougi font-semibold space-y-1 pt-2 border-t border-gris-canon-de-fusil/5">
+              <p>1. Paiement sécurisé et crypté.</p>
+              <p>2. Livraison sous 2-3 jours ouvrés.</p>
             </div>
           </div>
         </div>

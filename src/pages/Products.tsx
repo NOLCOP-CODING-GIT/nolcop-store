@@ -6,15 +6,23 @@ import type { Product } from "../types";
 import { supabase } from "../supabaseClient";
 
 const Products: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") || "";
-  const [sortBy, setSortBy] = useState("relevance");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";
+
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("name");
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    setSearchTerm(initialQuery);
+  }, [initialQuery]);
+
+  useEffect(() => {
+    const fetchProductsAndCategories = async () => {
       setLoading(true);
       try {
         const { data: productsData } = await supabase
@@ -39,6 +47,11 @@ const Products: React.FC = () => {
             updatedAt: p.updated_at,
           }));
           setAllProducts(formattedProducts as Product[]);
+
+          const uniqueCategories = Array.from(
+            new Set(formattedProducts.map((p) => p.category).filter(Boolean)),
+          );
+          setCategories(uniqueCategories);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des produits:", error);
@@ -47,27 +60,32 @@ const Products: React.FC = () => {
       }
     };
 
-    fetchProducts();
+    fetchProductsAndCategories();
   }, []);
 
   useEffect(() => {
-    if (allProducts.length === 0) return;
+    let result = [...allProducts];
 
-    if (!query) {
-      setSearchResults(allProducts);
-    } else {
-      const filtered = allProducts.filter(
+    if (searchTerm.trim() !== "") {
+      const q = searchTerm.toLowerCase().trim();
+      result = result.filter(
         (product) =>
-          product.name.toLowerCase().includes(query.toLowerCase()) ||
-          product.category.toLowerCase().includes(query.toLowerCase()) ||
-          (product.description &&
-            product.description.toLowerCase().includes(query.toLowerCase())),
+          product.name.toLowerCase().includes(q) ||
+          product.category.toLowerCase().includes(q),
       );
-      setSearchResults(filtered);
     }
-  }, [query, allProducts]);
 
-  const sortedResults = [...searchResults].sort((a, b) => {
+    if (selectedCategory !== "all") {
+      result = result.filter(
+        (product) =>
+          product.category.toLowerCase() === selectedCategory.toLowerCase(),
+      );
+    }
+
+    setFilteredProducts(result);
+  }, [searchTerm, selectedCategory, allProducts]);
+
+  const sortedResults = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-asc":
         return a.price - b.price;
@@ -75,15 +93,9 @@ const Products: React.FC = () => {
         return b.price - a.price;
       case "rating":
         return b.rating - a.rating;
-      case "relevance":
+      case "name":
       default:
-        const aScore = a.name.toLowerCase().includes(query.toLowerCase())
-          ? 2
-          : 0;
-        const bScore = b.name.toLowerCase().includes(query.toLowerCase())
-          ? 2
-          : 0;
-        return bScore - aScore;
+        return a.name.localeCompare(b.name);
     }
   });
 
@@ -111,7 +123,7 @@ const Products: React.FC = () => {
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blanc">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-black text-gris-canon-de-fusil mb-2 leading-tight">
-          {query ? `Résultats pour "${query}"` : "Tous les produits"}
+          {searchTerm ? `Résultats pour "${searchTerm}"` : "Tous les produits"}
         </h1>
         <p className="text-xs sm:text-sm text-gris-canon-de-fusil/50 font-medium">
           {sortedResults.length}{" "}
@@ -121,26 +133,49 @@ const Products: React.FC = () => {
       </div>
 
       <div className="mb-10">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex-1 max-w-md">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gris-canon-de-fusil/40" />
               <input
                 type="text"
-                defaultValue={query}
-                placeholder="Rechercher des produits..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value) {
+                    setSearchParams({ q: e.target.value });
+                  } else {
+                    setSearchParams({});
+                  }
+                }}
+                placeholder="Rechercher par produit ou catégorie..."
+                className="w-full pl-10 pr-4 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm text-gris-canon-de-fusil bg-blanc"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between lg:justify-end space-x-4 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Filtre par catégories */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-3 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm font-semibold text-gris-canon-de-fusil/80 bg-blanc cursor-pointer"
+            >
+              <option value="all">Toutes les catégories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            {/* Filtre de tri */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm font-semibold text-gris-canon-de-fusil/80 bg-blanc cursor-pointer"
             >
-              <option value="relevance">Pertinence</option>
+              <option value="name">Nom (A-Z)</option>
               <option value="price-asc">Prix croissant</option>
               <option value="price-desc">Prix décroissant</option>
               <option value="rating">Meilleures notes</option>
@@ -155,11 +190,11 @@ const Products: React.FC = () => {
             <Search className="h-14 w-14 mx-auto" />
           </div>
           <h3 className="text-lg font-black text-gris-canon-de-fusil mb-1">
-            {query ? "Aucun résultat trouvé" : "Aucun produit disponible"}
+            {searchTerm ? "Aucun résultat trouvé" : "Aucun produit disponible"}
           </h3>
           <p className="text-xs sm:text-sm text-gris-canon-de-fusil/50 mb-6 leading-relaxed">
-            {query
-              ? `Aucun produit ne correspond à votre recherche "${query}"`
+            {searchTerm
+              ? `Aucun produit ne correspond à votre recherche "${searchTerm}"`
               : "Essayez de modifier vos filtres ou de revenir plus tard."}
           </p>
         </div>

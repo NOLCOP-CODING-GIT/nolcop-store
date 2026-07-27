@@ -8,6 +8,7 @@ import { supabase } from "../supabaseClient";
 const CategoryPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [sortBy, setSortBy] = useState("name");
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -72,7 +73,16 @@ const CategoryPage: React.FC = () => {
     };
   }, [slug]);
 
-  const sortedProducts = [...products].sort((a, b) => {
+  const filteredProducts = products.filter((product) => {
+    const query = searchTerm.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      product.name.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query)
+    );
+  });
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-asc":
         return a.price - b.price;
@@ -125,8 +135,10 @@ const CategoryPage: React.FC = () => {
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gris-canon-de-fusil/40" />
               <input
                 type="text"
-                placeholder="Rechercher dans cette catégorie..."
-                className="w-full pl-10 pr-4 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm text-gris-canon-de-fusil"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Rechercher par nom de produit..."
+                className="w-full pl-10 pr-4 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm text-gris-canon-de-fusil bg-blanc"
               />
             </div>
           </div>
@@ -137,7 +149,7 @@ const CategoryPage: React.FC = () => {
               onChange={(e) => setSortBy(e.target.value)}
               className="px-3 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm font-semibold text-gris-canon-de-fusil/80 bg-blanc cursor-pointer"
             >
-              <option value="name">Nom</option>
+              <option value="name">Nom (A-Z)</option>
               <option value="price-asc">Prix croissant</option>
               <option value="price-desc">Prix décroissant</option>
               <option value="rating">Meilleures notes</option>

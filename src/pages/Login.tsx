@@ -19,6 +19,9 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -27,9 +30,26 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setMessage("");
+    setEmailError("");
+    setPasswordError("");
+
+    let hasError = false;
+
+    if (!email.trim()) {
+      setEmailError("L'adresse email est obligatoire.");
+      hasError = true;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Le mot de passe est obligatoire.");
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    setLoading(true);
 
     const result = await login(email, password);
 
@@ -69,7 +89,7 @@ const Login: React.FC = () => {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
           {message && (
             <div className="rounded-md bg-vert-jungle/10 p-4 mb-4">
               <div className="flex">
@@ -120,13 +140,25 @@ const Login: React.FC = () => {
                   name="email"
                   type="email"
                   autoComplete="email"
-                  required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-blanc border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir focus:ring-2 focus:ring-bleu-saphir/5 text-xs font-semibold text-gris-canon-de-fusil transition-all"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  className={`w-full pl-10 pr-4 py-2.5 bg-blanc border rounded-xl focus:outline-none text-xs font-semibold text-gris-canon-de-fusil transition-all ${
+                    emailError
+                      ? "border-rouge-ecarlate focus:border-rouge-ecarlate focus:ring-2 focus:ring-rouge-ecarlate/10"
+                      : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir focus:ring-2 focus:ring-bleu-saphir/5"
+                  }`}
                   placeholder="vous@exemple.com"
                 />
               </div>
+              {emailError && (
+                <p className="mt-1.5 text-xs font-bold text-rouge-ecarlate flex items-center gap-1">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  {emailError}
+                </p>
+              )}
             </div>
 
             <div>
@@ -145,10 +177,16 @@ const Login: React.FC = () => {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-blanc border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:border-bleu-saphir focus:ring-2 focus:ring-bleu-saphir/5 text-xs font-semibold text-gris-canon-de-fusil transition-all"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError("");
+                  }}
+                  className={`w-full pl-10 pr-4 py-2.5 bg-blanc border rounded-xl focus:outline-none text-xs font-semibold text-gris-canon-de-fusil transition-all ${
+                    passwordError
+                      ? "border-rouge-ecarlate focus:border-rouge-ecarlate focus:ring-2 focus:ring-rouge-ecarlate/10"
+                      : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir focus:ring-2 focus:ring-bleu-saphir/5"
+                  }`}
                   placeholder="•••••••••"
                 />
                 <button
@@ -163,6 +201,12 @@ const Login: React.FC = () => {
                   )}
                 </button>
               </div>
+              {passwordError && (
+                <p className="mt-1.5 text-xs font-bold text-rouge-ecarlate flex items-center gap-1">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  {passwordError}
+                </p>
+              )}
             </div>
           </div>
 

@@ -200,9 +200,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (address && userData.id) {
         await supabase.from("addresses").insert({
           user_id: userData.id,
-          street: address,
-          city: "Ville à définir",
-          country: "Bénin",
+          street: "",
+          city: "",
+          country: "",
           is_default: true,
         });
       }

@@ -122,7 +122,22 @@ const Register: React.FC = () => {
       setSuccess(true);
       navigate("/login");
     } else {
-      setError(result.error || "Une erreur est survenue");
+      const errorMsg = result.error || "";
+      const lowerError = errorMsg.toLowerCase();
+
+      if (
+        lowerError.includes("already registered") ||
+        lowerError.includes("déjà") ||
+        lowerError.includes("already in use") ||
+        lowerError.includes("unique constraint")
+      ) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "Cette adresse email est déjà utilisée.",
+        }));
+      } else {
+        setError(errorMsg || "Une erreur est survenue lors de l'inscription.");
+      }
     }
 
     setLoading(false);

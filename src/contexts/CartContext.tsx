@@ -1,6 +1,7 @@
 import React, { createContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { CartItem, Product } from "../types";
+import { useAuth } from "../hooks/useAuth"; // 👈 Import du hook d'authentification
 
 interface CartState {
   items: CartItem[];
@@ -146,6 +147,8 @@ export { CartContext };
 export const CartProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { user } = useAuth(); // 👈 Récupération de l'utilisateur actif
+
   const [state, dispatch] = useReducer(
     cartReducer,
     { items: [], total: 0, itemCount: 0 },
@@ -165,6 +168,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     },
   );
 
+  // 🚀 NOUVEAU : Réagir directement à la déconnexion de l'utilisateur
+  useEffect(() => {
+    if (!user) {
+      dispatch({ type: "CLEAR_CART" });
+      localStorage.removeItem("nolcop_cart");
+    }
+  }, [user]);
+
+  // Synchronisation avec localStorage lors des modifications du panier
   useEffect(() => {
     localStorage.setItem("nolcop_cart", JSON.stringify(state));
   }, [state]);

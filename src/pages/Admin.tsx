@@ -106,7 +106,7 @@ const Admin: React.FC = () => {
 
   return (
     <div className="mx-auto px-4 py-8 bg-blanc">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start justify-between">
         <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-8">
           Administration
         </h1>
@@ -115,7 +115,7 @@ const Admin: React.FC = () => {
           className="flex items-center px-4 py-2 text-xs font-bold bg-rouge-ecarlate text-blanc rounded-xl transition-all cursor-pointer hover:opacity-90"
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Se déconnecter
+          Déconnexion
         </button>
       </div>
 

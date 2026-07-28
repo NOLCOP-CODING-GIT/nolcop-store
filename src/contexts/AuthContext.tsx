@@ -120,19 +120,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return { success: false, error: "Mot de passe requis" };
       }
 
-      // 🚀 MODIFICATION : On teste d'abord la connexion native Supabase Auth (Admin)
+      // 1. Tenter la connexion native Supabase Auth (Admin)
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-      // Si la connexion native fonctionne, on s'arrête là, c'est un Admin !
       if (!authError && authData?.user) {
         return { success: true };
       }
 
-      // Si la connexion native échoue, on tente la méthode locale (Utilisateur simple)
+      // 2. Si échec native (ex: Erreur 400 / Utilisateur non-admin), tenter la RPC 'login_user'
       const { data, error: rpcError } = await supabase.rpc("login_user", {
         p_email: email,
         p_password: password,
@@ -150,7 +149,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return { success: true };
       }
 
-      // Si les deux ont échoué
+      // 3. Retourner le message d'erreur si les deux tentatives ont échoué
       return {
         success: false,
         error: "Email ou mot de passe incorrect",
@@ -196,13 +195,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       const userData = data as any;
 
-      // Si une adresse est fournie, l'ajouter
+      // Si une adresse est fournie, découper selon le format : Pays, Ville, Quartier/rue
       if (address && userData.id) {
+        const addressParts = address.split(",").map((p) => p.trim());
+        const country = addressParts[0] || "";
+        const city = addressParts[1] || "";
+        const street = addressParts.slice(2).join(", ") || "";
+
         await supabase.from("addresses").insert({
           user_id: userData.id,
-          street: "",
-          city: "",
-          country: "",
+          street: street,
+          city: city,
+          country: country,
           is_default: true,
         });
       }
@@ -234,6 +238,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     // Déconnexion Utilisateur Simple
     localStorage.removeItem("nolcop_session");
+
+    // Nettoyage du panier au logout
+    localStorage.removeItem("nolcop_cart");
+
     setUser(null);
     setLoading(false);
   };
@@ -247,7 +255,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         .update({
           name: updates.name,
           telephone: updates.phone,
-          // Convertir les autres champs si nécessaire
         })
         .eq("id", user.id);
 

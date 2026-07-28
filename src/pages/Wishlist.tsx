@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Heart, AlertCircle } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Heart, AlertCircle, Search } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../supabaseClient";
 
@@ -9,8 +9,17 @@ import WishlistCard from "../components/WishlistCard";
 
 const Wishlist: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";
+
   const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [filteredWishlist, setFilteredWishlist] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setSearchTerm(initialQuery);
+  }, [initialQuery]);
 
   useEffect(() => {
     if (user) {
@@ -38,8 +47,9 @@ const Wishlist: React.FC = () => {
       if (data) {
         const productsList = data
           .map((item: any) => item.products)
-          .filter(Boolean);
-        setWishlist(productsList as Product[]);
+          .filter(Boolean) as Product[];
+
+        setWishlist(productsList);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des favoris", error);
@@ -69,6 +79,17 @@ const Wishlist: React.FC = () => {
       console.error("Erreur lors de la suppression du favori", error);
     }
   };
+
+  useEffect(() => {
+    if (searchTerm.trim() !== "") {
+      const q = searchTerm.toLowerCase().trim();
+      setFilteredWishlist(
+        wishlist.filter((product) => product.name.toLowerCase().includes(q)),
+      );
+    } else {
+      setFilteredWishlist(wishlist);
+    }
+  }, [searchTerm, wishlist]);
 
   if (!user) {
     return (
@@ -133,10 +154,33 @@ const Wishlist: React.FC = () => {
           </div>
         </div>
         <p className="text-xs sm:text-sm text-gris-canon-de-fusil/50 font-semibold self-start sm:self-center bg-gris-canon-de-fusil/5 px-3 py-1.5 rounded-lg">
-          {wishlist.length} {wishlist.length === 1 ? "article" : "articles"}{" "}
-          enregistré{wishlist.length > 1 ? "s" : ""}
+          {filteredWishlist.length} / {wishlist.length}{" "}
+          {wishlist.length === 1 ? "article" : "articles"} enregistré
+          {wishlist.length > 1 ? "s" : ""}
         </p>
       </div>
+
+      {wishlist.length > 0 && (
+        <div className="mb-8 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gris-canon-de-fusil/40" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                if (e.target.value) {
+                  setSearchParams({ q: e.target.value });
+                } else {
+                  setSearchParams({});
+                }
+              }}
+              placeholder="Rechercher par nom de produit..."
+              className="w-full pl-10 pr-4 py-2 border border-gris-canon-de-fusil/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-bleu-saphir text-sm text-gris-canon-de-fusil bg-blanc"
+            />
+          </div>
+        </div>
+      )}
 
       {wishlist.length === 0 ? (
         <div className="text-center py-16 bg-blanc rounded-2xl shadow-xs max-w-xl mx-auto px-4">
@@ -157,9 +201,21 @@ const Wishlist: React.FC = () => {
             Découvrir des produits
           </Link>
         </div>
+      ) : filteredWishlist.length === 0 ? (
+        <div className="text-center py-16 bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-xs max-w-xl mx-auto px-4">
+          <div className="text-gris-canon-de-fusil/20 mb-4">
+            <Search className="h-14 w-14 mx-auto" />
+          </div>
+          <h3 className="text-lg font-black text-gris-canon-de-fusil mb-1">
+            Aucun résultat trouvé
+          </h3>
+          <p className="text-xs sm:text-sm text-gris-canon-de-fusil/50 mb-6 leading-relaxed">
+            Aucun article dans vos favoris ne correspond à "{searchTerm}".
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
-          {wishlist.map((product) => (
+          {filteredWishlist.map((product) => (
             <WishlistCard
               key={product.id}
               product={product}

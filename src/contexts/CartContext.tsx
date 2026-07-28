@@ -1,4 +1,4 @@
-import React, { createContext, useReducer } from "react";
+import React, { createContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { CartItem, Product } from "../types";
 
@@ -146,11 +146,28 @@ export { CartContext };
 export const CartProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [state, dispatch] = useReducer(cartReducer, {
-    items: [],
-    total: 0,
-    itemCount: 0,
-  });
+  const [state, dispatch] = useReducer(
+    cartReducer,
+    { items: [], total: 0, itemCount: 0 },
+    (initialState) => {
+      const savedCart = localStorage.getItem("nolcop_cart");
+      if (savedCart) {
+        try {
+          return JSON.parse(savedCart);
+        } catch (e) {
+          console.error(
+            "Erreur de récupération du panier depuis localStorage",
+            e,
+          );
+        }
+      }
+      return initialState;
+    },
+  );
+
+  useEffect(() => {
+    localStorage.setItem("nolcop_cart", JSON.stringify(state));
+  }, [state]);
 
   const addToCart = (
     product: Product,

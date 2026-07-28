@@ -128,10 +128,9 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/orders" element={<Orders />} />
                 </Route>
-
-                <Route element={<ProtectedRoute requireAdmin />}>
-                  <Route path="/admin" element={<Admin />} />
-                </Route>
+              </Route>
+              <Route element={<ProtectedRoute requireAdmin />}>
+                <Route path="/admin" element={<Admin />} />
               </Route>
 
               {/* 3. Capture globale 404 (S'affiche dans NotFoundLayout, sans Header ni Footer) */}

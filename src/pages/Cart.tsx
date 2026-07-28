@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "../hooks/useCart";
@@ -6,8 +6,9 @@ import { useAuth } from "../hooks/useAuth";
 
 const Cart: React.FC = () => {
   const { user } = useAuth();
-  const { state, updateQuantity, removeFromCart, addToCart } = useCart();
+  const { state, updateQuantity, removeFromCart } = useCart();
   const [promoCode, setPromoCode] = useState("");
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
       style: "currency",
@@ -16,13 +17,11 @@ const Cart: React.FC = () => {
     }).format(price);
   };
 
-  useEffect(() => {
-    if (state.items.length === 0) {
-      // Ajouter les produits au panier
-    }
-  }, [state.items.length, addToCart]);
-
-  const handleQuantityChange = (id: string, newQuantity: number) => {
+  // ✅ Gestionnaire de changement de quantité défini directement dans le composant
+  const handleQuantityChange = (
+    id: string,
+    newQuantity: number,
+  ) => {
     if (newQuantity > 0) {
       updateQuantity(id, newQuantity);
     } else {
@@ -123,9 +122,12 @@ const Cart: React.FC = () => {
                   <div className="flex items-center bg-gris-canon-de-fusil/5 rounded-lg p-1 border border-gris-canon-de-fusil/5">
                     <button
                       onClick={() =>
-                        handleQuantityChange(item.product.id, item.quantity - 1)
+                        handleQuantityChange(
+                          item.product.id,
+                          item.quantity - 1,
+                        )
                       }
-                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all"
+                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all cursor-pointer"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
@@ -134,9 +136,12 @@ const Cart: React.FC = () => {
                     </span>
                     <button
                       onClick={() =>
-                        handleQuantityChange(item.product.id, item.quantity + 1)
+                        handleQuantityChange(
+                          item.product.id,
+                          item.quantity + 1
+                        )
                       }
-                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all"
+                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -152,8 +157,14 @@ const Cart: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={() => removeFromCart(item.product.id)}
-                    className="text-gris-canon-de-fusil/40 hover:text-orange-rougi p-2 rounded-lg hover:bg-orange-rougi/5 transition-all"
+                    onClick={() =>
+                      removeFromCart(
+                        item.product.id,
+                        item.selectedColor,
+                        item.selectedSize,
+                      )
+                    }
+                    className="text-gris-canon-de-fusil/40 hover:text-orange-rougi p-2 rounded-lg hover:bg-orange-rougi/5 transition-all cursor-pointer"
                     aria-label="Supprimer l'article"
                   >
                     <Trash2 className="h-4 text-rouge-ecarlate w-4" />
@@ -196,15 +207,15 @@ const Cart: React.FC = () => {
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                 Code promo
               </label>
-              <div className="flex w-full items-center justify-between">
+              <div className="flex w-full items-center justify-between gap-2">
                 <input
                   type="text"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
                   placeholder="Entrez votre code..."
-                  className="p-2 w-10/18 border border-gris-canon-de-fusil/20 rounded-md focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-gris-canon-de-fusil text-sm placeholder:text-gris-canon-de-fusil/40"
+                  className="p-2 w-full border border-gris-canon-de-fusil/20 rounded-md focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-gris-canon-de-fusil text-sm placeholder:text-gris-canon-de-fusil/40"
                 />
-                <button className="p-2 bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil rounded-md hover:bg-gris-canon-de-fusil/20 transition-colors font-medium">
+                <button className="p-2 bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil rounded-md hover:bg-gris-canon-de-fusil/20 transition-colors font-medium shrink-0 cursor-pointer">
                   Appliquer
                 </button>
               </div>
@@ -212,13 +223,9 @@ const Cart: React.FC = () => {
 
             <Link
               to={user ? "/checkout" : "/login"}
-              className={
-                user
-                  ? "w-full flex items-center justify-center px-6 py-3 bg-bleu-saphir text-blanc rounded-lg font-semibold hover:opacity-90 shadow-md transition-all mb-4"
-                  : "w-full flex items-center justify-center px-6 py-3 bg-gris-canon-de-fusil text-blanc rounded-lg font-semibold cursor-not-allowed opacity-50 mb-4"
-              }
+              className="w-full flex items-center justify-center px-6 py-3 bg-bleu-saphir text-blanc rounded-lg font-semibold hover:opacity-90 shadow-md transition-all mb-4"
             >
-              {user ? "Passer la commande" : "Veuillez vous connecter"}
+              {user ? "Passer la commande" : "Se connecter pour commander"}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
 

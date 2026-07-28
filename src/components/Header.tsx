@@ -8,7 +8,6 @@ import {
   X,
   Heart,
   ChevronDown,
-  LogOut,
   ShieldUser,
 } from "lucide-react";
 import { useCart } from "../hooks/useCart";
@@ -19,7 +18,7 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const { state } = useCart();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
   const { categories } = useCategories();
@@ -39,12 +38,6 @@ const Header: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isMenuOpen]);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-    setIsMenuOpen(false);
-  };
 
   return (
     <header className="bg-blanc/50 backdrop-blur-md border-b border-blanc/20 shadow-sm sticky top-0 z-50">
@@ -144,12 +137,6 @@ const Header: React.FC = () => {
                       Administration
                     </Link>
                   )}
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir last:rounded-b-lg"
-                  >
-                    Déconnexion
-                  </button>
                 </div>
               </div>
             ) : (
@@ -296,13 +283,6 @@ const Header: React.FC = () => {
                           <span>Administration</span>
                         </Link>
                       )}
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-2 px-4 py-2 text-gris-canon-de-fusil hover:bg-bleu-clair/20 hover:text-bleu-saphir rounded-lg transition-colors"
-                      >
-                        <LogOut className="h-5 w-5" />
-                        <span>Déconnexion</span>
-                      </button>
                     </>
                   ) : (
                     <Link

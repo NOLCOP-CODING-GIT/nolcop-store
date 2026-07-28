@@ -1,7 +1,17 @@
-import React, { useState } from "react";
-import { Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  MessageSquare,
+  AlertCircle,
+} from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../supabaseClient";
 
 const Contact: React.FC = () => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -9,9 +19,63 @@ const Contact: React.FC = () => {
     message: "",
   });
 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        setFormData((prev) => ({
+          ...prev,
+          email: user.email || "",
+        }));
+
+        try {
+          const { data } = await supabase
+            .from("users")
+            .select("name")
+            .eq("id", user.id)
+            .single();
+
+          if (data?.name) {
+            setFormData((prev) => ({
+              ...prev,
+              name: data.name,
+            }));
+          }
+        } catch (err) {
+          console.error("Erreur récupération nom contact :", err);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Le nom complet est obligatoire.";
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = "L'adresse email est obligatoire.";
+    }
+    if (!formData.subject.trim()) {
+      newErrors.subject = "Le sujet du message est obligatoire.";
+    }
+    if (!formData.message.trim()) {
+      newErrors.message = "Votre message ne peut pas être vide.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Gérer l'envoi du formulaire
+    if (!validateForm()) {
+      return;
+    }
     console.log("Formulaire soumis :", formData);
   };
 
@@ -68,7 +132,7 @@ const Contact: React.FC = () => {
                   Adresse
                 </p>
                 <p className="text-sm font-medium text-blanc/90">
-                  Cotonou, Bénin - Segbeya
+                  Cotonou, Bénin - Sègbèya
                 </p>
               </div>
             </div>
@@ -82,68 +146,90 @@ const Contact: React.FC = () => {
             className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-sm p-4 space-y-6"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Nom */}
               <div>
                 <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                   Nom complet
                 </label>
                 <input
                   type="text"
-                  required
+                  disabled
+                  readOnly
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-sm text-gris-canon-de-fusil"
+                  className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/20 rounded-xl bg-gris-canon-de-fusil/5 text-sm text-gris-canon-de-fusil/70 cursor-not-allowed focus:outline-none"
                   placeholder="Jean Dupont"
                 />
               </div>
+
+              {/* Email (Chargé auto & Non modifiable) */}
               <div>
                 <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                   Adresse email
                 </label>
                 <input
                   type="email"
-                  required
+                  disabled
+                  readOnly
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-sm text-gris-canon-de-fusil"
+                  className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/20 rounded-xl bg-gris-canon-de-fusil/5 text-sm text-gris-canon-de-fusil/70 cursor-not-allowed focus:outline-none"
                   placeholder="jean.dupont@example.com"
                 />
               </div>
             </div>
 
+            {/* Sujet */}
             <div>
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
-                Sujet du message
+                Sujet du message *
               </label>
               <input
                 type="text"
-                required
+                minLength={5}
                 value={formData.subject}
-                onChange={(e) =>
-                  setFormData({ ...formData, subject: e.target.value })
-                }
-                className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-sm text-gris-canon-de-fusil"
+                onChange={(e) => {
+                  setFormData({ ...formData, subject: e.target.value });
+                  if (errors.subject) setErrors({ ...errors, subject: "" });
+                }}
+                className={`w-full px-4 py-2.5 bg-blanc border rounded-xl text-sm text-gris-canon-de-fusil focus:outline-none transition-colors ${
+                  errors.subject
+                    ? "border-rouge-ecarlate focus:border-rouge-ecarlate"
+                    : "border-gris-canon-de-fusil/20 focus:border-bleu-saphir"
+                }`}
                 placeholder="Ex : Suivi de commande, Question produit..."
               />
+              {errors.subject && (
+                <p className="text-rouge-ecarlate text-xs mt-1 flex items-center">
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" /> {errors.subject}
+                </p>
+              )}
             </div>
 
+            {/* Message */}
             <div>
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
-                Votre message
+                Votre message *
               </label>
               <textarea
                 rows={5}
-                required
+                minLength={5}
+                maxLength={500}
                 value={formData.message}
-                onChange={(e) =>
-                  setFormData({ ...formData, message: e.target.value })
-                }
-                className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/20 rounded-xl focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-sm text-gris-canon-de-fusil resize-none"
+                onChange={(e) => {
+                  setFormData({ ...formData, message: e.target.value });
+                  if (errors.message) setErrors({ ...errors, message: "" });
+                }}
+                className={`w-full px-4 py-2.5 bg-blanc border rounded-xl text-sm text-gris-canon-de-fusil resize-none focus:outline-none transition-colors ${
+                  errors.message
+                    ? "border-rouge-ecarlate focus:border-rouge-ecarlate"
+                    : "border-gris-canon-de-fusil/20 focus:border-bleu-saphir"
+                }`}
                 placeholder="Écrivez votre message ici..."
               />
+              {errors.message && (
+                <p className="text-rouge-ecarlate text-xs mt-1 flex items-center">
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" /> {errors.message}
+                </p>
+              )}
             </div>
 
             <button

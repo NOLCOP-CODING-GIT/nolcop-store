@@ -10,6 +10,7 @@ import {
   Star,
   Mail,
   AlertTriangle,
+  LogOut,
 } from "lucide-react";
 
 // Imports des sous-composants (ajuste le chemin si nécessaire)
@@ -22,8 +23,20 @@ import { AnalyseTab } from "../components/admin/tabs/AnalyseTab";
 import { AvisTab } from "../components/admin/tabs/AvisTab";
 import { NewsletterMailTab } from "../components/admin/tabs/NewsletterMailTab";
 import { UrgenceTab } from "../components/admin/tabs/UrgenceTab";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 const Admin: React.FC = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion", error);
+    }
+  };
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const TABS = [
@@ -93,9 +106,18 @@ const Admin: React.FC = () => {
 
   return (
     <div className="mx-auto px-4 py-8 bg-blanc">
-      <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-8">
-        Administration
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-black text-gris-canon-de-fusil mb-8">
+          Administration
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="flex items-center px-4 py-2 text-xs font-bold bg-rouge-ecarlate text-blanc rounded-xl transition-all cursor-pointer hover:opacity-90"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Se déconnecter
+        </button>
+      </div>
 
       <div className="border-b border-gris-canon-de-fusil/10 mb-8">
         <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-none pb-1">

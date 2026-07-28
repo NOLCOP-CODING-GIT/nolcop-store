@@ -495,8 +495,7 @@ const ProductDetail: React.FC = () => {
                   {renderStars(product.rating)}
                 </div>
                 <span className="text-xs font-bold text-gris-canon-de-fusil/60">
-                  {Number(product.rating || 0).toFixed(1)} (
-                  {product.reviewsCount} avis)
+                  ({product.reviewsCount} avis)
                 </span>
               </div>
 

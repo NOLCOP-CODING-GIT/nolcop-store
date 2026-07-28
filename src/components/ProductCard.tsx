@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, Eye, Check } from "lucide-react";
+import { Heart, ShoppingCart, Eye, Check, Star } from "lucide-react";
 import type { Product } from "../types";
 import { useCart } from "../hooks/useCart";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -144,6 +144,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
               {product.description}
             </p>
           ) : null}
+
+          <div className="flex items-center gap-1.5 my-1">
+            <div className="flex items-center">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`h-3.5 w-3.5 ${
+                    star <= Math.round(product.rating || 0)
+                      ? "text-amber-400 fill-amber-400"
+                      : "text-gris-canon-de-fusil/20"
+                  }`}
+                />
+              ))}
+            </div>
+            {product.reviews !== undefined && (
+              <span className="text-xs font-bold text-orange-rougi">
+                ({product.reviews} avis)
+              </span>
+            )}
+          </div>
         </div>
       </Link>
 

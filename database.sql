@@ -101,10 +101,8 @@ CREATE TABLE public.orders (
     status public.order_status DEFAULT 'pending' NOT NULL,
     payment_method public.payment_method_type NOT NULL,
     
-    shipping_first_name VARCHAR(255) NOT NULL,
-    shipping_last_name VARCHAR(255) NOT NULL,
+    shipping_name VARCHAR(255) NOT NULL,
     shipping_address TEXT NOT NULL,
-    shipping_city VARCHAR(255) NOT NULL,
     shipping_phone VARCHAR(50) NOT NULL,
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
@@ -307,5 +305,98 @@ BEGIN
     ELSE
         RAISE EXCEPTION 'Invalid email or password';
     END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- 1. Fonction pour générer et enregistrer l'OTP à 8 chiffres dans la DB
+CREATE OR REPLACE FUNCTION public.request_password_reset_otp(p_email VARCHAR)
+RETURNS json AS $$
+DECLARE
+    user_exists BOOLEAN;
+    generated_otp VARCHAR(8);
+BEGIN
+    -- Vérifier si l'utilisateur existe
+    SELECT EXISTS(SELECT 1 FROM public.users WHERE email = p_email) INTO user_exists;
+    IF NOT user_exists THEN
+        RAISE EXCEPTION 'Aucun compte associé à cette adresse email';
+    END IF;
+
+    -- Générer un code à 8 chiffres aléatoires
+    generated_otp := LPAD(FLOOR(RANDOM() * 100000000)::TEXT, 8, '0');
+
+    -- Invalider les anciens codes non utilisés pour cet email
+    UPDATE public.password_reset_otps 
+    SET is_used = TRUE 
+    WHERE email = p_email AND is_used = FALSE;
+
+    -- Insérer le nouveau code OTP (Valide pendant 15 minutes)
+    INSERT INTO public.password_reset_otps (email, otp_code, expires_at)
+    VALUES (p_email, generated_otp, NOW() + INTERVAL '15 minutes');
+
+    RETURN json_build_object(
+        'success', true,
+        'otp_code', generated_otp
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Fonction pour vérifier la conformité du code OTP
+CREATE OR REPLACE FUNCTION public.verify_password_reset_otp(p_email VARCHAR, p_otp_code VARCHAR)
+RETURNS json AS $$
+DECLARE
+    otp_record public.password_reset_otps;
+BEGIN
+    SELECT * INTO otp_record 
+    FROM public.password_reset_otps
+    WHERE email = p_email 
+      AND otp_code = p_otp_code 
+      AND is_used = FALSE 
+      AND expires_at > NOW()
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    IF otp_record.id IS NULL THEN
+        RAISE EXCEPTION 'Code OTP invalide ou expiré';
+    END IF;
+
+    RETURN json_build_object('success', true);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 3. Fonction pour valider l'OTP et mettre à jour le mot de passe
+CREATE OR REPLACE FUNCTION public.reset_password_with_otp(
+    p_email VARCHAR,
+    p_otp_code VARCHAR,
+    p_new_password VARCHAR
+)
+RETURNS json AS $$
+DECLARE
+    otp_record public.password_reset_otps;
+BEGIN
+    -- Vérifier à nouveau la validité du code
+    SELECT * INTO otp_record 
+    FROM public.password_reset_otps
+    WHERE email = p_email 
+      AND otp_code = p_otp_code 
+      AND is_used = FALSE 
+      AND expires_at > NOW()
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    IF otp_record.id IS NULL THEN
+        RAISE EXCEPTION 'Code OTP invalide ou expiré';
+    END IF;
+
+    -- Marquer le code OTP comme utilisé
+    UPDATE public.password_reset_otps 
+    SET is_used = TRUE 
+    WHERE id = otp_record.id;
+
+    -- Mettre à jour le hash du mot de passe dans public.users
+    UPDATE public.users 
+    SET password_hash = crypt(p_new_password, gen_salt('bf')),
+        updated_at = NOW()
+    WHERE email = p_email;
+
+    RETURN json_build_object('success', true);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

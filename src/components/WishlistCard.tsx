@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Trash2, Check } from "lucide-react";
 import type { Product } from "../types";
@@ -11,6 +11,7 @@ interface WishlistCardProps {
 }
 
 const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
+  const [selectedImage, setSelectedImage] = useState(0);
   const { state: cartState, addToCart } = useCart();
   const { showNotification } = useNotification();
 
@@ -39,9 +40,9 @@ const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
           <Link to={`/products/${product.id}`}>
             <img
               src={
-                product.selectedImage ||
-                product.images?.[0] ||
-                "/images/placeholder.png"
+                product.images && product.images[selectedImage]
+                  ? product.images[selectedImage]
+                  : product.selectedImage || product.images?.[0]
               }
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -77,6 +78,27 @@ const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
 
         {/* Détails du produit */}
         <div className="p-4 space-y-2">
+          {/* Sélecteur d'images */}
+          {product.images && product.images.length > 1 && (
+            <div className="flex gap-1 mb-1">
+              {product.images.slice(0, 3).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedImage(index);
+                  }}
+                  className={`w-3 h-3 rounded-full transition-colors cursor-pointer ${
+                    selectedImage === index
+                      ? "bg-bleu-saphir"
+                      : "bg-gris-canon-de-fusil/30"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Nom complet */}
           <Link to={`/products/${product.id}`}>
             <h3 className="text-sm font-bold text-gris-canon-de-fusil hover:text-bleu-saphir transition-colors line-clamp-2">
@@ -103,7 +125,9 @@ const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
         <button
           disabled={isAlreadyInCart || !inStock}
           onClick={() => {
-            addToCart(product, 1);
+            const activeImageUrl =
+              product.images?.[selectedImage] || product.images?.[0];
+            addToCart(product, 1, activeImageUrl);
             showNotification(`"${product.name}" ajouté au panier !`, "success");
           }}
           className={`w-full flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs ${

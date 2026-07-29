@@ -116,6 +116,7 @@ CREATE TABLE public.order_items (
     product_id UUID REFERENCES public.products(id) ON DELETE RESTRICT NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
     price_at_time DECIMAL(10, 2) NOT NULL CHECK (price_at_time >= 0),
+    selected_image VARCHAR NOT NULL,
     specifications JSONB DEFAULT '{}'::jsonb NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );

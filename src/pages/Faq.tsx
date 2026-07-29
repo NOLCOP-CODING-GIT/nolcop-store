@@ -5,19 +5,19 @@ const Faq: React.FC = () => {
   const faqs = [
     {
       q: "Quels sont vos délais de livraison ?",
-      a: "Nos délais standards sont de 2 à 3 jours ouvrés pour Cotonou et de 5 à 7 jours pour le reste du Benin.",
+      a: "Nos délais standards sont de 1 à 3 jours ouvrés pour Cotonou et de 5 à 7 jours pour le reste du Benin.",
     },
     {
       q: "Comment puis-je suivre mon colis ?",
-      a: "Dès l'expédition de votre commande, un e-mail contenant un lien de suivi personnalisé de votre transporteur vous sera automatiquement envoyé.",
+      a: "Dès l'expédition de votre commande, un message SMS contenant un lien de suivi personnalisé de votre transporteur vous sera automatiquement envoyé.",
     },
     {
       q: "Puis-je modifier ou annuler ma commande ?",
-      a: "Tant que votre commande n'est pas traitée par notre entrepôt (généralement dans les 2 heures suivant l'achat), vous pouvez demander son annulation auprès du service client.",
+      a: "Tant que votre commande n'est pas traitée par notre entrepôt (généralement dans les 30 minutes suivant la commande), vous pouvez demander son annulation auprès du service client.",
     },
     {
       q: "Quelle est votre politique de retour ?",
-      a: "Vous disposez d'un délai légal et étendu de 14 jours après réception de votre colis pour nous renvoyer un article s'il ne vous convient pas. Les articles doivent être neufs et dans leur emballage d'origine.",
+      a: "Vous disposez d'un délai légal et étendu de 7 jours après réception de votre colis pour nous renvoyer un article s'il ne vous convient pas. Les articles doivent être neufs et dans leur emballage d'origine.",
     },
   ];
 

@@ -1,7 +1,7 @@
 import React, { createContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { CartItem, Product } from "../types";
-import { useAuth } from "../hooks/useAuth"; // 👈 Import du hook d'authentification
+import { useAuth } from "../hooks/useAuth";
 
 interface CartState {
   items: CartItem[];
@@ -11,19 +11,9 @@ interface CartState {
 
 interface CartContextType {
   state: CartState;
-  addToCart: (
-    product: Product,
-    quantity?: number,
-    color?: string,
-    size?: string,
-  ) => void;
-  removeFromCart: (productId: string, color?: string, size?: string) => void;
-  updateQuantity: (
-    productId: string,
-    quantity: number,
-    color?: string,
-    size?: string,
-  ) => void;
+  addToCart: (product: Product, quantity?: number, image?: string) => void;
+  removeFromCart: (productId: string, image?: string) => void;
+  updateQuantity: (productId: string, quantity: number, image?: string) => void;
   clearCart: () => void;
 }
 
@@ -33,21 +23,19 @@ type CartAction =
       payload: {
         product: Product;
         quantity: number;
-        color?: string;
-        size?: string;
+        image?: string;
       };
     }
   | {
       type: "REMOVE_FROM_CART";
-      payload: { productId: string; color?: string; size?: string };
+      payload: { productId: string; image?: string };
     }
   | {
       type: "UPDATE_QUANTITY";
       payload: {
         productId: string;
         quantity: number;
-        color?: string;
-        size?: string;
+        image?: string;
       };
     }
   | { type: "CLEAR_CART" };
@@ -61,12 +49,12 @@ const getEffectivePrice = (product: Product) => {
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case "ADD_TO_CART": {
-      const { product, quantity, color, size } = action.payload;
+      const { product, quantity, image } = action.payload;
+      const targetImage = image || product.images[0];
       const existingItemIndex = state.items.findIndex(
         (item) =>
           item.product.id === product.id &&
-          item.selectedColor === color &&
-          item.selectedSize === size,
+          (item.selectedImage || item.product.images[0]) === targetImage,
       );
 
       let newItems: CartItem[];
@@ -77,7 +65,11 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       } else {
         newItems = [
           ...state.items,
-          { product, quantity, selectedColor: color, selectedSize: size },
+          {
+            product,
+            quantity,
+            selectedImage: targetImage,
+          },
         ];
       }
 
@@ -91,13 +83,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
 
     case "REMOVE_FROM_CART": {
-      const { productId, color, size } = action.payload;
+      const { productId, image } = action.payload;
       const newItems = state.items.filter(
         (item) =>
           !(
             item.product.id === productId &&
-            item.selectedColor === color &&
-            item.selectedSize === size
+            (!image || item.selectedImage === image)
           ),
       );
 
@@ -111,12 +102,11 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
 
     case "UPDATE_QUANTITY": {
-      const { productId, quantity, color, size } = action.payload;
+      const { productId, quantity, image } = action.payload;
       const newItems = state.items.map((item) => {
         if (
           item.product.id === productId &&
-          item.selectedColor === color &&
-          item.selectedSize === size
+          (!image || item.selectedImage === image)
         ) {
           return { ...item, quantity };
         }
@@ -147,7 +137,7 @@ export { CartContext };
 export const CartProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth(); // 👈 Récupération de l'utilisateur actif
+  const { user } = useAuth();
 
   const [state, dispatch] = useReducer(
     cartReducer,
@@ -168,7 +158,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     },
   );
 
-  // 🚀 NOUVEAU : Réagir directement à la déconnexion de l'utilisateur
   useEffect(() => {
     if (!user) {
       dispatch({ type: "CLEAR_CART" });
@@ -176,39 +165,35 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [user]);
 
-  // Synchronisation avec localStorage lors des modifications du panier
   useEffect(() => {
     localStorage.setItem("nolcop_cart", JSON.stringify(state));
   }, [state]);
 
-  const addToCart = (
-    product: Product,
-    quantity = 1,
-    color?: string,
-    size?: string,
-  ) => {
+  const addToCart = (product: Product, quantity = 1, image?: string) => {
     dispatch({
       type: "ADD_TO_CART",
-      payload: { product, quantity, color, size },
+      payload: { product, quantity, image },
     });
   };
 
-  const removeFromCart = (productId: string, color?: string, size?: string) => {
-    dispatch({ type: "REMOVE_FROM_CART", payload: { productId, color, size } });
+  const removeFromCart = (productId: string, image?: string) => {
+    dispatch({
+      type: "REMOVE_FROM_CART",
+      payload: { productId, image },
+    });
   };
 
   const updateQuantity = (
     productId: string,
     quantity: number,
-    color?: string,
-    size?: string,
+    image?: string,
   ) => {
     if (quantity <= 0) {
-      removeFromCart(productId, color, size);
+      removeFromCart(productId, image);
     } else {
       dispatch({
         type: "UPDATE_QUANTITY",
-        payload: { productId, quantity, color, size },
+        payload: { productId, quantity, image },
       });
     }
   };

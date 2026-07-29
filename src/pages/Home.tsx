@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, RefreshCw, Package, Headphones, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  Shield,
+  RefreshCw,
+  Package,
+  Headphones,
+  Loader2,
+} from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import type { Product } from "../types";
 import Lottie from "lottie-react";
@@ -17,12 +24,12 @@ const Home: React.FC = () => {
     const fetchData = async () => {
       try {
         const { data: productsData } = await supabase
-          .from('products')
-          .select('*, category:categories(name)')
-          .order('created_at', { ascending: false });
+          .from("products")
+          .select("*, category:categories(name)")
+          .order("created_at", { ascending: false });
 
         if (productsData) {
-          const formattedProducts = productsData.map(p => ({
+          const formattedProducts = productsData.map((p) => ({
             id: p.id,
             name: p.name,
             description: p.description,
@@ -41,7 +48,9 @@ const Home: React.FC = () => {
           setProducts(formattedProducts as Product[]);
         }
 
-        const { data: categoriesData } = await supabase.from('categories').select('*');
+        const { data: categoriesData } = await supabase
+          .from("categories")
+          .select("*");
         if (categoriesData) {
           setCategories(categoriesData);
         }
@@ -58,7 +67,6 @@ const Home: React.FC = () => {
   const featuredProducts = products.filter((p) => p.featured).slice(0, 3);
   const newProducts = products.slice(0, 4);
 
-
   const features = [
     {
       icon: Shield,
@@ -68,7 +76,7 @@ const Home: React.FC = () => {
     {
       icon: RefreshCw,
       title: "Retours faciles",
-      description: "14 jours pour retourner",
+      description: "7 jours pour retourner",
     },
     {
       icon: Package,
@@ -94,7 +102,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-blanc">
       {/* Hero Section */}
       <section className="relative bg-linear-to-r from-violet-myrtille-tenebreux to-[#1e1433] text-blanc overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-15">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -242,7 +250,7 @@ const Home: React.FC = () => {
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
             {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -270,7 +278,7 @@ const Home: React.FC = () => {
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
             {newProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

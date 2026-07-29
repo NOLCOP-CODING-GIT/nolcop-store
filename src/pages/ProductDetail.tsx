@@ -18,6 +18,7 @@ import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../supabaseClient";
 import { useWishlist } from "../hooks/useWishlist";
+import { useNotification } from "../hooks/useNotification";
 
 interface ReviewItem {
   id: string;
@@ -37,13 +38,13 @@ const ProductDetail: React.FC = () => {
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<number>(0);
-  const [selectedColor, setSelectedColor] = useState<string>("");
-  const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<
     "description" | "reviews" | "specs"
   >("description");
+
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { showNotification } = useNotification();
   const isFavorite = product ? isInWishlist(product.id) : false;
 
   // État du formulaire d'avis
@@ -100,6 +101,11 @@ const ProductDetail: React.FC = () => {
       return;
     }
     toggleWishlist(product.id);
+    if (isFavorite) {
+      showNotification(`"${product.name}" retiré des favoris`, "error");
+    } else {
+      showNotification(`"${product.name}" ajouté aux favoris`, "success");
+    }
   };
 
   const fetchReviews = async (productId: string) => {
@@ -194,16 +200,6 @@ const ProductDetail: React.FC = () => {
         };
 
         setProduct(formattedProduct);
-
-        const colors =
-          formattedProduct.specifications?.colors ||
-          formattedProduct.specifications?.Colors;
-        const sizes =
-          formattedProduct.specifications?.sizes ||
-          formattedProduct.specifications?.Sizes;
-        if (colors && colors.length > 0) setSelectedColor(colors[0]);
-        if (sizes && sizes.length > 0) setSelectedSize(sizes[0]);
-
         await fetchReviews(formattedProduct.id);
       }
     } catch (error) {
@@ -222,11 +218,12 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (product) {
-      addToCart(
-        product,
-        quantity,
-        selectedColor || undefined,
-        selectedSize || undefined,
+      const activeImageUrl =
+        product.images?.[selectedImage] || product.images?.[0];
+      addToCart(product, quantity, activeImageUrl);
+      showNotification(
+        `${quantity} x "${product.name}" ajouté au panier`,
+        "success",
       );
     }
   };
@@ -241,10 +238,12 @@ const ProductDetail: React.FC = () => {
     }
 
     if (!newComment.trim()) {
+      const errTxt = "Veuillez saisir un commentaire avant de valider.";
       setReviewMessage({
         type: "error",
-        text: "Veuillez saisir un commentaire avant de valider.",
+        text: errTxt,
       });
+      showNotification(errTxt, "error");
       return;
     }
 
@@ -255,10 +254,12 @@ const ProductDetail: React.FC = () => {
       const currentUserId = user?.id || sessionUserId;
 
       if (!currentUserId) {
+        const errTxt = "Vous devez être connecté pour soumettre un avis.";
         setReviewMessage({
           type: "error",
-          text: "Vous devez être connecté pour soumettre un avis.",
+          text: errTxt,
         });
+        showNotification(errTxt, "error");
         setSubmittingReview(false);
         return;
       }
@@ -272,6 +273,7 @@ const ProductDetail: React.FC = () => {
 
       if (error) throw error;
 
+      showNotification("Votre avis a été enregistré avec succès !", "success");
       setReviewMessage({
         type: "success",
         text: "Votre avis a été enregistré avec succès !",
@@ -282,12 +284,14 @@ const ProductDetail: React.FC = () => {
       await fetchProduct();
     } catch (err: any) {
       console.error("Erreur lors de la soumission de l'avis:", err);
+      const errTxt =
+        err.message ||
+        "Une erreur s'est produite lors de la publication de l'avis.";
       setReviewMessage({
         type: "error",
-        text:
-          err.message ||
-          "Une erreur s'est produite lors de la publication de l'avis.",
+        text: errTxt,
       });
+      showNotification(errTxt, "error");
     } finally {
       setSubmittingReview(false);
     }
@@ -520,7 +524,7 @@ const ProductDetail: React.FC = () => {
                 <div className="flex items-center bg-gris-canon-de-fusil/5 rounded-xl border border-gris-canon-de-fusil/10 p-1">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 rounded-lg bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10 font-bold flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-lg bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10 font-bold flex items-center justify-center transition-colors cursor-pointer"
                   >
                     -
                   </button>
@@ -536,7 +540,7 @@ const ProductDetail: React.FC = () => {
                         ),
                       )
                     }
-                    className="w-8 h-8 rounded-lg bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10 font-bold flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-lg bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10 font-bold flex items-center justify-center transition-colors cursor-pointer"
                   >
                     +
                   </button>
@@ -579,7 +583,7 @@ const ProductDetail: React.FC = () => {
 
             {/* Onglets d'informations */}
             <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl overflow-hidden shadow-xs">
-              <div className="border-b border-gris-canon-de-fusil/5 bg-gris-canon-de-fusil/5/30 px-3 flex items-center gap-4">
+              <div className="border-b border-gris-canon-de-fusil/5 bg-gris-canon-de-fusil/5/30 px-3 flex items-center justify-evenly gap-4">
                 <button
                   onClick={() => setActiveTab("description")}
                   className={`py-3.5 text-xs font-black uppercase tracking-wider border-b-2 transition-colors cursor-pointer ${
@@ -719,11 +723,7 @@ const ProductDetail: React.FC = () => {
                     </div>
 
                     {/* Liste des Avis */}
-                    <div className="space-y-4 pt-2">
-                      <h4 className="text-xs font-extrabold uppercase tracking-wider text-gris-canon-de-fusil">
-                        Avis clients ({reviewsList.length})
-                      </h4>
-
+                    <div className="space-y-4">
                       {reviewsList.length > 0 ? (
                         reviewsList.map((rev) => {
                           const authorName =

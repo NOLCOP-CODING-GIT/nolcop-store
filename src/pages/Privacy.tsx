@@ -26,9 +26,7 @@ const Privacy: React.FC = () => {
           </h2>
           <p className="text-justify">
             Lors de votre inscription ou d'un processus d'achat, nous collectons
-            les données indispensables au bon acheminement de votre commande :
-            Nom, prénom, adresse e-mail, adresse postale de livraison et numéro
-            de téléphone.
+            les données indispensables au bon acheminement de votre commande.
           </p>
         </section>
 

@@ -141,15 +141,12 @@ const Wishlist: React.FC = () => {
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex items-center space-x-3.5">
-          <div className="h-12 w-12 rounded-xl bg-bleu-saphir/5 flex items-center justify-center text-bleu-saphir">
-            <Heart className="h-6 w-6 fill-current" />
-          </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-gris-canon-de-fusil leading-none">
               Mes Favoris
             </h1>
-            <p className="text-[11px] sm:text-xs text-gris-canon-de-fusil/40 font-bold uppercase tracking-wider mt-1">
-              Liste de souhaits personnelle
+            <p className="text-[11px] sm:text-xs text-gris-canon-de-fusil/40 font-bold tracking-wider mt-2">
+              Liste de vos produits favoris.
             </p>
           </div>
         </div>

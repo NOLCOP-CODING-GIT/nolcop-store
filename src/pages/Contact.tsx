@@ -20,6 +20,8 @@ const Contact: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,12 +73,34 @@ const Contact: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSuccessMessage("");
     if (!validateForm()) {
       return;
     }
-    console.log("Formulaire soumis :", formData);
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("contacts").insert([
+        {
+          user_id: user?.id || null,
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+        },
+      ]);
+
+      if (error) throw error;
+      setSuccessMessage("Votre message a été envoyé avec succès !");
+      setFormData({ ...formData, subject: "", message: "" });
+    } catch (err) {
+      console.error("Erreur lors de l'envoi du message :", err);
+      setErrors({ form: "Une erreur est survenue lors de l'envoi." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -95,7 +119,6 @@ const Contact: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Informations de contact */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-violet-myrtille-tenebreux text-blanc p-8 rounded-2xl shadow-lg space-y-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-bleu-saphir/10 rounded-full blur-2xl -mr-10 -mt-10" />
@@ -139,14 +162,12 @@ const Contact: React.FC = () => {
           </div>
         </div>
 
-        {/* Formulaire de Contact */}
         <div className="lg:col-span-2">
           <form
             onSubmit={handleSubmit}
             className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl shadow-sm p-4 space-y-6"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Nom */}
               <div>
                 <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                   Nom complet
@@ -161,7 +182,6 @@ const Contact: React.FC = () => {
                 />
               </div>
 
-              {/* Email (Chargé auto & Non modifiable) */}
               <div>
                 <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                   Adresse email
@@ -177,7 +197,6 @@ const Contact: React.FC = () => {
               </div>
             </div>
 
-            {/* Sujet */}
             <div>
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                 Sujet du message *
@@ -204,7 +223,6 @@ const Contact: React.FC = () => {
               )}
             </div>
 
-            {/* Message */}
             <div>
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                 Votre message *
@@ -232,12 +250,24 @@ const Contact: React.FC = () => {
               )}
             </div>
 
+            {successMessage && (
+              <div className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-xl font-bold text-center">
+                {successMessage}
+              </div>
+            )}
+            {errors.form && (
+              <div className="p-4 mb-4 text-sm text-rouge-ecarlate bg-red-50 rounded-xl font-bold text-center">
+                {errors.form}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="inline-flex items-center justify-center px-6 py-3 lg:w-[30%] w-full bg-bleu-saphir text-blanc font-semibold text-sm rounded-xl hover:opacity-90 shadow-md transition-all cursor-pointer"
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center px-6 py-3 lg:w-[30%] w-full bg-bleu-saphir text-blanc font-semibold text-sm rounded-xl hover:opacity-90 shadow-md transition-all cursor-pointer disabled:opacity-50"
             >
-              Envoyer le message
-              <Send className="h-4 w-4 ml-2" />
+              {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
+              {!isSubmitting && <Send className="h-4 w-4 ml-2" />}
             </button>
           </form>
         </div>

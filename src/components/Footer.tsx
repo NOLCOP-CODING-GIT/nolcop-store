@@ -1,11 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { useCategories } from "../hooks/useCategories";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
-  const { categories } = useCategories();
 
   const usefulLinks = [
     { name: "À propos", href: "/about" },
@@ -24,7 +22,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-violet-myrtille-tenebreux text-blanc">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center space-x-2">
@@ -37,10 +35,9 @@ const Footer: React.FC = () => {
                 Nolcop Store
               </span>
             </Link>
-            <p className="text-blanc/70 mb-6 max-w-md text-sm leading-relaxed text-justify">
-              Nolcop Store - Votre solution e-commerce sur mesure. Une
-              démonstration de notre expertise en développement web pour votre
-              future boutique en ligne.
+            <p className="text-blanc/70 my-4 max-w-md text-sm leading-relaxed text-justify">
+              Votre boutique en ligne de confiance. Des produits de qualité, un
+              paiement sécurisé et une livraison rapide chez vous.
             </p>
 
             {/* Social Media */}
@@ -71,28 +68,6 @@ const Footer: React.FC = () => {
               </Link>
             </div>
           </div>
-
-          {/* Categories */}
-          {categories && categories.length > 1 ? (
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-bleu-clair mb-4">
-                Catégories
-              </h3>
-              <ul className="space-y-2 text-sm">
-                {categories.map((category) => (
-                  <Link
-                    key={category.slug}
-                    to={`/category/${category.slug}`}
-                    className="block px-4 py-2 ..."
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            ""
-          )}
 
           {/* Useful Links */}
           <div>
@@ -220,13 +195,13 @@ const Footer: React.FC = () => {
           <div className="flex space-x-6">
             <Link
               to="/privacy"
-              className="hover:text-blanc transition-colors duration-150"
+              className="text-blanc hover:text-orange-rougi transition-colors duration-150"
             >
               Politique de confidentialité
             </Link>
             <Link
               to="/terms"
-              className="hover:text-blanc transition-colors duration-150"
+              className="text-blanc hover:text-orange-rougi transition-colors duration-150"
             >
               Conditions d'utilisation
             </Link>

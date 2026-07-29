@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
+import { useNotification } from "../hooks/useNotification";
 import { supabase } from "../supabaseClient";
 import {
   CreditCard,
@@ -13,6 +14,8 @@ import {
   Plus,
   X,
   AlertCircle,
+  Edit,
+  Trash2,
 } from "lucide-react";
 
 interface Address {
@@ -26,21 +29,22 @@ interface Address {
 const Checkout: React.FC = () => {
   const { state, clearCart } = useCart();
   const { user } = useAuth();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Informations de livraison
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
     address: "",
     phone: "",
   });
 
-  // Validation & Messages d'erreurs
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Méthode de paiement & Champs
-  const [paymentMethod, setPaymentMethod] = useState("credit_card");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "credit_card" | "mtn_momo" | "moov_money" | "celtiis_cash"
+  >("credit_card");
+
   const [cardInfo, setCardInfo] = useState({
     cardName: "",
     cardNumber: "",
@@ -49,7 +53,6 @@ const Checkout: React.FC = () => {
   });
   const [momoPhone, setMomoPhone] = useState("");
 
-  // Gestion des adresses & Modale
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [newAddressForm, setNewAddressForm] = useState({
@@ -58,6 +61,7 @@ const Checkout: React.FC = () => {
     country: "",
   });
   const [savingNewAddress, setSavingNewAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
@@ -67,11 +71,16 @@ const Checkout: React.FC = () => {
     }).format(price);
   };
 
-  const subtotal = state.total;
-  const shipping = 1000;
-  const total = subtotal + shipping;
+  const calculatedSubtotal = state.items.reduce((acc, item) => {
+    const unitPrice = item.product.discount
+      ? item.product.price * (1 - item.product.discount / 100)
+      : item.product.price;
+    return acc + unitPrice * item.quantity;
+  }, 0);
 
-  // Charger automatiquement les données de l'utilisateur et ses adresses
+  const shipping = 1000;
+  const total = calculatedSubtotal + shipping;
+
   useEffect(() => {
     if (user) {
       fetchUserDataAndAddresses();
@@ -81,14 +90,12 @@ const Checkout: React.FC = () => {
   const fetchUserDataAndAddresses = async () => {
     if (!user) return;
     try {
-      // 1. Récupérer données profil (nom, téléphone)
       const { data: userData } = await supabase
         .from("users")
         .select("name, telephone")
         .eq("id", user.id)
         .single();
 
-      // 2. Récupérer adresses enregistrées
       const { data: addrData } = await supabase
         .from("addresses")
         .select("*")
@@ -99,7 +106,7 @@ const Checkout: React.FC = () => {
 
       const defaultAddr = addrData?.find((a) => a.is_default) || addrData?.[0];
       const formattedAddress = defaultAddr
-        ? `${defaultAddr.street}, ${defaultAddr.city}`
+        ? `${defaultAddr.street}, ${defaultAddr.city}, ${defaultAddr.country}`
         : "";
 
       setShippingInfo({
@@ -154,13 +161,16 @@ const Checkout: React.FC = () => {
     }
 
     if (!user) {
-      alert("Vous devez être connecté pour finaliser la commande.");
+      showNotification(
+        "Vous devez être connecté pour finaliser la commande.",
+        "error",
+      );
       navigate("/login");
       return;
     }
 
     if (state.items.length === 0) {
-      alert("Votre panier est vide.");
+      showNotification("Votre panier est vide.", "error");
       return;
     }
 
@@ -193,10 +203,8 @@ const Checkout: React.FC = () => {
           product_id: item.product.id,
           quantity: item.quantity,
           price_at_time: priceAtTime,
-          specifications: {
-            color: item.selectedColor,
-            size: item.selectedSize,
-          },
+          selected_image: item.selectedImage || item.product.images[0] || null,
+          specifications: {},
         };
       });
 
@@ -206,50 +214,106 @@ const Checkout: React.FC = () => {
 
       if (itemsError) throw itemsError;
 
+      for (const item of state.items) {
+        const newStock = Math.max(0, item.product.stock - item.quantity);
+        await supabase
+          .from("products")
+          .update({ stock: newStock })
+          .eq("id", item.product.id);
+      }
+
       clearCart();
-      alert("Commande effectuée avec succès !");
+      showNotification("Commande effectuée avec succès !", "success");
       navigate("/orders");
-    } catch (err) {
-      console.error("Erreur lors de la création de la commande :", err);
-      alert("Une erreur est survenue lors du traitement de votre commande.");
+    } catch (err: any) {
+      console.error(
+        "Erreur détaillée lors de la création de la commande :",
+        err,
+      );
+      showNotification(
+        `Erreur : ${err.message || err.details || "Une erreur est survenue"}`,
+        "error",
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddNewAddress = async (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (!newAddressForm.street.trim() || !newAddressForm.city.trim()) return;
 
     setSavingNewAddress(true);
     try {
-      const { data, error } = await supabase
-        .from("addresses")
-        .insert([
-          {
-            user_id: user.id,
+      if (editingAddressId) {
+        const { error } = await supabase
+          .from("addresses")
+          .update({
             street: newAddressForm.street,
             city: newAddressForm.city,
             country: newAddressForm.country,
-            is_default: addresses.length === 0,
-          },
-        ])
-        .select()
-        .single();
+          })
+          .eq("id", editingAddressId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const formatted = `${data.street}, ${data.city}`;
-      setShippingInfo((prev) => ({ ...prev, address: formatted }));
-      setAddresses((prev) => [data, ...prev]);
+        const formatted = `${newAddressForm.street}, ${newAddressForm.city}`;
+        setShippingInfo((prev) => ({ ...prev, address: formatted }));
+        setAddresses((prev) =>
+          prev.map((a) =>
+            a.id === editingAddressId ? { ...a, ...newAddressForm } : a,
+          ),
+        );
+      } else {
+        const { data, error } = await supabase
+          .from("addresses")
+          .insert([
+            {
+              user_id: user.id,
+              street: newAddressForm.street,
+              city: newAddressForm.city,
+              country: newAddressForm.country,
+              is_default: addresses.length === 0,
+            },
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const formatted = `${data.street}, ${data.city}`;
+        setShippingInfo((prev) => ({ ...prev, address: formatted }));
+        setAddresses((prev) => [data, ...prev]);
+      }
+      showNotification(
+        editingAddressId
+          ? "Adresse mise à jour avec succès"
+          : "Nouvelle adresse ajoutée",
+        "success",
+      );
       setIsAddressModalOpen(false);
       setNewAddressForm({ street: "", city: "", country: "Bénin" });
+      setEditingAddressId(null);
       setErrors((prev) => ({ ...prev, address: "" }));
     } catch (err) {
       console.error("Erreur enregistrement adresse :", err);
+      showNotification("Erreur lors de l'enregistrement de l'adresse", "error");
     } finally {
       setSavingNewAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase.from("addresses").delete().eq("id", id);
+      if (error) throw error;
+      setAddresses((prev) => prev.filter((a) => a.id !== id));
+      showNotification("Adresse supprimée", "success");
+    } catch (err) {
+      console.error("Erreur suppression adresse :", err);
+      showNotification("Erreur lors de la suppression de l'adresse", "error");
     }
   };
 
@@ -264,14 +328,12 @@ const Checkout: React.FC = () => {
           onSubmit={handlePaymentSubmit}
           className="lg:col-span-2 space-y-6"
         >
-          {/* 1. INFORMATIONS DE LIVRAISON */}
           <div className="bg-blanc border border-gris-canon-de-fusil/5 shadow-sm rounded-2xl p-6 space-y-4">
             <h2 className="text-lg font-semibold flex items-center mb-2 text-gris-canon-de-fusil">
               <Truck className="h-5 w-5 mr-2 text-bleu-saphir" />
               1. Informations de livraison
             </h2>
 
-            {/* Nom */}
             <div>
               <input
                 type="text"
@@ -294,7 +356,6 @@ const Checkout: React.FC = () => {
               )}
             </div>
 
-            {/* Adresse avec Modale */}
             <div>
               <div className="relative">
                 <input
@@ -330,7 +391,6 @@ const Checkout: React.FC = () => {
               )}
             </div>
 
-            {/* Téléphone */}
             <div>
               <input
                 type="tel"
@@ -354,7 +414,6 @@ const Checkout: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. MÉTHODE DE PAIEMENT */}
           <div className="bg-blanc border border-gris-canon-de-fusil/5 shadow-sm rounded-2xl p-6 space-y-4">
             <h2 className="text-lg font-semibold flex items-center mb-4 text-gris-canon-de-fusil">
               <ShieldCheck className="h-5 w-5 mr-2 text-bleu-saphir" />
@@ -571,7 +630,7 @@ const Checkout: React.FC = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <img
-                        src={item.product.images[0]}
+                        src={item.selectedImage || item.product.images[0]}
                         alt={item.product.name}
                         className="w-12 h-12 rounded-lg object-cover bg-gris-canon-de-fusil/5"
                       />
@@ -594,7 +653,7 @@ const Checkout: React.FC = () => {
               <div className="flex justify-between text-gris-canon-de-fusil/70">
                 <span>Sous-total</span>
                 <span className="font-medium text-gris-canon-de-fusil">
-                  {formatPrice(subtotal)}
+                  {formatPrice(calculatedSubtotal)}
                 </span>
               </div>
               <div className="flex justify-between text-gris-canon-de-fusil/70">
@@ -617,7 +676,6 @@ const Checkout: React.FC = () => {
         </div>
       </div>
 
-      {/* MODAL SELECTION & CREATION D'ADRESSE DE LIVRAISON */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
           <div className="bg-blanc rounded-2xl p-6 w-full max-w-md border border-gris-canon-de-fusil/10 shadow-xl space-y-5">
@@ -627,14 +685,17 @@ const Checkout: React.FC = () => {
               </h3>
               <button
                 type="button"
-                onClick={() => setIsAddressModalOpen(false)}
+                onClick={() => {
+                  setIsAddressModalOpen(false);
+                  setEditingAddressId(null);
+                  setNewAddressForm({ street: "", city: "", country: "Bénin" });
+                }}
                 className="p-1 rounded-lg hover:bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/60 hover:text-gris-canon-de-fusil transition-colors cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Liste des adresses existantes */}
             {addresses.length > 0 && (
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                 <p className="text-xs font-bold text-gris-canon-de-fusil/60 uppercase">
@@ -663,25 +724,48 @@ const Checkout: React.FC = () => {
                         <p className="text-[11px] text-gris-canon-de-fusil/60">
                           {addr.city}, {addr.country}
                         </p>
+                        {addr.is_default && (
+                          <span className="px-2 py-0.5 text-[9px] bg-bleu-saphir/10 text-bleu-saphir rounded-md font-bold mt-1 inline-block">
+                            Par défaut
+                          </span>
+                        )}
                       </div>
-                      {addr.is_default && (
-                        <span className="px-2 py-0.5 text-[9px] bg-bleu-saphir/10 text-bleu-saphir rounded-md font-bold">
-                          Par défaut
-                        </span>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingAddressId(addr.id);
+                            setNewAddressForm({
+                              street: addr.street,
+                              city: addr.city,
+                              country: addr.country,
+                            });
+                          }}
+                          className="p-1.5 text-bleu-saphir hover:bg-bleu-saphir/10 rounded-md transition-colors"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteAddress(addr.id, e)}
+                          className="p-1.5 text-rouge-ecarlate hover:bg-rouge-ecarlate/10 rounded-md transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* Formulaire pour ajouter une nouvelle adresse */}
             <form
-              onSubmit={handleAddNewAddress}
+              onSubmit={handleSaveAddress}
               className="space-y-3 pt-3 border-t border-gris-canon-de-fusil/5"
             >
               <p className="text-xs font-bold text-gris-canon-de-fusil/60 uppercase">
-                Ou ajouter une nouvelle adresse :
+                {editingAddressId
+                  ? "Modifier l'adresse :"
+                  : "Ou ajouter une nouvelle adresse :"}
               </p>
               <input
                 type="text"
@@ -728,7 +812,15 @@ const Checkout: React.FC = () => {
               <div className="flex justify-end space-x-2 pt-3">
                 <button
                   type="button"
-                  onClick={() => setIsAddressModalOpen(false)}
+                  onClick={() => {
+                    setIsAddressModalOpen(false);
+                    setEditingAddressId(null);
+                    setNewAddressForm({
+                      street: "",
+                      city: "",
+                      country: "Bénin",
+                    });
+                  }}
                   className="px-3 py-2 bg-gris-canon-de-fusil/5 hover:bg-gris-canon-de-fusil/10 text-xs font-bold rounded-xl text-gris-canon-de-fusil/70"
                 >
                   Annuler
@@ -739,7 +831,11 @@ const Checkout: React.FC = () => {
                   className="px-4 py-2 bg-bleu-saphir text-blanc text-xs font-bold rounded-xl hover:bg-bleu-saphir/90 transition-all flex items-center"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  {savingNewAddress ? "Ajout..." : "Utiliser cette adresse"}
+                  {savingNewAddress
+                    ? "Enregistrement..."
+                    : editingAddressId
+                      ? "Mettre à jour"
+                      : "Utiliser cette adresse"}
                 </button>
               </div>
             </form>

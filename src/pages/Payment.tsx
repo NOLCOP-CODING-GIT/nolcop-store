@@ -9,7 +9,7 @@ const Payment: React.FC = () => {
         <h1 className="text-3xl font-bold tracking-tight">
           Paiement 100% Sécurisé
         </h1>
-        <p className="text-sm text-gris-canon-de-fusil/60">
+        <p className="text-sm text-gris-canon-de-fusil/60 text-justify">
           Achetez l'esprit serein grâce à nos protocoles d'encaissement cryptés
           de dernière génération.
         </p>

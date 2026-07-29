@@ -8,7 +8,7 @@ const Shipping: React.FC = () => {
         <h1 className="text-2xl font-bold tracking-tight mb-2">
           Livraisons & Retours
         </h1>
-        <p className="text-gris-canon-de-fusil/60 text-sm">
+        <p className="text-gris-canon-de-fusil/60 text-sm text-justify">
           Tout savoir sur le traitement, l'expédition et la politique d'échange
           de vos colis.
         </p>
@@ -21,24 +21,10 @@ const Shipping: React.FC = () => {
             <Truck className="h-6 w-6" />
             <h2 className="text-xl font-bold">Modes de Livraison</h2>
           </div>
-          <p className="text-sm text-gris-canon-de-fusil/80 leading-relaxed">
+          <p className="text-sm text-gris-canon-de-fusil/80 leading-relaxed text-justify">
             Nolcop Store collabore avec des transporteurs de confiance pour
             garantir la sécurité de vos achats.
           </p>
-          <ul className="space-y-2 text-sm text-gris-canon-de-fusil/70 list-disc list-inside">
-            <li>
-              <strong className="text-gris-canon-de-fusil">
-                Colissimo Suivi :
-              </strong>{" "}
-              2-3 jours ouvrés (1000 Fcfa ou offert dès 100000 Fcfa d'achat).
-            </li>
-            <li>
-              <strong className="text-gris-canon-de-fusil">
-                Chronopost Express :
-              </strong>{" "}
-              Livraison le lendemain avant 13h (1500 Fcfa).
-            </li>
-          </ul>
         </div>
 
         {/* Retours */}
@@ -47,12 +33,12 @@ const Shipping: React.FC = () => {
             <RefreshCw className="h-6 w-6" />
             <h2 className="text-xl font-bold">Retours & Remboursements</h2>
           </div>
-          <p className="text-sm text-gris-canon-de-fusil/80 leading-relaxed">
-            Vous avez changé d'avis ? Aucun problème ! Vous disposez de 14 jours
+          <p className="text-sm text-gris-canon-de-fusil/80 leading-relaxed text-justify">
+            Vous avez changé d'avis ? Aucun problème ! Vous disposez de 7 jours
             francs à compter de la réception de votre colis pour initier un
             retour complet.
           </p>
-          <p className="text-xs text-gris-canon-de-fusil/60">
+          <p className="text-xs text-gris-canon-de-fusil/60 text-justify">
             Note : Les frais de retour restent à la charge du client sauf si le
             produit présente un défaut de fabrication avéré à l'ouverture.
           </p>
@@ -64,9 +50,8 @@ const Shipping: React.FC = () => {
         <Box className="h-8 w-8 text-bleu-clair mx-auto" />
         <h3 className="text-lg font-bold">Comment effectuer un retour ?</h3>
         <p className="text-sm text-blanc/70 max-w-lg mx-auto text-justify">
-          Contactez notre support via votre espace profil, téléchargez votre bon
-          de retour, emballez proprement l'article non porté et déposez-le dans
-          votre bureau de poste local.
+          Contactez notre support via la page de contact, emballez proprement
+          l'article non porté et attendez votre livreur pour qu'il recupère et s'en suivra les autres démarches.
         </p>
       </div>
     </div>

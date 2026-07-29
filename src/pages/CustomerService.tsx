@@ -10,7 +10,7 @@ const CustomerService: React.FC = () => {
         <h1 className="text-3xl font-bold tracking-tight">
           Centre d'Assistance Client
         </h1>
-        <p className="text-sm text-gris-canon-de-fusil/60">
+        <p className="text-sm text-gris-canon-de-fusil/60 text-justify">
           Une question ou une réclamation ? Nous sommes à vos côtés à chaque
           étape de votre commande.
         </p>
@@ -40,13 +40,13 @@ const CustomerService: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-gris-canon-de-fusil/5 p-8 rounded-2xl space-y-4 max-w-xl mx-auto border border-gris-canon-de-fusil/5">
+      <div className="bg-gris-canon-de-fusil/5 p-4 rounded-2xl space-y-4 max-w-xl mx-auto border border-gris-canon-de-fusil/5">
         <h4 className="font-bold text-lg text-center">
           Besoin d'ouvrir un ticket d'assistance immédiat ?
         </h4>
         <p className="text-xs text-gris-canon-de-fusil/70 text-justify">
           Pour nous permettre de traiter au mieux votre demande, merci de vous
-          munir de votre numéro de commande débutant par #NOL.
+          munir de votre numéro de commande.
         </p>
         <Link
           to="/contact"

@@ -18,6 +18,15 @@
     display: none;
   }
 
+  font-family: "Google Sans Flex", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings:
+    "slnt" 0,
+    "wdth" 100,
+    "GRAD" 0,
+    "ROND" 0;
+
   /* 2. Pour Firefox (CSS standardisé moderne) */
   scrollbar-width: none;
 

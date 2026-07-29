@@ -12,23 +12,42 @@ import {
   MapPin,
   Calendar,
   Trash2,
+  Edit,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useNotification } from "../hooks/useNotification";
 import type { Order } from "../types";
 import { supabase } from "../supabaseClient";
 
 const Orders: React.FC = () => {
   const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // État pour gérer le modal de suivi de commande
   const [selectedOrderForTracking, setSelectedOrderForTracking] =
     useState<Order | null>(null);
 
-  // État pour la suppression de commande
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [editForm, setEditForm] = useState({
+    shippingName: "",
+    shippingAddress: "",
+    shippingPhone: "",
+    items: [] as Array<{
+      id?: string;
+      productId: string;
+      productName: string;
+      price: number;
+      quantity: number;
+      selectedImage?: string;
+    }>,
+  });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
@@ -42,7 +61,10 @@ const Orders: React.FC = () => {
     let isMounted = true;
 
     const fetchOrders = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
       try {
@@ -52,8 +74,12 @@ const Orders: React.FC = () => {
             `
             *,
             order_items (
+              id,
               quantity,
               price_at_time,
+              selected_image,
+              product_id,
+              created_at,
               product:products (
                 id,
                 name,
@@ -82,31 +108,43 @@ const Orders: React.FC = () => {
             status: order.status,
             total: Number(order.total),
             paymentMethod: order.payment_method,
+            shippingName: order.shipping_name || "",
+            shippingPhone: order.shipping_phone || "",
             shippingAddress: {
               id: order.id,
-              street: order.shipping_address,
-              city: order.shipping_city,
-              country: "Bénin",
+              street: order.shipping_address || "",
+              city: order.shipping_city || "",
+              country: order.shipping_country || "",
               isDefault: false,
             },
             createdAt: order.created_at,
             updatedAt: order.updated_at,
-            items: order.order_items.map((item: any) => ({
-              product: {
-                id: item.product.id,
-                name: item.product.name,
-                description: item.product.description,
-                category: item.product.category?.name || "Général",
-                images: item.product.images,
-                price: Number(item.price_at_time),
-                stock: item.product.stock,
-                rating: item.product.rating,
-                reviews: item.product.reviews,
-                createdAt: item.product.created_at,
-                updatedAt: item.product.updated_at,
-              },
-              quantity: item.quantity,
-            })),
+            items: (order.order_items || []).map((item: any) => {
+              const productData = item.product || {};
+              const images = Array.isArray(productData.images)
+                ? productData.images
+                : [];
+              const fallbackImage = images[0] || "";
+
+              return {
+                product: {
+                  id: productData.id || item.product_id,
+                  name: productData.name || "Produit sans nom",
+                  description: productData.description || "",
+                  category: productData.category?.name || "Général",
+                  images: images,
+                  price: Number(item.price_at_time || productData.price || 0),
+                  stock: productData.stock || 0,
+                  rating: productData.rating || 0,
+                  reviews: productData.reviews || 0,
+                  createdAt: productData.created_at || item.created_at,
+                  updatedAt: productData.updated_at || item.created_at,
+                },
+                quantity: item.quantity || 1,
+                selectedImage:
+                  item.selected_image || item.selectedImage || fallbackImage,
+              };
+            }),
           }));
 
           setOrders(formattedOrders);
@@ -139,11 +177,142 @@ const Orders: React.FC = () => {
 
       setOrders((prev) => prev.filter((o) => o.id !== deletingOrderId));
       setDeletingOrderId(null);
+      showNotification("Commande supprimée avec succès", "success");
     } catch (error) {
       console.error("Erreur lors de la suppression :", error);
-      alert("Impossible de supprimer cette commande.");
+      showNotification("Impossible de supprimer cette commande.", "error");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleOpenEditModal = (order: Order) => {
+    setEditingOrder(order);
+    setEditForm({
+      shippingName: (order as any).shippingName || "",
+      shippingAddress: order.shippingAddress.street || "",
+      shippingPhone: (order as any).shippingPhone || "",
+      items: order.items.map((item) => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+        selectedImage: item.selectedImage,
+      })),
+    });
+  };
+
+  const handleQuantityChange = (index: number, delta: number) => {
+    setEditForm((prev) => {
+      const updatedItems = prev.items.map((item, i) => {
+        if (i === index) {
+          const newQty = item.quantity + delta;
+          return { ...item, quantity: newQty > 0 ? newQty : 1 };
+        }
+        return item;
+      });
+      return { ...prev, items: updatedItems };
+    });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setEditForm((prev) => {
+      if (prev.items.length <= 1) {
+        showNotification(
+          "Une commande doit contenir au moins un produit.",
+          "error",
+        );
+        return prev;
+      }
+      return { ...prev, items: prev.items.filter((_, i) => i !== index) };
+    });
+  };
+
+  const calculatedNewTotal = editForm.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
+
+  const handleUpdateOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOrder) return;
+
+    setIsSavingEdit(true);
+    try {
+      const { error: orderError } = await supabase
+        .from("orders")
+        .update({
+          shipping_name: editForm.shippingName,
+          shipping_address: editForm.shippingAddress,
+          shipping_phone: editForm.shippingPhone,
+          total: calculatedNewTotal,
+        })
+        .eq("id", editingOrder.id);
+
+      if (orderError) throw orderError;
+
+      const { error: deleteItemsError } = await supabase
+        .from("order_items")
+        .delete()
+        .eq("order_id", editingOrder.id);
+
+      if (deleteItemsError) throw deleteItemsError;
+
+      const newOrderItems = editForm.items.map((item) => ({
+        order_id: editingOrder.id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        price_at_time: item.price,
+        selected_image: item.selectedImage || "",
+      }));
+
+      const { error: insertItemsError } = await supabase
+        .from("order_items")
+        .insert(newOrderItems);
+
+      if (insertItemsError) throw insertItemsError;
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === editingOrder.id
+            ? {
+                ...o,
+                shippingName: editForm.shippingName,
+                shippingPhone: editForm.shippingPhone,
+                shippingAddress: {
+                  ...o.shippingAddress,
+                  street: editForm.shippingAddress,
+                },
+                total: calculatedNewTotal,
+                items: editForm.items.map((item) => ({
+                  product: {
+                    ...o.items.find((i) => i.product.id === item.productId)
+                      ?.product!,
+                    id: item.productId,
+                    name: item.productName,
+                    price: item.price,
+                  },
+                  quantity: item.quantity,
+                  selectedImage: item.selectedImage || "",
+                })),
+              }
+            : o,
+        ),
+      );
+
+      showNotification(
+        "Commande et articles mis à jour avec succès",
+        "success",
+      );
+      setEditingOrder(null);
+    } catch (error: any) {
+      console.error("Erreur mise à jour commande :", error);
+      showNotification(
+        "Erreur lors de la mise à jour de la commande.",
+        "error",
+      );
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -313,7 +482,7 @@ const Orders: React.FC = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gris-canon-de-fusil/5 gap-3">
                     <div>
                       <h3 className="text-base font-extrabold text-gris-canon-de-fusil">
-                        Référence {order.id.slice(0, 8).toUpperCase()}
+                        Référence COM-{order.id.slice(0, 8).toUpperCase()}
                       </h3>
                       <p className="text-xs text-gris-canon-de-fusil/40 mt-0.5">
                         Achat effectué le{" "}
@@ -332,16 +501,25 @@ const Orders: React.FC = () => {
                         {statusInfo.label}
                       </span>
                       <div className="flex items-center space-x-1">
+                        {order.status === "pending" && (
+                          <button
+                            onClick={() => handleOpenEditModal(order)}
+                            className="p-2 text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer"
+                            title="Modifier la commande"
+                          >
+                            <Edit className="h-5 w-5" />
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedOrderForTracking(order)}
-                          className="p-2 text-gris-canon-de-fusil/40 hover:text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer"
+                          className="p-2 text-bleu-saphir rounded-xl transition-colors cursor-pointer"
                           title="Détails"
                         >
                           <Eye className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => setDeletingOrderId(order.id)}
-                          className="p-2 text-gris-canon-de-fusil/40 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                          className="p-2 text-rouge-ecarlate rounded-xl transition-colors cursor-pointer"
                           title="Supprimer la commande"
                         >
                           <Trash2 className="h-5 w-5" />
@@ -357,14 +535,17 @@ const Orders: React.FC = () => {
                         key={`${item.product.id}-${index}`}
                         className="flex items-center space-x-4"
                       >
-                        <img
-                          src={
-                            item.product.images[0] ||
-                            "/categories/electronics.jfif"
-                          }
-                          alt={item.product.name}
-                          className="w-14 h-14 object-cover rounded-xl border border-gris-canon-de-fusil/5 shrink-0 bg-gris-canon-de-fusil/5"
-                        />
+                        {item.selectedImage ? (
+                          <img
+                            src={item.selectedImage}
+                            alt={item.product.name}
+                            className="w-14 h-14 object-cover rounded-xl border border-gris-canon-de-fusil/5 shrink-0 bg-gris-canon-de-fusil/5"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl border border-gris-canon-de-fusil/5 bg-gris-canon-de-fusil/5 flex items-center justify-center shrink-0">
+                            <Package className="h-6 w-6 text-gris-canon-de-fusil/30" />
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-bold text-gris-canon-de-fusil truncate">
                             {item.product.name}
@@ -384,19 +565,6 @@ const Orders: React.FC = () => {
 
                   {/* Footer */}
                   <div className="border-t border-gris-canon-de-fusil/5 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="text-xs font-semibold text-gris-canon-de-fusil/50 order-2 sm:order-1">
-                      {order.items.reduce(
-                        (acc, item) => acc + item.quantity,
-                        0,
-                      )}{" "}
-                      {order.items.reduce(
-                        (acc, item) => acc + item.quantity,
-                        0,
-                      ) === 1
-                        ? "article"
-                        : "articles"}
-                      {` • Livré à ${order.shippingAddress.city} via ${order.paymentMethod}`}
-                    </div>
                     <div className="text-right order-1 sm:order-2">
                       <span className="text-xs text-gris-canon-de-fusil/40 mr-2">
                         Montant total :
@@ -408,7 +576,7 @@ const Orders: React.FC = () => {
                   </div>
 
                   {/* Buttons Actifs */}
-                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="mt-5 grid grid-cols-2 gap-3 pt-1">
                     <button
                       onClick={() => setSelectedOrderForTracking(order)}
                       className="w-full px-4 py-2.5 border border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/70 hover:bg-gris-canon-de-fusil/5 font-bold text-sm rounded-xl transition-colors cursor-pointer text-center"
@@ -429,6 +597,179 @@ const Orders: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL DE MODIFICATION DE COMMANDE (PRODUITS + QUANTITES) */}
+      {editingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
+          <div className="bg-blanc max-w-lg w-full rounded-2xl shadow-xl border border-gris-canon-de-fusil/5 overflow-hidden p-6 space-y-5 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-gris-canon-de-fusil/5 shrink-0">
+              <h3 className="text-base font-black text-gris-canon-de-fusil">
+                Modifier la commande COM-
+                {editingOrder.id.slice(0, 8).toUpperCase()}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingOrder(null)}
+                className="p-1 rounded-lg hover:bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/60 hover:text-gris-canon-de-fusil transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleUpdateOrder}
+              className="space-y-4 overflow-y-auto pr-1 flex-1"
+            >
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gris-canon-de-fusil mb-1">
+                    Nom du destinataire
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.shippingName}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        shippingName: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-blanc border border-gris-canon-de-fusil/20 rounded-xl text-xs focus:outline-none focus:border-bleu-saphir"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gris-canon-de-fusil mb-1">
+                    Adresse de livraison
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.shippingAddress}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        shippingAddress: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-blanc border border-gris-canon-de-fusil/20 rounded-xl text-xs focus:outline-none focus:border-bleu-saphir"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gris-canon-de-fusil mb-1">
+                    Téléphone de contact
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={editForm.shippingPhone}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        shippingPhone: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-blanc border border-gris-canon-de-fusil/20 rounded-xl text-xs focus:outline-none focus:border-bleu-saphir"
+                  />
+                </div>
+              </div>
+
+              {/* LISTE ET MODIFICATION DES ARTICLES */}
+              <div className="pt-2 border-t border-gris-canon-de-fusil/5">
+                <h4 className="text-xs font-black text-gris-canon-de-fusil mb-3">
+                  Articles de la commande
+                </h4>
+                <div className="space-y-3">
+                  {editForm.items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 bg-gris-canon-de-fusil/2 rounded-xl border border-gris-canon-de-fusil/5 gap-3"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-gris-canon-de-fusil truncate">
+                          {item.productName}
+                        </p>
+                        <p className="text-[10px] text-gris-canon-de-fusil/50">
+                          {formatPrice(item.price)} / unité
+                        </p>
+                      </div>
+
+                      {/* Sélecteur de Quantité */}
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuantityChange(idx, -1);
+                          }}
+                          className="p-1 rounded-lg bg-gris-canon-de-fusil/10 hover:bg-gris-canon-de-fusil/20 text-gris-canon-de-fusil cursor-pointer"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="text-xs font-extrabold text-gris-canon-de-fusil min-w-5 text-center">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuantityChange(idx, 1);
+                          }}
+                          className="p-1 rounded-lg bg-gris-canon-de-fusil/10 hover:bg-gris-canon-de-fusil/20 text-gris-canon-de-fusil cursor-pointer"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+
+                      {/* Suppression d'un article */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveItem(idx);
+                        }}
+                        className="p-1.5 text-rouge-ecarlate hover:bg-rouge-ecarlate/10 rounded-lg transition-colors cursor-pointer"
+                        title="Supprimer ce produit"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nouveau total calculé */}
+              <div className="flex items-center justify-between pt-3 border-t border-gris-canon-de-fusil/5 shrink-0">
+                <span className="text-xs font-bold text-gris-canon-de-fusil/60">
+                  Nouveau Total à payer :
+                </span>
+                <span className="text-lg font-black text-bleu-saphir">
+                  {formatPrice(calculatedNewTotal)}
+                </span>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-3 border-t border-gris-canon-de-fusil/5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setEditingOrder(null)}
+                  className="px-4 py-2 bg-gris-canon-de-fusil/5 hover:bg-gris-canon-de-fusil/10 text-xs font-bold rounded-xl text-gris-canon-de-fusil/70"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="px-4 py-2 bg-bleu-saphir text-blanc text-xs font-bold rounded-xl hover:bg-bleu-saphir/90 transition-all flex items-center cursor-pointer"
+                >
+                  {isSavingEdit ? "Enregistrement..." : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MODAL DE SUIVI DE COMMANDE */}
       {selectedOrderForTracking &&
         (() => {
@@ -446,7 +787,8 @@ const Orders: React.FC = () => {
                       Suivi de Commande
                     </h3>
                     <p className="text-xs text-gris-canon-de-fusil/50 mt-0.5">
-                      Réf : #{selectedOrderForTracking.id}
+                      Référence : COM-
+                      {selectedOrderForTracking.id.slice(0, 8).toUpperCase()}
                     </p>
                   </div>
                   <button
@@ -467,8 +809,9 @@ const Orders: React.FC = () => {
                           Destination
                         </p>
                         <p className="text-gris-canon-de-fusil/60 mt-0.5">
-                          {selectedOrderForTracking.shippingAddress.street},{" "}
-                          {selectedOrderForTracking.shippingAddress.city}
+                          {selectedOrderForTracking.shippingAddress.street}{" "}
+                          {selectedOrderForTracking.shippingAddress.city}{" "}
+                          {selectedOrderForTracking.shippingAddress.country}
                         </p>
                       </div>
                     </div>

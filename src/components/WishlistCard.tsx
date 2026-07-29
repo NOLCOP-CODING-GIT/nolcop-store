@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ShoppingCart, Trash2, Check } from "lucide-react";
 import type { Product } from "../types";
 import { useCart } from "../hooks/useCart";
+import { useNotification } from "../hooks/useNotification";
 
 interface WishlistCardProps {
   product: Product;
@@ -11,6 +12,7 @@ interface WishlistCardProps {
 
 const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
   const { state: cartState, addToCart } = useCart();
+  const { showNotification } = useNotification();
 
   const isAlreadyInCart = cartState.items.some(
     (item) => item.product.id === product.id,
@@ -36,7 +38,11 @@ const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
         <div className="relative aspect-square w-full overflow-hidden bg-gris-canon-de-fusil/5">
           <Link to={`/products/${product.id}`}>
             <img
-              src={product.images?.[0] || "/images/placeholder.png"}
+              src={
+                product.selectedImage ||
+                product.images?.[0] ||
+                "/images/placeholder.png"
+              }
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -58,7 +64,10 @@ const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
 
           {/* Bouton de suppression */}
           <button
-            onClick={() => onRemove(product.id)}
+            onClick={() => {
+              onRemove(product.id);
+              showNotification(`"${product.name}" retiré des favoris`, "error");
+            }}
             className="absolute top-2.5 right-2.5 p-2 bg-blanc/90 backdrop-blur-md text-rouge-ecarlate rounded-xl shadow-xs border border-gris-canon-de-fusil/5 hover:bg-rouge-ecarlate hover:text-blanc transition-all cursor-pointer z-10"
             title="Supprimer des favoris"
           >
@@ -93,7 +102,10 @@ const WishlistCard: React.FC<WishlistCardProps> = ({ product, onRemove }) => {
       <div className="p-4 pt-0">
         <button
           disabled={isAlreadyInCart || !inStock}
-          onClick={() => addToCart(product, 1)}
+          onClick={() => {
+            addToCart(product, 1);
+            showNotification(`"${product.name}" ajouté au panier !`, "success");
+          }}
           className={`w-full flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs ${
             !inStock
               ? "bg-gray-200 text-gray-400 cursor-not-allowed"

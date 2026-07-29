@@ -9,6 +9,8 @@ import { WifiOff } from "lucide-react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { NotificationContainer } from "./components/Notifications";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AuthLayout from "./components/AuthLayout";
@@ -91,62 +93,68 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <Router>
-            <Routes>
-              {/* 1. Routes d'authentification (Sans MainLayout) */}
-              <Route element={<AuthLayout />}>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-              </Route>
-
-              <Route path="/unauthorized" element={<Unauthorized />} />
-
-              {/* 2. Routes principales de l'application (Toutes avec MainLayout automatique) */}
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/category/:slug" element={<CategoryPage />} />
-                <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/faq" element={<Faq />} />
-                <Route path="/shipping" element={<Shipping />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/payment" element={<Payment />} />
-                <Route path="/customer-service" element={<CustomerService />} />
-
-                {/* Routes Protégées (Avec MainLayout) */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/orders" element={<Orders />} />
+    <NotificationProvider>
+      <AuthProvider>
+        <WishlistProvider>
+          <CartProvider>
+            <Router>
+              <NotificationContainer />
+              <Routes>
+                {/* 1. Routes d'authentification (Sans MainLayout) */}
+                <Route element={<AuthLayout />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
                 </Route>
-              </Route>
-              <Route element={<ProtectedRoute requireAdmin />}>
-                <Route path="/admin" element={<Admin />} />
-              </Route>
 
-              {/* 3. Capture globale 404 (S'affiche dans NotFoundLayout, sans Header ni Footer) */}
-              <Route
-                path="*"
-                element={
-                  <NotFoundLayout>
-                    <NotFound />
-                  </NotFoundLayout>
-                }
-              />
-            </Routes>
-          </Router>
-        </CartProvider>
-      </WishlistProvider>
-    </AuthProvider>
+                <Route path="/unauthorized" element={<Unauthorized />} />
+
+                {/* 2. Routes principales de l'application (Toutes avec MainLayout automatique) */}
+                <Route element={<MainLayout />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/category/:slug" element={<CategoryPage />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/faq" element={<Faq />} />
+                  <Route path="/shipping" element={<Shipping />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/payment" element={<Payment />} />
+                  <Route
+                    path="/customer-service"
+                    element={<CustomerService />}
+                  />
+
+                  {/* Routes Protégées (Avec MainLayout) */}
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/orders" element={<Orders />} />
+                  </Route>
+                </Route>
+                <Route element={<ProtectedRoute requireAdmin />}>
+                  <Route path="/admin" element={<Admin />} />
+                </Route>
+
+                {/* 3. Capture globale 404 (S'affiche dans NotFoundLayout, sans Header ni Footer) */}
+                <Route
+                  path="*"
+                  element={
+                    <NotFoundLayout>
+                      <NotFound />
+                    </NotFoundLayout>
+                  }
+                />
+              </Routes>
+            </Router>
+          </CartProvider>
+        </WishlistProvider>
+      </AuthProvider>
+    </NotificationProvider>
   );
 }
 

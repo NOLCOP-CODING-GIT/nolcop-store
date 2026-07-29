@@ -7,6 +7,7 @@ import { useCart } from "../hooks/useCart";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useWishlist } from "../hooks/useWishlist";
 import { useAuth } from "../hooks/useAuth";
+import { useNotification } from "../hooks/useNotification";
 
 interface ProductCardProps {
   product: Product;
@@ -23,6 +24,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { state, addToCart } = useCart();
   const { user } = useAuth();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
 
   const isAlreadyInCart = state.items.some(
@@ -42,7 +44,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     if (!isAlreadyInCart && product.stock > 0) {
-      addToCart(product);
+      addToCart(product, 1);
+      showNotification(`"${product.name}" ajouté au panier !`, "success");
     }
   };
 
@@ -59,6 +62,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
       return;
     }
     toggleWishlist(product.id);
+    if (isFavorite) {
+      showNotification(`"${product.name}" retiré des favoris`, "error");
+    } else {
+      showNotification(`"${product.name}" ajouté aux favoris !`, "success");
+    }
   };
 
   const discountPercentage = product.discount || 0;

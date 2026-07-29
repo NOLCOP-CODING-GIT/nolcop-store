@@ -8,7 +8,6 @@ import {
   Camera,
   LogOut,
   AlertCircle,
-  CheckCircle2,
   MapPin,
   Plus,
   Trash2,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../supabaseClient";
+import { useNotification } from "../hooks/useNotification";
 
 interface Address {
   id: string;
@@ -29,6 +29,7 @@ interface Address {
 const ProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,7 +41,6 @@ const ProfilePage: React.FC = () => {
   const [profileErrors, setProfileErrors] = useState<{ [key: string]: string }>(
     {},
   );
-  const [successMessage, setSuccessMessage] = useState(false);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
@@ -134,6 +134,10 @@ const ProfilePage: React.FC = () => {
     if (!user) return;
 
     if (!validateProfileForm()) {
+      showNotification(
+        "Veuillez corriger les erreurs dans le formulaire.",
+        "error",
+      );
       return;
     }
 
@@ -151,12 +155,12 @@ const ProfilePage: React.FC = () => {
       if (error) throw error;
 
       setProfileErrors({});
-      setSuccessMessage(true);
       setIsEditing(false);
       fetchUser();
-      setTimeout(() => setSuccessMessage(false), 3000);
+      showNotification("Profil mis à jour avec succès !", "success");
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil", error);
+      showNotification("Erreur lors de la mise à jour du profil.", "error");
     } finally {
       setLoading(false);
     }
@@ -208,6 +212,10 @@ const ProfilePage: React.FC = () => {
     if (!user) return;
 
     if (!validateAddressForm()) {
+      showNotification(
+        "Veuillez remplir tous les champs de l'adresse.",
+        "error",
+      );
       return;
     }
 
@@ -232,6 +240,7 @@ const ProfilePage: React.FC = () => {
           .eq("id", editingAddressId);
 
         if (error) throw error;
+        showNotification("Adresse modifiée avec succès !", "success");
       } else {
         const { error } = await supabase.from("addresses").insert([
           {
@@ -244,6 +253,7 @@ const ProfilePage: React.FC = () => {
         ]);
 
         if (error) throw error;
+        showNotification("Adresse ajoutée avec succès !", "success");
       }
 
       setAddressForm({
@@ -258,19 +268,28 @@ const ProfilePage: React.FC = () => {
       fetchAddresses();
     } catch (error) {
       console.error("Erreur lors de l'enregistrement de l'adresse", error);
+      showNotification(
+        "Erreur lors de l'enregistrement de l'adresse.",
+        "error",
+      );
     } finally {
       setLoadingAddresses(false);
     }
   };
 
   const handleDeleteAddress = async (id: string) => {
-    if (addresses.length <= 1) return;
+    if (addresses.length <= 1) {
+      showNotification("Vous devez conserver au moins une adresse.", "error");
+      return;
+    }
     try {
       const { error } = await supabase.from("addresses").delete().eq("id", id);
       if (error) throw error;
       setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+      showNotification("Adresse supprimée avec succès !", "error");
     } catch (error) {
       console.error("Erreur lors de la suppression", error);
+      showNotification("Erreur lors de la suppression de l'adresse.", "error");
     }
   };
 
@@ -289,8 +308,13 @@ const ProfilePage: React.FC = () => {
 
       if (error) throw error;
       fetchAddresses();
+      showNotification("Adresse définie comme principale !", "success");
     } catch (error) {
       console.error("Erreur de mise à jour par défaut", error);
+      showNotification(
+        "Erreur lors du changement d'adresse par défaut.",
+        "error",
+      );
     }
   };
 
@@ -331,13 +355,6 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc relative space-y-8">
-      {successMessage && (
-        <div className="bg-vert-jungle mb-3 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5" />
-          <span>Profil mis à jour avec succès !</span>
-        </div>
-      )}
-
       {/* ---------------- SECTION PROFIL ---------------- */}
       <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-5 sm:p-6 shadow-xs transition-all duration-300">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gris-canon-de-fusil/5 mb-6">
@@ -508,7 +525,7 @@ const ProfilePage: React.FC = () => {
           <div className="flex items-center space-x-2.5">
             <MapPin className="h-5 w-5 text-bleu-saphir" />
             <h2 className="text-base sm:text-lg font-black text-gris-canon-de-fusil tracking-tight">
-              Mes Adresses de livraison
+              Mes Adresses
             </h2>
           </div>
           <button

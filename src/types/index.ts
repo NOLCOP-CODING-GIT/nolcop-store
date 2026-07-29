@@ -5,6 +5,7 @@ export interface Product {
   price: number;
   category: string;
   images: string[]; // Recommandé : toujours avoir au moins une image dans le tableau
+  selectedImage?: string;
   stock: number;
   rating: number;
   reviews: number;
@@ -17,8 +18,6 @@ export interface Product {
 
 // Un sous-type dédié pour tes specs, pour garder de l'autocomplétion sympa !
 export interface ProductSpecifications {
-  colors?: string[];
-  sizes?: string[];
   [key: string]: any; // Permet d'ajouter d'autres specs (ex: poids, matière) à la volée
 }
 
@@ -34,8 +33,7 @@ export interface Category {
 export interface CartItem {
   product: Product;
   quantity: number;
-  selectedColor?: string;
-  selectedSize?: string;
+  selectedImage?: string;
 }
 
 export interface User {

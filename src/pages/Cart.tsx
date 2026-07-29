@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
+import { useNotification } from "../hooks/useNotification";
 
 const Cart: React.FC = () => {
   const { user } = useAuth();
   const { state, updateQuantity, removeFromCart } = useCart();
+  const { showNotification } = useNotification();
   const [promoCode, setPromoCode] = useState("");
 
   const formatPrice = (price: number) => {
@@ -17,15 +19,34 @@ const Cart: React.FC = () => {
     }).format(price);
   };
 
-  // ✅ Gestionnaire de changement de quantité défini directement dans le composant
   const handleQuantityChange = (
     id: string,
     newQuantity: number,
+    productName: string,
   ) => {
     if (newQuantity > 0) {
       updateQuantity(id, newQuantity);
     } else {
       removeFromCart(id);
+      showNotification(`"${productName}" retiré du panier`, "error");
+    }
+  };
+
+  const handleApplyPromoCode = () => {
+    if (!promoCode.trim()) return;
+
+    if (!user) {
+      showNotification(
+        "Veuillez vous connecter pour appliquer un code promo.",
+        "error",
+      );
+      return;
+    }
+
+    if (promoCode.trim().toUpperCase() === "NOLCOP10") {
+      showNotification("Code promo appliqué avec succès !", "success");
+    } else {
+      showNotification("Code promo invalide ou expiré.", "error");
     }
   };
 
@@ -75,12 +96,12 @@ const Cart: React.FC = () => {
 
             return (
               <div
-                key={`${item.product.id}-${item.selectedColor || ""}-${item.selectedSize || ""}`}
+                key={`${item.product.id}`}
                 className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gris-canon-de-fusil/5 hover:border-gris-canon-de-fusil/10 transition-all gap-4 bg-blanc"
               >
                 <div className="flex items-center space-x-4 flex-1">
                   <img
-                    src={item.product.images[0]}
+                    src={item.selectedImage || item.product.images[0]}
                     alt={item.product.name}
                     className="w-24 h-24 sm:w-20 sm:h-20 object-cover rounded-lg bg-gris-canon-de-fusil/5 shrink-0"
                   />
@@ -125,6 +146,7 @@ const Cart: React.FC = () => {
                         handleQuantityChange(
                           item.product.id,
                           item.quantity - 1,
+                          item.product.name,
                         )
                       }
                       className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all cursor-pointer"
@@ -138,7 +160,8 @@ const Cart: React.FC = () => {
                       onClick={() =>
                         handleQuantityChange(
                           item.product.id,
-                          item.quantity + 1
+                          item.quantity + 1,
+                          item.product.name,
                         )
                       }
                       className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all cursor-pointer"
@@ -157,13 +180,13 @@ const Cart: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={() =>
-                      removeFromCart(
-                        item.product.id,
-                        item.selectedColor,
-                        item.selectedSize,
-                      )
-                    }
+                    onClick={() => {
+                      removeFromCart(item.product.id);
+                      showNotification(
+                        `"${item.product.name}" retiré du panier`,
+                        "error",
+                      );
+                    }}
                     className="text-gris-canon-de-fusil/40 hover:text-orange-rougi p-2 rounded-lg hover:bg-orange-rougi/5 transition-all cursor-pointer"
                     aria-label="Supprimer l'article"
                   >
@@ -215,7 +238,15 @@ const Cart: React.FC = () => {
                   placeholder="Entrez votre code..."
                   className="p-2 w-full border border-gris-canon-de-fusil/20 rounded-md focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-gris-canon-de-fusil text-sm placeholder:text-gris-canon-de-fusil/40"
                 />
-                <button className="p-2 bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil rounded-md hover:bg-gris-canon-de-fusil/20 transition-colors font-medium shrink-0 cursor-pointer">
+                <button
+                  onClick={handleApplyPromoCode}
+                  disabled={!promoCode.trim()}
+                  className={`p-2 rounded-md font-medium shrink-0 text-xs transition-colors ${
+                    promoCode.trim()
+                      ? "bg-orange-rougi text-blanc cursor-pointer hover:opacity-90"
+                      : "bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil/40 cursor-not-allowed opacity-60"
+                  }`}
+                >
                   Appliquer
                 </button>
               </div>
@@ -223,7 +254,7 @@ const Cart: React.FC = () => {
 
             <Link
               to={user ? "/checkout" : "/login"}
-              className="w-full flex items-center justify-center px-6 py-3 bg-bleu-saphir text-blanc rounded-lg font-semibold hover:opacity-90 shadow-md transition-all mb-4"
+              className="w-full flex items-center justify-center px-6 py-3 bg-bleu-saphir text-blanc rounded-lg font-semibold hover:opacity-90 shadow-md transition-all mb-4 text-sm"
             >
               {user ? "Passer la commande" : "Se connecter pour commander"}
               <ArrowRight className="h-4 w-4 ml-2" />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Package,
@@ -15,6 +15,11 @@ import {
   Edit,
   Plus,
   Minus,
+  FileText,
+  Printer,
+  Bell,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNotification } from "../hooks/useNotification";
@@ -32,6 +37,15 @@ const Orders: React.FC = () => {
 
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
+  const [clientNotif, setClientNotif] = useState<string | null>(null);
+
+  // Archivage côté client : totalement indépendant de l'archivage admin.
+  // Ce filtre porte sur "archived_by_client", jamais sur "is_archived"
+  // (qui reste réservé à l'admin), donc chaque interface garde sa propre vue.
+  const [showArchived, setShowArchived] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
 
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [editForm, setEditForm] = useState({
@@ -57,132 +71,254 @@ const Orders: React.FC = () => {
     }).format(price);
   };
 
-  React.useEffect(() => {
-    let isMounted = true;
+  // Fenêtre de modification / annulation de 10 minutes max
+  const isModifiable = (createdAtStr: string, currentStatus: string) => {
+    if (
+      currentStatus === "cancelled" ||
+      currentStatus === "delivered" ||
+      currentStatus === "shipped"
+    ) {
+      return false;
+    }
+    const createdTime = new Date(createdAtStr).getTime();
+    const now = new Date().getTime();
+    const diffMinutes = (now - createdTime) / (1000 * 60);
+    return diffMinutes < 10;
+  };
 
-    const fetchOrders = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
+  const getComputedStatus = (order: any) => {
+    if (order.status === "cancelled" || order.status === "delivered") {
+      return order.status;
+    }
+    const now = new Date().getTime();
+    const created = new Date(order.createdAt || order.created_at).getTime();
+    const diffMinutes = (now - created) / (1000 * 60);
 
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select(
-            `
-            *,
-            order_items (
+    if (diffMinutes < 10) return "pending";
+    if (diffMinutes < 30) return "processing";
+    return "shipped";
+  };
+
+  const fetchOrders = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          `
+          *,
+          order_items (
+            id,
+            quantity,
+            price_at_time,
+            selected_image,
+            product_id,
+            created_at,
+            product:products (
               id,
-              quantity,
-              price_at_time,
-              selected_image,
-              product_id,
+              name,
+              description,
+              category:categories(name),
+              images,
+              price,
+              stock,
+              rating,
+              reviews,
               created_at,
-              product:products (
-                id,
-                name,
-                description,
-                category:categories(name),
-                images,
-                price,
-                stock,
-                rating,
-                reviews,
-                created_at,
-                updated_at
-              )
+              updated_at
             )
-          `,
           )
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+        `,
+        )
+        .eq("user_id", user.id)
+        .eq("archived_by_client", showArchived)
+        .order("created_at", { ascending: false });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data && isMounted) {
-          const formattedOrders: Order[] = data.map((order: any) => ({
+      if (data) {
+        const formattedOrders: Order[] = data.map((order: any) => ({
+          id: order.id,
+          userId: order.user_id,
+          status: order.status,
+          total: Number(order.total),
+          paymentMethod: order.payment_method,
+          shippingName: order.shipping_name || "",
+          shippingPhone: order.shipping_phone || "",
+          shippingAddress: {
             id: order.id,
-            userId: order.user_id,
-            status: order.status,
-            total: Number(order.total),
-            paymentMethod: order.payment_method,
-            shippingName: order.shipping_name || "",
-            shippingPhone: order.shipping_phone || "",
-            shippingAddress: {
-              id: order.id,
-              street: order.shipping_address || "",
-              city: order.shipping_city || "",
-              country: order.shipping_country || "",
-              isDefault: false,
-            },
-            createdAt: order.created_at,
-            updatedAt: order.updated_at,
-            items: (order.order_items || []).map((item: any) => {
-              const productData = item.product || {};
-              const images = Array.isArray(productData.images)
-                ? productData.images
-                : [];
-              const fallbackImage = images[0] || "";
+            street: order.shipping_address || "",
+            city: order.shipping_city || "",
+            country: order.shipping_country || "",
+            isDefault: false,
+          },
+          createdAt: order.created_at,
+          updatedAt: order.updated_at,
+          items: (order.order_items || []).map((item: any) => {
+            const productData = item.product || {};
+            const images = Array.isArray(productData.images)
+              ? productData.images
+              : [];
+            const fallbackImage = images[0] || "";
 
-              return {
-                product: {
-                  id: productData.id || item.product_id,
-                  name: productData.name || "Produit sans nom",
-                  description: productData.description || "",
-                  category: productData.category?.name || "Général",
-                  images: images,
-                  price: Number(item.price_at_time || productData.price || 0),
-                  stock: productData.stock || 0,
-                  rating: productData.rating || 0,
-                  reviews: productData.reviews || 0,
-                  createdAt: productData.created_at || item.created_at,
-                  updatedAt: productData.updated_at || item.created_at,
-                },
-                quantity: item.quantity || 1,
-                selectedImage:
-                  item.selected_image || item.selectedImage || fallbackImage,
-              };
-            }),
-          }));
+            return {
+              product: {
+                id: productData.id || item.product_id,
+                name: productData.name || "Produit sans nom",
+                description: productData.description || "",
+                category: productData.category?.name || "Général",
+                images: images,
+                price: Number(item.price_at_time || productData.price || 0),
+                stock: productData.stock || 0,
+                rating: productData.rating || 0,
+                reviews: productData.reviews || 0,
+                createdAt: productData.created_at || item.created_at,
+                updatedAt: productData.updated_at || item.created_at,
+              },
+              quantity: item.quantity || 1,
+              selectedImage:
+                item.selected_image || item.selectedImage || fallbackImage,
+            };
+          }),
+        }));
 
-          setOrders(formattedOrders);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des commandes:", error);
-      } finally {
-        if (isMounted) setLoading(false);
+        setOrders(formattedOrders);
       }
-    };
+    } catch (error) {
+      console.error("Erreur lors de la récupération des commandes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrders();
 
+    if (!user?.id) return;
+
+    // Supabase Realtime - notifications de changement de statut
+    const channel = supabase
+      .channel("client_orders_channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newStatus = payload.new.status;
+          let message = `Commande COM-${payload.new.id.slice(0, 8).toUpperCase()} mise à jour : ${newStatus}`;
+          if (newStatus === "processing") {
+            message = "Votre commande est désormais en cours de préparation !";
+          } else if (newStatus === "shipped") {
+            message =
+              "Votre commande a été expédiée ! Votre facture est disponible.";
+          } else if (newStatus === "delivered") {
+            message =
+              "Votre commande a été livrée ! Merci pour votre confiance.";
+          } else if (newStatus === "cancelled") {
+            message = "Votre commande a été annulée.";
+          }
+
+          setClientNotif(message);
+          fetchOrders();
+        },
+      )
+      .subscribe();
+
     return () => {
-      isMounted = false;
+      supabase.removeChannel(channel);
     };
   }, [user]);
 
-  const handleDeleteOrder = async () => {
+  // Recharge la liste quand le client bascule entre "Mes commandes" et
+  // "Archivées". Complètement indépendant de la vue admin.
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showArchived]);
+
+  const handleCancelOrder = async () => {
     if (!deletingOrderId) return;
     setIsDeleting(true);
-
     try {
       const { error } = await supabase
         .from("orders")
-        .delete()
+        .update({ status: "cancelled" })
         .eq("id", deletingOrderId);
 
       if (error) throw error;
 
-      setOrders((prev) => prev.filter((o) => o.id !== deletingOrderId));
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === deletingOrderId ? { ...o, status: "cancelled" } : o,
+        ),
+      );
+
+      showNotification("Commande annulée avec succès.", "success");
       setDeletingOrderId(null);
-      showNotification("Commande supprimée avec succès", "success");
-    } catch (error) {
-      console.error("Erreur lors de la suppression :", error);
-      showNotification("Impossible de supprimer cette commande.", "error");
+    } catch (err) {
+      console.error("Erreur lors de l'annulation :", err);
+      showNotification("Erreur lors de l'annulation de la commande.", "error");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleArchiveOrder = async (orderId: string) => {
+    setArchivingId(orderId);
+    try {
+      // On ne touche qu'à "archived_by_client" : la commande reste visible
+      // et inchangée côté admin (qui filtre uniquement sur "is_archived").
+      const { error } = await supabase
+        .from("orders")
+        .update({ archived_by_client: true })
+        .eq("id", orderId)
+        .eq("user_id", user!.id);
+
+      if (error) throw error;
+
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      showNotification(
+        "Commande archivée. Retrouvez-la dans l'onglet Archivées.",
+        "success",
+      );
+    } catch (err) {
+      console.error("Erreur lors de l'archivage :", err);
+      showNotification("Erreur lors de l'archivage de la commande.", "error");
+    } finally {
+      setArchivingId(null);
+    }
+  };
+
+  const handleRestoreOrder = async (orderId: string) => {
+    setArchivingId(orderId);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ archived_by_client: false })
+        .eq("id", orderId)
+        .eq("user_id", user!.id);
+
+      if (error) throw error;
+
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      showNotification("Commande restaurée.", "success");
+    } catch (err) {
+      console.error("Erreur lors de la restauration :", err);
+      showNotification(
+        "Erreur lors de la restauration de la commande.",
+        "error",
+      );
+    } finally {
+      setArchivingId(null);
     }
   };
 
@@ -272,34 +408,7 @@ const Orders: React.FC = () => {
 
       if (insertItemsError) throw insertItemsError;
 
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === editingOrder.id
-            ? {
-                ...o,
-                shippingName: editForm.shippingName,
-                shippingPhone: editForm.shippingPhone,
-                shippingAddress: {
-                  ...o.shippingAddress,
-                  street: editForm.shippingAddress,
-                },
-                total: calculatedNewTotal,
-                items: editForm.items.map((item) => ({
-                  product: {
-                    ...o.items.find((i) => i.product.id === item.productId)
-                      ?.product!,
-                    id: item.productId,
-                    name: item.productName,
-                    price: item.price,
-                  },
-                  quantity: item.quantity,
-                  selectedImage: item.selectedImage || "",
-                })),
-              }
-            : o,
-        ),
-      );
-
+      fetchOrders();
       showNotification(
         "Commande et articles mis à jour avec succès",
         "success",
@@ -321,13 +430,13 @@ const Orders: React.FC = () => {
       case "pending":
         return {
           label: "En attente",
-          color: "text-yellow-600 bg-yellow-100",
+          color: "text-amber-600 bg-amber-100",
           icon: Clock,
           step: 1,
         };
       case "processing":
         return {
-          label: "En traitement",
+          label: "En préparation",
           color: "text-blue-600 bg-blue-100",
           icon: Package,
           step: 2,
@@ -425,24 +534,66 @@ const Orders: React.FC = () => {
 
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-blanc">
+      {/* Alerte Realtime pour le Client */}
+      {clientNotif && (
+        <div className="mb-6 p-4 bg-vert-jungle/10 border border-vert-jungle/20 rounded-2xl flex items-center justify-between text-vert-jungle">
+          <div className="flex items-center space-x-3">
+            <Bell className="h-5 w-5 animate-pulse" />
+            <span className="text-xs font-bold">{clientNotif}</span>
+          </div>
+          <button
+            onClick={() => setClientNotif(null)}
+            className="p-1 hover:bg-vert-jungle/20 rounded-lg text-xs font-bold cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-5 gap-4">
         <div className="flex items-center">
           <div className="h-12 w-12 bg-bleu-saphir/5 text-bleu-saphir rounded-xl flex items-center justify-center mr-4 shrink-0">
             <Package className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-2xl font-black text-gris-canon-de-fusil tracking-tight">
-              Mes Commandes
+              {showArchived ? "Commandes Archivées" : "Mes Commandes"}
             </h1>
             <p className="text-xs text-gris-canon-de-fusil/50 mt-0.5">
-              Suivi en temps réel de vos achats sécurisés
+              {showArchived
+                ? "Commandes que vous avez masquées de votre liste principale"
+                : "Suivi en temps réel de vos achats sécurisés"}
             </p>
           </div>
         </div>
-        <div className="bg-gris-canon-de-fusil/5 px-4 py-2 rounded-xl text-sm font-bold text-gris-canon-de-fusil/70 self-start sm:self-center">
+        <div className="bg-gris-canon-de-fusil/5 px-4 py-2 rounded-xl text-sm font-bold text-gris-canon-de-fusil/70 self-start sm:self-center ">
           {orders.length} {orders.length === 1 ? "commande" : "commandes"}
         </div>
+      </div>
+
+      {/* Bascule Actives / Archivées (indépendante de l'archivage admin) */}
+      <div className="flex bg-gris-canon-de-fusil/5 rounded-xl p-1 w-fit mb-6">
+        <button
+          onClick={() => setShowArchived(false)}
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+            !showArchived
+              ? "bg-bleu-saphir text-blanc"
+              : "text-gris-canon-de-fusil/60 hover:text-gris-canon-de-fusil"
+          }`}
+        >
+          Mes commandes
+        </button>
+        <button
+          onClick={() => setShowArchived(true)}
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+            showArchived
+              ? "bg-bleu-saphir text-blanc"
+              : "text-gris-canon-de-fusil/60 hover:text-gris-canon-de-fusil"
+          }`}
+        >
+          Archivées
+        </button>
       </div>
 
       {/* Empty State */}
@@ -451,13 +602,27 @@ const Orders: React.FC = () => {
           <div className="h-16 w-16 bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <Package className="h-8 w-8" />
           </div>
-          <h2 className="text-lg font-bold text-gris-canon-de-fusil mb-1">
-            Vous n'avez pas encore de commandes
-          </h2>
-          <p className="text-sm text-gris-canon-de-fusil/50 max-w-xs mx-auto mb-6 leading-relaxed">
-            Découvrez nos produits exclusifs et passez votre première commande
-            dès aujourd'hui.
-          </p>
+          {showArchived ? (
+            <>
+              <h2 className="text-lg font-bold text-gris-canon-de-fusil mb-1">
+                Aucune commande archivée
+              </h2>
+              <p className="text-sm text-gris-canon-de-fusil/50 max-w-xs mx-auto mb-6 leading-relaxed">
+                Les commandes que vous archivez apparaîtront ici. Elles restent
+                consultables et vous pouvez les restaurer à tout moment.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-lg font-bold text-gris-canon-de-fusil mb-1">
+                Vous n'avez pas encore de commandes
+              </h2>
+              <p className="text-sm text-gris-canon-de-fusil/50 max-w-xs mx-auto mb-6 leading-relaxed">
+                Découvrez nos produits exclusifs et passez votre première
+                commande dès aujourd'hui.
+              </p>
+            </>
+          )}
           <Link
             to="/products"
             className="inline-flex items-center justify-center px-6 py-3 bg-bleu-saphir hover:bg-bleu-saphir/90 text-blanc text-sm font-bold rounded-xl transition-all duration-200 cursor-pointer shadow-xs gap-2"
@@ -469,8 +634,14 @@ const Orders: React.FC = () => {
         /* List */
         <div className="space-y-6">
           {orders.map((order) => {
-            const statusInfo = getStatusInfo(order.status);
+            const computedStatus = getComputedStatus(order);
+            const statusInfo = getStatusInfo(computedStatus);
             const StatusIcon = statusInfo.icon;
+            const canEdit = isModifiable(order.createdAt, computedStatus);
+            const isShippedOrDelivered =
+              computedStatus === "shipped" || computedStatus === "delivered";
+            const isFinished =
+              computedStatus === "delivered" || computedStatus === "cancelled";
 
             return (
               <div
@@ -485,11 +656,13 @@ const Orders: React.FC = () => {
                         Référence COM-{order.id.slice(0, 8).toUpperCase()}
                       </h3>
                       <p className="text-xs text-gris-canon-de-fusil/40 mt-0.5">
-                        Achat effectué le{" "}
+                        Commande effectuée le{" "}
                         {new Date(order.createdAt).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "long",
                           year: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
                         })}
                       </p>
                     </div>
@@ -501,29 +674,64 @@ const Orders: React.FC = () => {
                         {statusInfo.label}
                       </span>
                       <div className="flex items-center space-x-1">
-                        {order.status === "pending" && (
+                        {canEdit && (
                           <button
                             onClick={() => handleOpenEditModal(order)}
                             className="p-2 text-bleu-saphir hover:bg-bleu-saphir/5 rounded-xl transition-colors cursor-pointer"
-                            title="Modifier la commande"
+                            title="Modifier la commande (moins de 10 min)"
                           >
                             <Edit className="h-5 w-5" />
                           </button>
                         )}
                         <button
                           onClick={() => setSelectedOrderForTracking(order)}
-                          className="p-2 text-bleu-saphir rounded-xl transition-colors cursor-pointer"
-                          title="Détails"
+                          className="p-2 text-bleu-saphir rounded-xl transition-colors cursor-pointer hover:bg-bleu-saphir/5"
+                          title="Suivi de commande"
                         >
                           <Eye className="h-5 w-5" />
                         </button>
-                        <button
-                          onClick={() => setDeletingOrderId(order.id)}
-                          className="p-2 text-rouge-ecarlate rounded-xl transition-colors cursor-pointer"
-                          title="Supprimer la commande"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => setDeletingOrderId(order.id)}
+                            className="p-2 text-rouge-ecarlate rounded-xl transition-colors cursor-pointer hover:bg-rouge-ecarlate/5"
+                            title="Annuler la commande"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        )}
+                        {isShippedOrDelivered && (
+                          <button
+                            onClick={() => setInvoiceOrder(order)}
+                            className="p-2 text-vert-jungle hover:bg-vert-jungle/10 rounded-xl transition-colors cursor-pointer"
+                            title="Télécharger la facture"
+                          >
+                            <FileText className="h-5 w-5" />
+                          </button>
+                        )}
+
+                        {/* ARCHIVAGE / RESTAURATION */}
+                        {showArchived ? (
+                          <button
+                            onClick={() => handleRestoreOrder(order.id)}
+                            disabled={archivingId === order.id}
+                            className="p-2 text-vert-jungle rounded-xl transition-colors cursor-pointer hover:bg-vert-jungle/10"
+                            title="Restaurer dans mes commandes"
+                          >
+                            <ArchiveRestore className="h-5 w-5" />
+                          </button>
+                        ) : (
+                          /* Affiché uniquement si la commande est terminée (livrée ou annulée) */
+                          isFinished && (
+                            <button
+                              onClick={() => handleArchiveOrder(order.id)}
+                              disabled={archivingId === order.id}
+                              className="p-2 text-orange-rougi hover:bg-gris-canon-de-fusil/5 rounded-xl transition-colors cursor-pointer"
+                              title="Archiver cette commande"
+                            >
+                              <Archive className="h-5 w-5" />
+                            </button>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>
@@ -773,9 +981,8 @@ const Orders: React.FC = () => {
       {/* MODAL DE SUIVI DE COMMANDE */}
       {selectedOrderForTracking &&
         (() => {
-          const currentStep = getStatusInfo(
-            selectedOrderForTracking.status,
-          ).step;
+          const computed = getComputedStatus(selectedOrderForTracking);
+          const currentStep = getStatusInfo(computed).step;
 
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
@@ -843,7 +1050,7 @@ const Orders: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="relative pl-6 space-y-6 before:absolute before:bottom-2 before:top-2 before:left-2.75 before:w-0.5 before:bg-gris-canon-de-fusil/10">
+                    <div className="relative pl-6 space-y-6 before:absolute before:bottom-2 before:top-2 before:left-2.75 before:w-0.5 before:bg-gris-canon-de-fusil/50">
                       {trackingSteps.map((step, idx) => {
                         const stepNum = idx + 1;
                         const isCompleted = currentStep >= stepNum;
@@ -855,9 +1062,9 @@ const Orders: React.FC = () => {
                             className="relative flex items-start gap-4 text-xs"
                           >
                             <div
-                              className={`absolute -left-5.25 h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-300 bg-blanc z-10 ${
+                              className={`absolute -left-5.25 h-4 w-4 rounded-full flex items-center justify-center transition-all duration-300 bg-bleu-saphir z-10 ${
                                 isCompleted
-                                  ? "border-bleu-saphir bg-bleu-saphir text-blanc"
+                                  ? "bg-vert-jungle text-blanc"
                                   : "border-gris-canon-de-fusil/20"
                               }`}
                             >
@@ -868,9 +1075,15 @@ const Orders: React.FC = () => {
 
                             <div className="flex-1">
                               <h4
-                                className={`font-bold ${isCurrent ? "text-bleu-saphir text-sm" : isCompleted ? "text-gris-canon-de-fusil" : "text-gris-canon-de-fusil/40"}`}
+                                className={`font-bold ${
+                                  isCurrent
+                                    ? step.label !== "Livrée"
+                                      ? "text-bleu-saphir text-sm"
+                                      : "text-vert-jungle"
+                                    : isCompleted && "text-vert-jungle"
+                                }`}
                               >
-                                {step.label} {isCurrent && "— En cours"}
+                                {step.label}
                               </h4>
                               <p className="text-gris-canon-de-fusil/50 mt-0.5">
                                 {step.desc}
@@ -896,20 +1109,108 @@ const Orders: React.FC = () => {
           );
         })()}
 
-      {/* MODAL DE CONFIRMATION DE SUPPRESSION */}
+      {/* MODAL DE FACTURE CLIENT */}
+      {invoiceOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
+          <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl border border-gris-canon-de-fusil/5 overflow-hidden p-6 space-y-5">
+            <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+              <h3 className="text-base font-black text-gris-canon-de-fusil">
+                Facture Client - COM-
+                {invoiceOrder.id.slice(0, 8).toUpperCase()}
+              </h3>
+              <button
+                onClick={() => setInvoiceOrder(null)}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs" id="invoice-printable">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-lg font-black text-bleu-saphir">
+                    NOLCOP STORE
+                  </h2>
+                  <p className="text-[10px] text-gray-500">
+                    Facture Officielle d'Achat
+                  </p>
+                </div>
+                <div className="text-right text-[11px]">
+                  <p className="font-bold">
+                    Date :{" "}
+                    {new Date(invoiceOrder.createdAt).toLocaleDateString(
+                      "fr-FR",
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-xl space-y-1">
+                <p className="font-bold text-gray-700">
+                  Adresse de livraison :
+                </p>
+                <p>{(invoiceOrder as any).shippingName || user?.email}</p>
+                <p>{invoiceOrder.shippingAddress.street}</p>
+                <p>{(invoiceOrder as any).shippingPhone}</p>
+              </div>
+
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 text-gray-500 text-[11px]">
+                    <th className="py-2">Produit</th>
+                    <th className="py-2 text-center">Qté</th>
+                    <th className="py-2 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {invoiceOrder.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="py-2 font-medium">{item.product.name}</td>
+                      <td className="py-2 text-center">{item.quantity}</td>
+                      <td className="py-2 text-right font-bold">
+                        {formatPrice(item.product.price * item.quantity)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                <span className="font-bold text-gray-600">Total payé :</span>
+                <span className="text-base font-black text-bleu-saphir">
+                  {formatPrice(invoiceOrder.total)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-gray-100">
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-bleu-saphir text-white text-xs font-bold rounded-xl flex items-center space-x-2 cursor-pointer hover:bg-bleu-saphir/90"
+              >
+                <Printer className="h-4 w-4" />
+                <span>Imprimer / Télécharger (PDF)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMATION D'ANNULATION */}
       {deletingOrderId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
           <div className="bg-blanc max-w-sm w-full rounded-2xl shadow-xl border border-gris-canon-de-fusil/5 overflow-hidden p-6 space-y-6">
             <div className="flex flex-col items-center text-center">
-              <div className="h-12 w-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
+              <div className="h-12 w-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-gris-canon-de-fusil mb-2">
-                Supprimer cette commande ?
+                Annuler cette commande ?
               </h3>
               <p className="text-xs text-gris-canon-de-fusil/60 leading-relaxed">
-                Cette action supprime définitivement l'historique de cette
-                commande.
+                Le statut de la commande passera à "Annulé". Cette action ne
+                supprime pas la commande de votre historique.
               </p>
             </div>
 
@@ -919,14 +1220,14 @@ const Orders: React.FC = () => {
                 disabled={isDeleting}
                 className="flex-1 py-2.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-200 transition-colors cursor-pointer"
               >
-                Annuler
+                Retour
               </button>
               <button
-                onClick={handleDeleteOrder}
+                onClick={handleCancelOrder}
                 disabled={isDeleting}
                 className="flex-1 py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 transition-colors cursor-pointer flex justify-center items-center"
               >
-                {isDeleting ? "Suppression..." : "Confirmer"}
+                {isDeleting ? "Annulation..." : "Confirmer l'annulation"}
               </button>
             </div>
           </div>

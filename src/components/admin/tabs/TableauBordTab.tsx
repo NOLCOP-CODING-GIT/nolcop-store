@@ -1,6 +1,6 @@
 // Fichier : src/components/admin/tabs/TableauBordTab.tsx
 import React, { useState, useEffect } from "react";
-import { Users, ShoppingCart, DollarSign, Package, Eye } from "lucide-react";
+import { Users, ShoppingCart, DollarSign, Package } from "lucide-react";
 import { supabase } from "../../../supabaseClient";
 import { Card } from "../Card";
 import { Table } from "../Table";
@@ -104,24 +104,39 @@ export const TableauBordTab: React.FC = () => {
       <h2 className="text-xl font-bold text-gris-canon-de-fusil mt-8 mb-4">
         Commandes récentes
       </h2>
-      <Table headers={["Commande", "Total", "Statut", "Actions"]}>
+      <Table headers={["Ref", "Client", "Total", "Date commande", "Status"]}>
         {recentOrders.map((order) => (
           <tr key={order.id}>
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-              {order.id.slice(0, 8)}...
+              COM-{order.id.slice(0, 8).toUpperCase()}
+            </td>
+            <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+              {order.shipping_name}
             </td>
             <td className="px-6 py-4 text-sm font-black text-bleu-saphir">
               {formatPrice(order.total)}
             </td>
-            <td className="px-6 py-4">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
-                {order.status}
-              </span>
+            <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+              {new Date(order.created_at).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+              })}
             </td>
             <td className="px-6 py-4">
-              <button className="text-bleu-saphir hover:bg-bleu-saphir/5 p-1 rounded-lg">
-                <Eye className="h-4 w-4" />
-              </button>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
+                {order.status && order.status === "pending"
+                  ? "En attente"
+                  : order.status === "processing"
+                    ? "En préparation"
+                    : order.status === "shipped"
+                      ? "Expédiée"
+                      : order.status === "delivered"
+                        ? "Livrée"
+                        : "Annulée"}
+              </span>
             </td>
           </tr>
         ))}

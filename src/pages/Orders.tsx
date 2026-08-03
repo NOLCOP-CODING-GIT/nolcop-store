@@ -16,7 +16,6 @@ import {
   Plus,
   Minus,
   FileText,
-  Printer,
   Bell,
   Archive,
   ArchiveRestore,
@@ -126,7 +125,7 @@ const Orders: React.FC = () => {
               category:categories(name),
               images,
               price,
-              stock,
+              qte_min,
               rating,
               reviews,
               created_at,
@@ -144,6 +143,7 @@ const Orders: React.FC = () => {
       if (data) {
         const formattedOrders: Order[] = data.map((order: any) => ({
           id: order.id,
+          reference: order.reference || formatRef(order.id),
           userId: order.user_id,
           status: order.status,
           total: Number(order.total),
@@ -174,7 +174,7 @@ const Orders: React.FC = () => {
                 category: productData.category?.name || "Général",
                 images: images,
                 price: Number(item.price_at_time || productData.price || 0),
-                stock: productData.stock || 0,
+                qte_min: productData.qte_min || 1,
                 rating: productData.rating || 0,
                 reviews: productData.reviews || 0,
                 createdAt: productData.created_at || item.created_at,
@@ -472,6 +472,10 @@ const Orders: React.FC = () => {
     }
   };
 
+  const formatRef = (id: string) => {
+    return `COM${id.split("-")[0].substring(0, 5).toUpperCase()}`;
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-blanc px-4">
@@ -653,7 +657,7 @@ const Orders: React.FC = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gris-canon-de-fusil/5 gap-3">
                     <div>
                       <h3 className="text-base font-extrabold text-gris-canon-de-fusil">
-                        Référence COM-{order.id.slice(0, 8).toUpperCase()}
+                        {formatRef(order.id)}
                       </h3>
                       <p className="text-xs text-gris-canon-de-fusil/40 mt-0.5">
                         Commande effectuée le{" "}
@@ -994,8 +998,7 @@ const Orders: React.FC = () => {
                       Suivi de Commande
                     </h3>
                     <p className="text-xs text-gris-canon-de-fusil/50 mt-0.5">
-                      Référence : COM-
-                      {selectedOrderForTracking.id.slice(0, 8).toUpperCase()}
+                      {formatRef(selectedOrderForTracking.id)}
                     </p>
                   </div>
                   <button
@@ -1112,63 +1115,118 @@ const Orders: React.FC = () => {
       {/* MODAL DE FACTURE CLIENT */}
       {invoiceOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity duration-300">
-          <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl border border-gris-canon-de-fusil/5 overflow-hidden p-6 space-y-5">
-            <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+          <div className="bg-blanc max-w-lg w-full rounded-2xl shadow-xl border border-gris-canon-de-fusil/5 overflow-hidden p-6 space-y-5">
+            {/* En-tête du Modal */}
+            <div className="flex justify-between items-center pb-3 border-b border-gris-canon-de-fusil/10">
               <h3 className="text-base font-black text-gris-canon-de-fusil">
-                Facture Client - COM-
-                {invoiceOrder.id.slice(0, 8).toUpperCase()}
+                Facture Client - {formatRef(invoiceOrder.id)}
               </h3>
               <button
                 onClick={() => setInvoiceOrder(null)}
-                className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 cursor-pointer"
+                className="p-1 rounded-lg hover:bg-gris-canon-de-fusil/5 text-gris-canon-de-fusil/50 hover:text-gris-canon-de-fusil cursor-pointer transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
+            {/* Zone Imprimable */}
             <div className="space-y-4 text-xs" id="invoice-printable">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-lg font-black text-bleu-saphir">
+                  <h2 className="text-lg font-black text-bleu-saphir tracking-tight">
                     NOLCOP STORE
                   </h2>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-gris-canon-de-fusil/50 font-medium">
                     Facture Officielle d'Achat
                   </p>
                 </div>
-                <div className="text-right text-[11px]">
+                <div className="text-right text-[11px] text-gris-canon-de-fusil/70">
                   <p className="font-bold">
                     Date :{" "}
                     {new Date(invoiceOrder.createdAt).toLocaleDateString(
                       "fr-FR",
+                      {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      },
+                    )}
+                  </p>
+                  <p className="font-bold">
+                    Heure :{" "}
+                    {new Date(invoiceOrder.createdAt).toLocaleTimeString(
+                      "fr-FR",
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      },
                     )}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-3 rounded-xl space-y-1">
-                <p className="font-bold text-gray-700">
-                  Adresse de livraison :
-                </p>
-                <p>{(invoiceOrder as any).shippingName || user?.email}</p>
-                <p>{invoiceOrder.shippingAddress.street}</p>
-                <p>{(invoiceOrder as any).shippingPhone}</p>
+              {/* Adresse de livraison */}
+              <div className="bg-gris-canon-de-fusil/5 p-4 rounded-xl border border-gris-canon-de-fusil/10 space-y-3 text-xs">
+                <div className="flex items-center space-x-2 border-b border-gris-canon-de-fusil/10 pb-2">
+                  <MapPin className="h-4 w-4 text-bleu-saphir" />
+                  <span className="font-extrabold text-bleu-saphir uppercase tracking-wider text-[11px]">
+                    Adresse de livraison
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-gris-canon-de-fusil">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gris-canon-de-fusil/60 font-medium">
+                      Nom complet :
+                    </span>
+                    <span className="font-bold text-gris-canon-de-fusil">
+                      {(invoiceOrder as any).shippingName || user?.email}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gris-canon-de-fusil/60 font-medium">
+                      Adresse :
+                    </span>
+                    <span className="font-bold text-gris-canon-de-fusil">
+                      {invoiceOrder.shippingAddress.street}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gris-canon-de-fusil/60 font-medium flex items-center space-x-1">
+                      <span>Téléphone :</span>
+                    </span>
+                    <span className="font-bold text-gris-canon-de-fusil">
+                      {(invoiceOrder as any).shippingPhone}
+                    </span>
+                  </div>
+                </div>
               </div>
 
+              {/* Tableau des produits */}
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-200 text-gray-500 text-[11px]">
-                    <th className="py-2">Produit</th>
-                    <th className="py-2 text-center">Qté</th>
-                    <th className="py-2 text-right">Total</th>
+                  <tr className="border-b border-gris-canon-de-fusil/10 text-gris-canon-de-fusil/50 text-[11px]">
+                    <th className="py-2 font-bold text-orange-rougi">
+                      Produit
+                    </th>
+                    <th className="py-2 text-center font-bold text-orange-rougi">
+                      Qté
+                    </th>
+                    <th className="py-2 text-right font-bold text-orange-rougi">
+                      Total
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gris-canon-de-fusil/5">
                   {invoiceOrder.items.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="py-2 font-medium">{item.product.name}</td>
-                      <td className="py-2 text-center">{item.quantity}</td>
-                      <td className="py-2 text-right font-bold">
+                    <tr key={idx} className="text-gris-canon-de-fusil">
+                      <td className="py-2.5 font-semibold">
+                        {item.product.name}
+                      </td>
+                      <td className="py-2.5 text-center font-extrabold text-gris-canon-de-fusil/70">
+                        {item.quantity}
+                      </td>
+                      <td className="py-2.5 text-right font-extrabold text-gris-canon-de-fusil">
                         {formatPrice(item.product.price * item.quantity)}
                       </td>
                     </tr>
@@ -1176,22 +1234,15 @@ const Orders: React.FC = () => {
                 </tbody>
               </table>
 
-              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                <span className="font-bold text-gray-600">Total payé :</span>
+              {/* Total */}
+              <div className="flex justify-between items-center pt-3 border-t border-gris-canon-de-fusil/10">
+                <span className="font-bold text-gris-canon-de-fusil/70">
+                  Total payé :
+                </span>
                 <span className="text-base font-black text-bleu-saphir">
                   {formatPrice(invoiceOrder.total)}
                 </span>
               </div>
-            </div>
-
-            <div className="flex justify-end pt-3 border-t border-gray-100">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-bleu-saphir text-white text-xs font-bold rounded-xl flex items-center space-x-2 cursor-pointer hover:bg-bleu-saphir/90"
-              >
-                <Printer className="h-4 w-4" />
-                <span>Imprimer / Télécharger (PDF)</span>
-              </button>
             </div>
           </div>
         </div>

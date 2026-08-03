@@ -7,6 +7,7 @@ import {
   MessageSquare,
   AlertCircle,
 } from "lucide-react";
+import emailjs from "@emailjs/browser";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../supabaseClient";
 
@@ -82,22 +83,26 @@ const Contact: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("contacts").insert([
+      // Envoi uniquement de l'email via EmailJS
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_CONTACT,
         {
-          user_id: user?.id || null,
-          name: formData.name,
-          email: formData.email,
+          from_name: formData.name,
+          from_email: formData.email,
           subject: formData.subject,
           message: formData.message,
         },
-      ]);
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+      );
 
-      if (error) throw error;
       setSuccessMessage("Votre message a été envoyé avec succès !");
       setFormData({ ...formData, subject: "", message: "" });
     } catch (err) {
       console.error("Erreur lors de l'envoi du message :", err);
-      setErrors({ form: "Une erreur est survenue lors de l'envoi." });
+      setErrors({
+        form: "Une erreur est survenue lors de l'envoi de votre message. Veuillez réessayer.",
+      });
     } finally {
       setIsSubmitting(false);
     }

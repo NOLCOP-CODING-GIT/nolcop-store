@@ -24,7 +24,7 @@ interface Product {
   price: number;
   category_id: string;
   images: string[];
-  stock: number;
+  qte_min: number;
   featured: boolean;
   discount: number;
   specifications: { name: string; description: string }[];
@@ -54,7 +54,7 @@ export const ProduitsTab: React.FC = () => {
     name: "",
     description: "",
     price: "",
-    stock: "",
+    qte_min: "",
     category_id: "",
     featured: false,
     discount: 0,
@@ -64,7 +64,7 @@ export const ProduitsTab: React.FC = () => {
     name: "",
     category_id: "",
     price: "",
-    stock: "",
+    qte_min: "",
     description: "",
     images: "",
   });
@@ -168,9 +168,9 @@ export const ProduitsTab: React.FC = () => {
         aValue = a.price || 0;
         bValue = b.price || 0;
         break;
-      case "stock":
-        aValue = a.stock || 0;
-        bValue = b.stock || 0;
+      case "qte_min":
+        aValue = a.qte_min || 0;
+        bValue = b.qte_min || 0;
         break;
       case "created_at":
         aValue = new Date(a.created_at).getTime();
@@ -244,7 +244,7 @@ export const ProduitsTab: React.FC = () => {
       name: "",
       description: "",
       price: "",
-      stock: "",
+      qte_min: "",
       category_id: "",
       featured: false,
       discount: 0,
@@ -256,7 +256,7 @@ export const ProduitsTab: React.FC = () => {
       name: "",
       category_id: "",
       price: "",
-      stock: "",
+      qte_min: "",
       description: "",
       images: "",
     });
@@ -270,7 +270,7 @@ export const ProduitsTab: React.FC = () => {
       name: product.name,
       description: product.description || "",
       price: product.price.toString(),
-      stock: product.stock.toString(),
+      qte_min: product.qte_min.toString(),
       category_id: product.category_id || "",
       featured: product.featured || false,
       discount: product.discount || 0,
@@ -286,7 +286,7 @@ export const ProduitsTab: React.FC = () => {
       name: "",
       category_id: "",
       price: "",
-      stock: "",
+      qte_min: "",
       description: "",
       images: "",
     });
@@ -307,9 +307,9 @@ export const ProduitsTab: React.FC = () => {
         !formData.price || parseFloat(formData.price) <= 0
           ? "Le prix doit être supérieur à 0."
           : "",
-      stock:
-        formData.stock === "" || parseInt(formData.stock, 10) < 0
-          ? "Le stock doit être supérieur ou égal à 0."
+      qte_min:
+        formData.qte_min === "" || parseInt(formData.qte_min, 10) < 1
+          ? "La quantité minimale doit être supérieure ou égale à 1."
           : "",
       description: !formData.description.trim()
         ? "La description est obligatoire."
@@ -337,7 +337,7 @@ export const ProduitsTab: React.FC = () => {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock, 10),
+        qte_min: parseInt(formData.qte_min, 10),
         category_id: formData.category_id || null,
         featured: formData.featured,
         discount: formData.discount,
@@ -448,7 +448,7 @@ export const ProduitsTab: React.FC = () => {
           { label: "En vedette", key: "featured", sortable: true },
           { label: "Promotion", key: "discount", sortable: true },
           { label: "Prix", key: "price", sortable: true },
-          { label: "Stock", key: "stock", sortable: true },
+          { label: "Qté min", key: "qte_min", sortable: true },
           { label: "Date création", key: "created_at", sortable: true },
           { label: "Actions", sortable: false },
         ]}
@@ -503,7 +503,7 @@ export const ProduitsTab: React.FC = () => {
               {formatCurrency(p.price)}
             </td>
             <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
-              {p.stock > 0 ? p.stock : "Rupture"}
+              {p.qte_min}
             </td>
             <td className="px-6 py-4 text-sm text-gris-canon-de-fusil/80">
               {formatDate(p.created_at)}
@@ -633,26 +633,26 @@ export const ProduitsTab: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gris-canon-de-fusil/60 uppercase mb-1">
-                Stock *
+                Quantité minimale *
               </label>
               <input
                 type="number"
-                min="0"
-                value={formData.stock}
+                min="1"
+                value={formData.qte_min}
                 onChange={(e) => {
-                  setFormData({ ...formData, stock: e.target.value });
-                  if (formErrors.stock)
-                    setFormErrors({ ...formErrors, stock: "" });
+                  setFormData({ ...formData, qte_min: e.target.value });
+                  if (formErrors.qte_min)
+                    setFormErrors({ ...formErrors, qte_min: "" });
                 }}
                 className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none text-sm font-semibold ${
-                  formErrors.stock
+                  formErrors.qte_min
                     ? "border-rose-500 focus:border-rose-500"
                     : "border-gris-canon-de-fusil/10 focus:border-bleu-saphir"
                 }`}
               />
-              {formErrors.stock && (
+              {formErrors.qte_min && (
                 <p className="mt-1 text-xs text-rose-600 font-semibold">
-                  {formErrors.stock}
+                  {formErrors.qte_min}
                 </p>
               )}
             </div>

@@ -45,7 +45,7 @@ const CategoryPage: React.FC = () => {
               discount: p.discount,
               category: p.category?.name || categoryData.name,
               images: p.images,
-              stock: p.stock,
+              qte_min: Number(p.qte_min) || 1,
               rating: p.rating,
               reviews: p.reviews,
               featured: p.featured,

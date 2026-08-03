@@ -72,6 +72,10 @@ export const TableauBordTab: React.FC = () => {
     }
   };
 
+  const formatRef = (id: string) => {
+    return `COM${id.split("-")[0].substring(0, 5).toUpperCase()}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -108,7 +112,7 @@ export const TableauBordTab: React.FC = () => {
         {recentOrders.map((order) => (
           <tr key={order.id}>
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-              COM-{order.id.slice(0, 8).toUpperCase()}
+              {formatRef(order.id)}
             </td>
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
               {order.shipping_name}
@@ -118,7 +122,7 @@ export const TableauBordTab: React.FC = () => {
             </td>
             <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
               {new Date(order.created_at).toLocaleDateString("fr-FR", {
-                day: "numeric",
+                day: "2-digit",
                 month: "long",
                 year: "numeric",
                 hour: "numeric",

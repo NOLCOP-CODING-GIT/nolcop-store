@@ -144,7 +144,7 @@ const ProductDetail: React.FC = () => {
           price, 
           discount, 
           images, 
-          stock, 
+          qte_min, 
           rating, 
           reviews, 
           featured, 
@@ -190,7 +190,7 @@ const ProductDetail: React.FC = () => {
             parsedImages.length > 0
               ? parsedImages
               : ["/images/placeholder.png"],
-          stock: Number(data.stock) || 0,
+          qte_min: Number(data.qte_min) || 1,
           rating: Number(data.rating) || 0,
           reviewsCount: Number(data.reviews) || 0,
           featured: data.featured,
@@ -200,6 +200,9 @@ const ProductDetail: React.FC = () => {
         };
 
         setProduct(formattedProduct);
+        setQuantity((current) =>
+          Math.max(current, Number(formattedProduct.qte_min) || 1),
+        );
         await fetchReviews(formattedProduct.id);
       }
     } catch (error) {
@@ -218,11 +221,13 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (product) {
+      const minimumQuantity = Number(product.qte_min) || 1;
+      const quantityToAdd = Math.max(quantity, minimumQuantity);
       const activeImageUrl =
         product.images?.[selectedImage] || product.images?.[0];
-      addToCart(product, quantity, activeImageUrl);
+      addToCart(product, quantityToAdd, activeImageUrl);
       showNotification(
-        `${quantity} x "${product.name}" ajouté au panier`,
+        `${quantityToAdd} x "${product.name}" ajouté au panier`,
         "success",
       );
     }
@@ -364,6 +369,7 @@ const ProductDetail: React.FC = () => {
     ? product.price * (1 - product.discount / 100)
     : product.price;
   const originalPrice = product.price;
+  const minimumQuantity = Number(product.qte_min) || 1;
 
   return (
     <div className="min-h-screen bg-blanc">
@@ -523,8 +529,13 @@ const ProductDetail: React.FC = () => {
                 </span>
                 <div className="flex items-center bg-gris-canon-de-fusil/5 rounded-xl border border-gris-canon-de-fusil/10 p-1">
                   <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 rounded-lg bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10 font-bold flex items-center justify-center transition-colors cursor-pointer"
+                    onClick={() =>
+                      setQuantity((current) =>
+                        Math.max(minimumQuantity, current - 1),
+                      )
+                    }
+                    disabled={quantity <= minimumQuantity}
+                    className="w-8 h-8 rounded-lg bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10 font-bold flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     -
                   </button>
@@ -532,35 +543,24 @@ const ProductDetail: React.FC = () => {
                     {quantity}
                   </span>
                   <button
-                    onClick={() =>
-                      setQuantity(
-                        Math.min(
-                          product.stock > 0 ? product.stock : 99,
-                          quantity + 1,
-                        ),
-                      )
-                    }
+                    onClick={() => setQuantity((current) => current + 1)}
                     className="w-8 h-8 rounded-lg bg-blanc text-gris-canon-de-fusil hover:bg-gris-canon-de-fusil/10 font-bold flex items-center justify-center transition-colors cursor-pointer"
                   >
                     +
                   </button>
                 </div>
               </div>
+              <p className="text-[11px] text-gris-canon-de-fusil/50">
+                Quantité minimale à commander : {minimumQuantity}
+              </p>
 
               <div className="flex items-center justify-between gap-3">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  className={`flex-1 flex items-center justify-center px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-xs ${
-                    product.stock === 0
-                      ? "bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil/30 cursor-not-allowed"
-                      : "bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 active:scale-[0.99] cursor-pointer"
-                  }`}
+                  className="flex-1 flex items-center justify-center px-6 py-3.5 rounded-xl font-bold text-sm transition-all shadow-xs bg-bleu-saphir text-blanc hover:bg-bleu-saphir/90 active:scale-[0.99] cursor-pointer"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  {product.stock === 0
-                    ? "Rupture de stock"
-                    : "Ajouter au panier"}
+                  Ajouter au panier
                 </button>
 
                 <button

@@ -43,8 +43,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAlreadyInCart && product.stock > 0) {
-      addToCart(product, 1);
+    if (!isAlreadyInCart) {
+      addToCart(product, Math.max(1, Number(product.qte_min) || 1));
       showNotification(`"${product.name}" ajouté au panier !`, "success");
     }
   };
@@ -74,10 +74,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     ? product.price * (1 - product.discount / 100)
     : product.price;
   const originalPrice = product.price;
-
-  if (product.stock === 0) {
-    return null;
-  }
 
   return (
     <motion.div
@@ -220,13 +216,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
           <button
             onClick={handleAddToCart}
-            disabled={product.stock === 0 || isAlreadyInCart}
+            disabled={isAlreadyInCart}
             className={`p-1.5 sm:p-2 rounded-lg transition-colors shrink-0 z-20 ${
-              product.stock === 0
-                ? "bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil/30 cursor-not-allowed"
-                : isAlreadyInCart
-                  ? "bg-green-100 text-green-600 border border-green-200 cursor-not-allowed"
-                  : "bg-bleu-saphir text-blanc hover:opacity-90 cursor-pointer"
+              isAlreadyInCart
+                ? "bg-green-100 text-green-600 border border-green-200 cursor-not-allowed"
+                : "bg-bleu-saphir text-blanc hover:opacity-90 cursor-pointer"
             }`}
             aria-label={
               isAlreadyInCart ? "Déjà dans le panier" : "Ajouter au panier"

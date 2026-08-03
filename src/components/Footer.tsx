@@ -1,9 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { supabase } from "../supabaseClient";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string | null;
+  }>({ type: null, message: null });
 
   const usefulLinks = [
     { name: "À propos", href: "/about" },
@@ -18,6 +25,62 @@ const Footer: React.FC = () => {
     { name: "Moyens de paiement", href: "/payment" },
     { name: "Service client", href: "/customer-service" },
   ];
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email.trim()) {
+      setStatus({
+        type: "error",
+        message: "Veuillez entrer une adresse email valide.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setStatus({ type: null, message: null });
+
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+
+      // Apport RPC pour vérifier l'existence de l'email dans auth.users
+      const { data: isMember } = await supabase.rpc("check_is_member", {
+        user_email: cleanEmail,
+      });
+
+      const { error } = await supabase.from("newsletter_subscribers").insert([
+        {
+          email: cleanEmail,
+          member: !!isMember,
+        },
+      ]);
+
+      if (error) {
+        if (error.code === "23505") {
+          setStatus({
+            type: "error",
+            message: "Cet email est déjà utiliser !",
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        setStatus({
+          type: "success",
+          message: "Merci pour votre inscription à la newsletter !",
+        });
+        setEmail("");
+      }
+    } catch (err: any) {
+      console.error("Erreur lors de l'inscription à la newsletter :", err);
+      setStatus({
+        type: "error",
+        message: err?.message || "Une erreur est survenue. Veuillez réessayer.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <footer className="bg-violet-myrtille-tenebreux text-blanc">
@@ -159,19 +222,50 @@ const Footer: React.FC = () => {
               Recevez nos dernières offres et nouveautés directement dans votre
               boîte mail
             </p>
-            <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Votre adresse email"
-                className="flex-1 px-4 py-2 bg-blanc/5 border border-blanc/10 text-blanc placeholder-blanc/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-bleu-saphir focus:border-transparent text-sm"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-bleu-saphir hover:opacity-90 px-6 py-2 rounded-lg text-sm font-medium transition-all"
-              >
-                S'abonner
-              </button>
+            <form
+              onSubmit={handleSubscribe}
+              noValidate
+              className="space-y-3 max-w-md mx-auto"
+            >
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (status.type === "error")
+                      setStatus({ type: null, message: null });
+                  }}
+                  placeholder="Votre adresse email"
+                  className={`flex-1 px-4 py-2 bg-blanc/5 text-blanc placeholder-blanc/40 rounded-lg focus:outline-none focus:ring-2 text-sm transition-colors ${
+                    status.type === "error"
+                      ? "border-2 border-rouge-ecarlate focus:ring-rouge-ecarlate"
+                      : "border border-blanc/10 focus:ring-bleu-saphir focus:border-transparent"
+                  }`}
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-bleu-saphir hover:opacity-90 px-6 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center space-x-2"
+                >
+                  {loading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-blanc" />
+                  )}
+                  <span>{loading ? "Inscription..." : "S'abonner"}</span>
+                </button>
+              </div>
+              {status.message && (
+                <p
+                  className={`text-xs font-semibold ${
+                    status.type === "success"
+                      ? "text-vert-jungle"
+                      : "text-rouge-ecarlate"
+                  }`}
+                >
+                  {status.message}
+                </p>
+              )}
             </form>
           </div>
         </div>
@@ -191,7 +285,6 @@ const Footer: React.FC = () => {
             . Tous droits réservés.
           </p>
 
-          {/* Nouveaux Menus ajoutés en bas */}
           <div className="flex space-x-6">
             <Link
               to="/privacy"

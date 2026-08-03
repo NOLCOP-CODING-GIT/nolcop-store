@@ -1,15 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, ArrowRight, X } from "lucide-react";
 import { useCart } from "../hooks/useCart";
 import { useAuth } from "../hooks/useAuth";
 import { useNotification } from "../hooks/useNotification";
+import { supabase } from "../supabaseClient";
 
 const Cart: React.FC = () => {
   const { user } = useAuth();
-  const { state, updateQuantity, removeFromCart } = useCart();
+  const { state, updateQuantity, removeFromCart, applyPromo, removePromo } =
+    useCart();
   const { showNotification } = useNotification();
-  const [promoCode, setPromoCode] = useState("");
+  const [promoCode, setPromoCode] = useState(state.promoCode || "");
+  const [applyingPromo, setApplyingPromo] = useState(false);
+  const [isValidCode, setIsValidCode] = useState(false);
+  const [isInvalid, setIsInvalid] = useState(false);
+
+  useEffect(() => {
+    const checkAutoPromo = async () => {
+      if (!user) return;
+      try {
+        const { count, error } = await supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("status", "delivered");
+
+        if (error) throw error;
+        const delivered = count || 0;
+        if (delivered >= 10) {
+          const autoCode = `FIDELITE-${user.id.slice(0, 6).toUpperCase()}`;
+          if (!state.promoCode) {
+            setPromoCode(autoCode);
+            setIsValidCode(true);
+            setIsInvalid(false);
+          }
+        }
+      } catch (err) {
+        console.error(
+          "Erreur lors de la récupération automatique du code promo",
+          err,
+        );
+      }
+    };
+    checkAutoPromo();
+  }, [user, state.promoCode]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setPromoCode(val);
+    setIsInvalid(false);
+
+    if (!user) {
+      setIsValidCode(val.trim().toUpperCase() === "NOLCOP10");
+      return;
+    }
+
+    const userFideliteCode = `FIDELITE-${user.id.slice(0, 6).toUpperCase()}`;
+    if (
+      val.trim().toUpperCase() === "NOLCOP10" ||
+      val.trim().toUpperCase() === userFideliteCode
+    ) {
+      setIsValidCode(true);
+    } else {
+      setIsValidCode(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
@@ -32,7 +88,7 @@ const Cart: React.FC = () => {
     }
   };
 
-  const handleApplyPromoCode = () => {
+  const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) return;
 
     if (!user) {
@@ -43,11 +99,68 @@ const Cart: React.FC = () => {
       return;
     }
 
+    setApplyingPromo(true);
+
     if (promoCode.trim().toUpperCase() === "NOLCOP10") {
+      applyPromo("NOLCOP10", 10);
       showNotification("Code promo appliqué avec succès !", "success");
+      setApplyingPromo(false);
+      return;
+    }
+
+    const userFideliteCode = `FIDELITE-${user.id.slice(0, 6).toUpperCase()}`;
+
+    if (promoCode.trim().toUpperCase() === userFideliteCode) {
+      try {
+        const { count, error } = await supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("status", "delivered");
+
+        if (error) throw error;
+
+        const delivered = count || 0;
+        let discount = 0;
+        if (delivered >= 25) discount = 20;
+        else if (delivered >= 20) discount = 15;
+        else if (delivered >= 15) discount = 10;
+        else if (delivered >= 10) discount = 5;
+
+        if (discount > 0) {
+          applyPromo(userFideliteCode, discount);
+          showNotification(
+            `Code fidélité appliqué (-${discount}%) !`,
+            "success",
+          );
+        } else {
+          setIsInvalid(true);
+          setIsValidCode(false);
+          showNotification(
+            "Vous n'avez pas encore débloqué de code fidélité.",
+            "error",
+          );
+        }
+      } catch (err) {
+        setIsInvalid(true);
+        setIsValidCode(false);
+        showNotification("Erreur lors de la vérification du code.", "error");
+      }
     } else {
+      setIsInvalid(true);
+      setIsValidCode(false);
       showNotification("Code promo invalide ou expiré.", "error");
     }
+
+    setApplyingPromo(false);
+  };
+
+  const handleRemovePromo = () => {
+    removePromo();
+    setPromoCode("");
+    setIsValidCode(false);
+    setIsInvalid(false);
+    showNotification("Code promo retiré.", "success");
   };
 
   const getItemUnitPrice = (product: any) => {
@@ -57,8 +170,9 @@ const Cart: React.FC = () => {
   };
 
   const subtotal = state.total;
+  const discountAmount = subtotal * (state.discountPercentage / 100);
   const shipping = 1000;
-  const total = subtotal + shipping;
+  const total = subtotal - discountAmount + shipping;
 
   if (state.items.length === 0) {
     return (
@@ -93,6 +207,7 @@ const Cart: React.FC = () => {
         <div className="lg:col-span-2 space-y-4">
           {state.items.map((item) => {
             const unitPrice = getItemUnitPrice(item.product);
+            const minimumQuantity = Number(item.product.qte_min) || 1;
 
             return (
               <div
@@ -142,6 +257,7 @@ const Cart: React.FC = () => {
 
                   <div className="flex items-center bg-gris-canon-de-fusil/5 rounded-lg p-1 border border-gris-canon-de-fusil/5">
                     <button
+                      disabled={item.quantity <= minimumQuantity}
                       onClick={() =>
                         handleQuantityChange(
                           item.product.id,
@@ -149,7 +265,7 @@ const Cart: React.FC = () => {
                           item.product.name,
                         )
                       }
-                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all cursor-pointer"
+                      className="p-1 rounded-md hover:bg-blanc text-gris-canon-de-fusil hover:shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
@@ -168,6 +284,9 @@ const Cart: React.FC = () => {
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
+                  </div>
+                  <div className="hidden sm:block text-xs text-gris-canon-de-fusil/40">
+                    Min: {minimumQuantity}
                   </div>
 
                   <div className="text-right min-w-20">
@@ -218,6 +337,13 @@ const Cart: React.FC = () => {
                 </span>
               </div>
 
+              {state.discountPercentage > 0 && (
+                <div className="flex justify-between text-orange-rougi font-medium">
+                  <span>Réduction ({state.discountPercentage}%)</span>
+                  <span>-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
+
               <div className="border-t border-gris-canon-de-fusil/10 pt-3">
                 <div className="flex justify-between text-lg font-bold text-gris-canon-de-fusil">
                   <span>Total</span>
@@ -230,26 +356,54 @@ const Cart: React.FC = () => {
               <label className="block text-sm font-medium text-gris-canon-de-fusil/80 mb-2">
                 Code promo
               </label>
-              <div className="flex w-full items-center justify-between gap-2">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  placeholder="Entrez votre code..."
-                  className="p-2 w-full border border-gris-canon-de-fusil/20 rounded-md focus:outline-none focus:border-bleu-saphir focus:ring-1 focus:ring-bleu-saphir bg-blanc text-gris-canon-de-fusil text-sm placeholder:text-gris-canon-de-fusil/40"
-                />
-                <button
-                  onClick={handleApplyPromoCode}
-                  disabled={!promoCode.trim()}
-                  className={`p-2 rounded-md font-medium shrink-0 text-xs transition-colors ${
-                    promoCode.trim()
-                      ? "bg-orange-rougi text-blanc cursor-pointer hover:opacity-90"
-                      : "bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil/40 cursor-not-allowed opacity-60"
-                  }`}
-                >
-                  Appliquer
-                </button>
-              </div>
+              {state.promoCode ? (
+                <div className="flex w-full items-center justify-between gap-2 p-2 border border-green-500/30 bg-green-500/5 rounded-md">
+                  <span className="text-sm font-bold text-green-600">
+                    {state.promoCode} (-{state.discountPercentage}%)
+                  </span>
+                  <button
+                    onClick={handleRemovePromo}
+                    className="text-gris-canon-de-fusil/40 hover:text-rouge-ecarlate cursor-pointer p-1"
+                    title="Retirer le code"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex w-full items-center justify-between gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={handleInputChange}
+                    placeholder="Entrez votre code..."
+                    disabled={applyingPromo}
+                    className={`p-2 w-full border rounded-md focus:outline-none text-sm bg-blanc text-gris-canon-de-fusil placeholder:text-gris-canon-de-fusil/40 disabled:opacity-50 transition-colors ${
+                      isInvalid
+                        ? "border-rouge-ecarlate focus:border-rouge-ecarlate"
+                        : isValidCode
+                          ? "border-green-500 focus:border-green-500"
+                          : "border-gris-canon-de-fusil/20 focus:border-bleu-saphir"
+                    }`}
+                  />
+                  <button
+                    onClick={handleApplyPromoCode}
+                    disabled={!promoCode.trim() || applyingPromo}
+                    className={`p-2 rounded-md font-medium shrink-0 text-xs transition-colors ${
+                      isValidCode
+                        ? "bg-green-600 text-blanc cursor-pointer hover:bg-green-700"
+                        : promoCode.trim() && !applyingPromo
+                          ? "bg-orange-rougi text-blanc cursor-pointer hover:opacity-90"
+                          : "bg-gris-canon-de-fusil/10 text-gris-canon-de-fusil/40 cursor-not-allowed opacity-60"
+                    }`}
+                  >
+                    {applyingPromo
+                      ? "..."
+                      : isValidCode
+                        ? "Valider"
+                        : "Appliquer"}
+                  </button>
+                </div>
+              )}
             </div>
 
             <Link

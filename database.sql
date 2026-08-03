@@ -29,7 +29,7 @@ CREATE TABLE public.products (
   price numeric NOT NULL CHECK (price >= 0::numeric),
   category_id uuid,
   images ARRAY NOT NULL DEFAULT '{}'::text[],
-  stock integer NOT NULL DEFAULT 0 CHECK (stock >= 0),
+  qte_min integer NOT NULL DEFAULT 1 CHECK (qte_min >= 1),
   rating numeric DEFAULT 0 CHECK (rating >= 0::numeric AND rating <= 5::numeric),
   reviews integer DEFAULT 0 CHECK (reviews >= 0),
   featured boolean DEFAULT false,
@@ -93,16 +93,6 @@ CREATE TABLE public.order_items (
   CONSTRAINT order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
   CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
 );
-CREATE TABLE public.code_promo (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  code character varying NOT NULL UNIQUE,
-  discount integer DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),
-  is_active boolean DEFAULT true,
-  expires_at timestamp with time zone,
-  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
-  CONSTRAINT code_promo_pkey PRIMARY KEY (id)
-);
 CREATE TABLE public.wishlist_items (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL,
@@ -124,18 +114,7 @@ CREATE TABLE public.password_reset_otps (
 CREATE TABLE public.newsletter_subscribers (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   email character varying NOT NULL UNIQUE,
-  is_active boolean DEFAULT true,
+  member boolean DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT newsletter_subscribers_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.emergencies (
-  id uuid NOT NULL DEFAULT uuid_generate_v4(),
-  user_id uuid,
-  subject character varying NOT NULL,
-  message text NOT NULL,
-  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'in_progress'::character varying, 'resolved'::character varying]::text[])),
-  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
-  CONSTRAINT emergencies_pkey PRIMARY KEY (id),
-  CONSTRAINT emergencies_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );

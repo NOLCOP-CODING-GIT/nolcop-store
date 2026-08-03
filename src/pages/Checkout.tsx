@@ -79,7 +79,8 @@ const Checkout: React.FC = () => {
   }, 0);
 
   const shipping = 1000;
-  const total = calculatedSubtotal + shipping;
+  const discountAmount = calculatedSubtotal * (state.discountPercentage / 100);
+  const total = calculatedSubtotal - discountAmount + shipping;
 
   useEffect(() => {
     if (user) {
@@ -213,14 +214,6 @@ const Checkout: React.FC = () => {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
-
-      for (const item of state.items) {
-        const newStock = Math.max(0, item.product.stock - item.quantity);
-        await supabase
-          .from("products")
-          .update({ stock: newStock })
-          .eq("id", item.product.id);
-      }
 
       clearCart();
       showNotification("Commande effectuée avec succès !", "success");
@@ -662,6 +655,12 @@ const Checkout: React.FC = () => {
                   {formatPrice(shipping)}
                 </span>
               </div>
+              {state.discountPercentage > 0 && (
+                <div className="flex justify-between text-orange-rougi font-medium">
+                  <span>Réduction ({state.discountPercentage}%)</span>
+                  <span>-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
               <div className="border-t border-gris-canon-de-fusil/10 pt-2 flex justify-between text-base font-bold">
                 <span>Total à régler</span>
                 <span className="text-bleu-saphir">{formatPrice(total)}</span>

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface Product {
   id: string;
   name: string;
@@ -6,7 +8,7 @@ export interface Product {
   category: string;
   images: string[]; // Recommandé : toujours avoir au moins une image dans le tableau
   selectedImage?: string;
-  stock: number;
+  qte_min: number;
   rating: number;
   reviews: number;
   featured?: boolean;
@@ -57,6 +59,7 @@ export interface Address {
 }
 
 export interface Order {
+  reference: ReactNode;
   id: string;
   userId: string;
   items: CartItem[];

@@ -12,6 +12,8 @@ import {
   Plus,
   Trash2,
   Check,
+  Gift,
+  Copy,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../supabaseClient";
@@ -56,10 +58,14 @@ const ProfilePage: React.FC = () => {
     {},
   );
 
+  const [deliveredOrdersCount, setDeliveredOrdersCount] = useState<number>(0);
+  const [promoDiscount, setPromoDiscount] = useState<number | null>(null);
+
   useEffect(() => {
     if (user) {
       fetchAddresses();
       fetchUser();
+      fetchOrdersCount();
     }
   }, [user]);
 
@@ -102,6 +108,30 @@ const ProfilePage: React.FC = () => {
       }
     } catch (error) {
       console.error("Erreur de chargement des données utilisateur", error);
+    }
+  };
+
+  const fetchOrdersCount = async () => {
+    if (!user) return;
+    try {
+      const { count, error } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "delivered");
+
+      if (error) throw error;
+
+      const delivered = count || 0;
+      setDeliveredOrdersCount(delivered);
+
+      if (delivered >= 25) setPromoDiscount(20);
+      else if (delivered >= 20) setPromoDiscount(15);
+      else if (delivered >= 15) setPromoDiscount(10);
+      else if (delivered >= 10) setPromoDiscount(5);
+      else setPromoDiscount(null);
+    } catch (error) {
+      console.error("Erreur de chargement des commandes", error);
     }
   };
 
@@ -516,6 +546,72 @@ const ProfilePage: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ---------------- SECTION AVANTAGES & CODES PROMO ---------------- */}
+      <div className="bg-blanc border border-gris-canon-de-fusil/5 rounded-2xl p-5 sm:p-6 shadow-xs transition-all duration-300">
+        <div className="flex items-center justify-between pb-5 border-b border-gris-canon-de-fusil/5 mb-6">
+          <div className="flex items-center space-x-2.5">
+            <Gift className="h-5 w-5 text-orange-rougi" />
+            <h2 className="text-base sm:text-lg font-black text-gris-canon-de-fusil tracking-tight">
+              Mes Avantages & Codes Promo
+            </h2>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <p className="text-sm font-medium text-gris-canon-de-fusil/70">
+            Commandes livrées cumulées :{" "}
+            <span className="font-bold text-bleu-saphir">
+              {deliveredOrdersCount}
+            </span>
+          </p>
+
+          {promoDiscount ? (
+            <div className="bg-orange-rougi/5 border border-orange-rougi/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold text-orange-rougi uppercase tracking-wider mb-1">
+                  Votre code fidélité actif
+                </p>
+                <div className="flex items-center gap-3">
+                  <code className="px-3 py-1.5 bg-blanc border border-orange-rougi/30 rounded-lg text-sm font-black text-orange-rougi select-all">
+                    FIDELITE-{user.id.slice(0, 6).toUpperCase()}
+                  </code>
+                  <button
+                    onClick={() => {
+                      const code = `FIDELITE-${user.id.slice(0, 6).toUpperCase()}`;
+                      navigator.clipboard.writeText(code);
+                      showNotification(
+                        "Code promo copié dans le presse-papier !",
+                        "success",
+                      );
+                    }}
+                    className="p-2 text-orange-rougi hover:bg-orange-rougi/10 rounded-lg transition-colors cursor-pointer"
+                    title="Copier le code"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-green-500/10 text-green-600">
+                    -{promoDiscount}%
+                  </span>
+                </div>
+                <p className="text-xs text-gris-canon-de-fusil/60 mt-2 font-medium">
+                  Utilisez ce code dans votre panier pour profiter de votre
+                  réduction !
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gris-canon-de-fusil/2 border border-gris-canon-de-fusil/10 rounded-xl p-4">
+              <p className="text-sm text-gris-canon-de-fusil/60 font-medium">
+                Encore{" "}
+                <span className="font-bold">{10 - deliveredOrdersCount}</span>{" "}
+                commande{10 - deliveredOrdersCount > 1 ? "s" : ""} livrée
+                {10 - deliveredOrdersCount > 1 ? "s" : ""} pour débloquer votre
+                premier code promo de 5% !
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

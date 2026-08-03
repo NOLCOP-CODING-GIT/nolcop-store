@@ -8,6 +8,9 @@ import {
   AlertCircle,
   Printer,
   Bell,
+  MapPin,
+  Phone,
+  User,
 } from "lucide-react";
 import { Table } from "../Table";
 import { Modal } from "../Modal";
@@ -27,6 +30,7 @@ export const CommandesTab: React.FC = () => {
   // toutes ses commandes quel que soit leur statut d'archivage.
   const [showArchived, setShowArchived] = useState(false);
   const [restoringId, setRestoringId] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("fr-BJ", {
@@ -36,7 +40,12 @@ export const CommandesTab: React.FC = () => {
     }).format(price);
   };
 
+  const formatRef = (id: string) => {
+    return `COM${id.split("-")[0].substring(0, 5).toUpperCase()}`;
+  };
+
   const fetchOrders = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("orders")
       .select(
@@ -63,6 +72,7 @@ export const CommandesTab: React.FC = () => {
     } else {
       setOrders(data || []);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -231,134 +241,148 @@ export const CommandesTab: React.FC = () => {
           "Actions",
         ]}
       >
-        {orders.map((order) => {
-          const currentStatus = getComputedStatus(order);
-          const isShippedOrDelivered =
-            currentStatus === "shipped" || currentStatus === "delivered";
-          const isDeleteOrDelivered =
-            currentStatus === "cancelled" || currentStatus === "delivered";
+        {loading ? (
+          <tr>
+            <td colSpan={9} className="px-6 py-8 text-center text-sm">
+              Chargement...
+            </td>
+          </tr>
+        ) : orders.length === 0 ? (
+          <tr>
+            <td colSpan={9} className="px-6 py-8 text-center text-sm">
+              Aucune commande trouvée.
+            </td>
+          </tr>
+        ) : (
+          orders.map((order) => {
+            const currentStatus = getComputedStatus(order);
+            const isShippedOrDelivered =
+              currentStatus === "shipped" || currentStatus === "delivered";
+            const isDeleteOrDelivered =
+              currentStatus === "cancelled" || currentStatus === "delivered";
 
-          return (
-            <tr key={order.id}>
-              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-                COM-{order.id.slice(0, 8).toUpperCase()}
-              </td>
-              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-                {order.shipping_name}
-              </td>
-              <td className="px-6 py-4 text-sm font-black text-bleu-saphir">
-                {formatPrice(order.total)}
-              </td>
-              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-                {new Date(order.created_at).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                })}
-              </td>
-              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-                {order.payment_method === "mtn_momo"
-                  ? "MTN Momo"
-                  : order.payment_method === "moov_money"
-                    ? "Moov Money"
-                    : "Celtiis Cash"}
-              </td>
-              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-                {order.shipping_address}
-              </td>
-              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-                {order.shipping_phone}
-              </td>
-              <td className="px-6 py-4">
-                {currentStatus !== "delivered" ? (
-                  <select
-                    value={currentStatus}
-                    onChange={(e) =>
-                      handleStatusChange(order.id, e.target.value)
-                    }
-                    className={`text-xs font-bold px-3 py-1.5 rounded-full border-0 focus:outline-none cursor-pointer ${
-                      currentStatus === "pending"
-                        ? "bg-amber-100 text-amber-800"
-                        : currentStatus === "processing"
-                          ? "bg-blue-100 text-blue-800"
-                          : currentStatus === "shipped"
-                            ? "bg-indigo-100 text-indigo-800"
-                            : currentStatus === "delivered"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    <option value="pending">En attente (10m)</option>
-                    <option value="processing">En préparation (20m)</option>
-                    <option value="shipped">Expédiée</option>
-                    <option value="delivered">Livrée</option>
-                    <option value="cancelled">Annulée</option>
-                  </select>
-                ) : (
-                  <span className="inline-flex items-center px-5 p-2 rounded-full text-xs font-extrabold bg-vert-jungle/10 text-vert-jungle">
-                    Livrée
-                  </span>
-                )}
-              </td>
-              <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => setSelectedOrder(order)}
-                    title="Voir les détails"
-                    className="text-bleu-saphir p-1.5 hover:bg-bleu-saphir/10 rounded-lg cursor-pointer transition-colors"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
-                  {showArchived ? (
-                    <button
-                      onClick={() => handleRestoreOrder(order.id)}
-                      disabled={restoringId}
-                      title="Restaurer dans les commandes actives"
-                      className="p-1.5 rounded-lg text-vert-jungle hover:bg-vert-jungle/10 cursor-pointer transition-colors"
+            return (
+              <tr key={order.id}>
+                <td className="px-6 py-4 text-sm font-bold text-bleu-saphir/70">
+                  {formatRef(order.id)}
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+                  {order.shipping_name}
+                </td>
+                <td className="px-6 py-4 text-sm font-black text-bleu-saphir">
+                  {formatPrice(order.total)}
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+                  {new Date(order.created_at).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                  })}
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-orange-rougi">
+                  {order.payment_method === "mtn_momo"
+                    ? "MTN"
+                    : order.payment_method === "moov_money"
+                      ? "MOOV"
+                      : "CELTIIS"}
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+                  {order.shipping_address}
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+                  {order.shipping_phone}
+                </td>
+                <td className="px-6 py-4">
+                  {currentStatus !== "delivered" ? (
+                    <select
+                      value={currentStatus}
+                      onChange={(e) =>
+                        handleStatusChange(order.id, e.target.value)
+                      }
+                      className={`text-xs font-bold px-3 py-1.5 rounded-full border-0 focus:outline-none cursor-pointer ${
+                        currentStatus === "pending"
+                          ? "bg-amber-100 text-amber-800"
+                          : currentStatus === "processing"
+                            ? "bg-blue-100 text-blue-800"
+                            : currentStatus === "shipped"
+                              ? "bg-indigo-100 text-indigo-800"
+                              : currentStatus === "delivered"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                      }`}
                     >
-                      <ArchiveRestore className="h-4 w-4" />
-                    </button>
+                      <option value="pending">En attente (10m)</option>
+                      <option value="processing">En préparation (20m)</option>
+                      <option value="shipped">Expédiée</option>
+                      <option value="delivered">Livrée</option>
+                      <option value="cancelled">Annulée</option>
+                    </select>
                   ) : (
+                    <span className="inline-flex items-center px-5 p-2 rounded-full text-xs font-extrabold bg-vert-jungle/10 text-vert-jungle">
+                      Livrée
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gris-canon-de-fusil">
+                  <div className="flex items-center space-x-1">
                     <button
-                      onClick={() => setDeleteOrderId(order.id)}
-                      disabled={!isDeleteOrDelivered}
+                      onClick={() => setSelectedOrder(order)}
+                      title="Voir les détails"
+                      className="text-bleu-saphir p-1.5 hover:bg-bleu-saphir/10 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    {showArchived ? (
+                      <button
+                        onClick={() => handleRestoreOrder(order.id)}
+                        disabled={restoringId}
+                        title="Restaurer dans les commandes actives"
+                        className="p-1.5 rounded-lg text-vert-jungle hover:bg-vert-jungle/10 cursor-pointer transition-colors"
+                      >
+                        <ArchiveRestore className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setDeleteOrderId(order.id)}
+                        disabled={!isDeleteOrDelivered}
+                        title={
+                          isDeleteOrDelivered
+                            ? "Archiver"
+                            : "Disponible après annulation"
+                        }
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isDeleteOrDelivered
+                            ? "text-rouge-ecarlate hover:bg-rouge-ecarlate/10 cursor-pointer"
+                            : "text-gray-300 cursor-not-allowed"
+                        }`}
+                      >
+                        <Archive className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setInvoiceOrder(order)}
+                      disabled={!isShippedOrDelivered}
                       title={
-                        isDeleteOrDelivered
-                          ? "Archiver"
-                          : "Disponible après annulation"
+                        isShippedOrDelivered
+                          ? "Voir la facture"
+                          : "Disponible après expédition"
                       }
                       className={`p-1.5 rounded-lg transition-colors ${
-                        isDeleteOrDelivered
-                          ? "text-rouge-ecarlate hover:bg-rouge-ecarlate/10 cursor-pointer"
+                        isShippedOrDelivered
+                          ? "text-vert-jungle hover:bg-vert-jungle/10 cursor-pointer"
                           : "text-gray-300 cursor-not-allowed"
                       }`}
                     >
-                      <Archive className="h-4 w-4" />
+                      <File className="h-4 w-4" />
                     </button>
-                  )}
-                  <button
-                    onClick={() => setInvoiceOrder(order)}
-                    disabled={!isShippedOrDelivered}
-                    title={
-                      isShippedOrDelivered
-                        ? "Voir la facture"
-                        : "Disponible après expédition"
-                    }
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      isShippedOrDelivered
-                        ? "text-vert-jungle hover:bg-vert-jungle/10 cursor-pointer"
-                        : "text-gray-300 cursor-not-allowed"
-                    }`}
-                  >
-                    <File className="h-4 w-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          );
-        })}
+                  </div>
+                </td>
+              </tr>
+            );
+          })
+        )}
       </Table>
 
       {/* Modal 1: Détails de la commande (Eye) */}
@@ -444,7 +468,9 @@ export const CommandesTab: React.FC = () => {
       <Modal
         isOpen={!!invoiceOrder}
         onClose={() => setInvoiceOrder(null)}
-        title={`Facture Client COM-${invoiceOrder?.id?.slice(0, 8).toUpperCase()}`}
+        title={
+          invoiceOrder ? `Facture Client ${formatRef(invoiceOrder.id)}` : ""
+        }
       >
         {invoiceOrder && (
           <div className="space-y-6 p-2" id="invoice-content">
@@ -455,26 +481,44 @@ export const CommandesTab: React.FC = () => {
                 </h2>
                 <p className="text-xs text-gray-500">Facture Officielle</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-gray-700">
-                  Réf : COM-{invoiceOrder.id.slice(0, 8).toUpperCase()}
+              <div className="text-right text-[11px] text-gris-canon-de-fusil/70">
+                <p className="text-sm font-bold text-gray-700">
+                  Réf : {formatRef(invoiceOrder.id)}
                 </p>
-                <p className="text-[10px] text-gray-500">
+                <p className="font-bold">
                   Date :{" "}
                   {new Date(invoiceOrder.created_at).toLocaleDateString(
                     "fr-FR",
+                    {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                    },
                   )}
                 </p>
               </div>
             </div>
-
-            <div className="text-xs space-y-1">
-              <p className="font-bold text-gray-700">Facturé à :</p>
-              <p>{invoiceOrder.shipping_name}</p>
-              <p>{invoiceOrder.shipping_address}</p>
-              <p>{invoiceOrder.shipping_phone}</p>
+            <div className="bg-gris-canon-de-fusil/5 p-4 rounded-xl border border-gris-canon-de-fusil/10 space-y-2 text-xs">
+              <p className="font-extrabold text-bleu-saphir uppercase tracking-wider text-[11px] border-b border-gris-canon-de-fusil/10 pb-1">
+                Facturé à
+              </p>
+              <div className="space-y-1 pt-0.5 text-gris-canon-de-fusil">
+                <div className="flex items-center space-x-2 text-gris-canon-de-fusil/80">
+                  <User className="h-3.5 w-3.5 shrink-0 text-bleu-saphir/70" />
+                  <span>Nom complet : {invoiceOrder.shipping_name}</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gris-canon-de-fusil/80">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-bleu-saphir/70" />
+                  <span>Adresse : {invoiceOrder.shipping_address}</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gris-canon-de-fusil/80">
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-bleu-saphir/70" />
+                  <span>Téléphone : {invoiceOrder.shipping_phone}</span>
+                </div>
+              </div>
             </div>
-
             <table className="w-full text-xs text-left">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-500">
@@ -499,7 +543,6 @@ export const CommandesTab: React.FC = () => {
                 ))}
               </tbody>
             </table>
-
             <div className="flex justify-end pt-4 border-t border-gray-200">
               <div className="text-right space-y-1">
                 <span className="text-xs text-gray-500 mr-4">
@@ -510,7 +553,6 @@ export const CommandesTab: React.FC = () => {
                 </span>
               </div>
             </div>
-
             <div className="pt-4 flex justify-end">
               <button
                 onClick={() => window.print()}

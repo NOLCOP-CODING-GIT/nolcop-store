@@ -7,6 +7,8 @@ interface CartState {
   items: CartItem[];
   total: number;
   itemCount: number;
+  promoCode: string | null;
+  discountPercentage: number;
 }
 
 interface CartContextType {
@@ -15,6 +17,8 @@ interface CartContextType {
   removeFromCart: (productId: string, image?: string) => void;
   updateQuantity: (productId: string, quantity: number, image?: string) => void;
   clearCart: () => void;
+  applyPromo: (code: string, discount: number) => void;
+  removePromo: () => void;
 }
 
 type CartAction =
@@ -38,7 +42,9 @@ type CartAction =
         image?: string;
       };
     }
-  | { type: "CLEAR_CART" };
+  | { type: "CLEAR_CART" }
+  | { type: "APPLY_PROMO"; payload: { code: string; discount: number } }
+  | { type: "REMOVE_PROMO" };
 
 const getEffectivePrice = (product: Product) => {
   return product.discount
@@ -46,14 +52,61 @@ const getEffectivePrice = (product: Product) => {
     : product.price;
 };
 
+type ProductWithLegacyQuantity = Product & {
+  stock?: number;
+  qte_min?: number;
+};
+
+const getMinimumQuantity = (product: ProductWithLegacyQuantity) => {
+  return Math.max(1, Number(product.qte_min ?? product.stock ?? 1) || 1);
+};
+
+const normalizeProduct = (product: ProductWithLegacyQuantity): Product => {
+  return {
+    ...product,
+    qte_min: getMinimumQuantity(product),
+  };
+};
+
+const normalizeCartItem = (item: CartItem): CartItem => {
+  const legacyProduct = item.product as ProductWithLegacyQuantity;
+  const minimumQuantity = getMinimumQuantity(legacyProduct);
+
+  return {
+    ...item,
+    product: normalizeProduct(legacyProduct),
+    quantity: Math.max(minimumQuantity, Number(item.quantity) || 0),
+  };
+};
+
+const recalculateCartState = (
+  items: CartItem[],
+  state: CartState,
+): CartState => {
+  const total = items.reduce(
+    (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
+    0,
+  );
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  return { ...state, items, total, itemCount };
+};
+
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case "ADD_TO_CART": {
       const { product, quantity, image } = action.payload;
-      const targetImage = image || product.images[0];
+      const normalizedProduct = normalizeProduct(
+        product as ProductWithLegacyQuantity,
+      );
+      const targetImage = image || normalizedProduct.images[0];
+      const quantityToAdd = Math.max(
+        quantity,
+        getMinimumQuantity(normalizedProduct),
+      );
       const existingItemIndex = state.items.findIndex(
         (item) =>
-          item.product.id === product.id &&
+          item.product.id === normalizedProduct.id &&
           (item.selectedImage || item.product.images[0]) === targetImage,
       );
 
@@ -61,25 +114,19 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
       if (existingItemIndex >= 0) {
         newItems = [...state.items];
-        newItems[existingItemIndex].quantity += quantity;
+        newItems[existingItemIndex].quantity += quantityToAdd;
       } else {
         newItems = [
           ...state.items,
           {
-            product,
-            quantity,
+            product: normalizedProduct,
+            quantity: quantityToAdd,
             selectedImage: targetImage,
           },
         ];
       }
 
-      const total = newItems.reduce(
-        (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
-        0,
-      );
-      const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
-
-      return { items: newItems, total, itemCount };
+      return recalculateCartState(newItems, state);
     }
 
     case "REMOVE_FROM_CART": {
@@ -92,13 +139,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           ),
       );
 
-      const total = newItems.reduce(
-        (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
-        0,
-      );
-      const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
-
-      return { items: newItems, total, itemCount };
+      return recalculateCartState(newItems, state);
     }
 
     case "UPDATE_QUANTITY": {
@@ -108,22 +149,28 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           item.product.id === productId &&
           (!image || item.selectedImage === image)
         ) {
-          return { ...item, quantity };
+          return {
+            ...item,
+            quantity: Math.max(
+              getMinimumQuantity(item.product as ProductWithLegacyQuantity),
+              quantity,
+            ),
+          };
         }
         return item;
       });
 
-      const total = newItems.reduce(
-        (sum, item) => sum + getEffectivePrice(item.product) * item.quantity,
-        0,
-      );
-      const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
-
-      return { items: newItems, total, itemCount };
+      return recalculateCartState(newItems, state);
     }
 
     case "CLEAR_CART":
-      return { items: [], total: 0, itemCount: 0 };
+      return { items: [], total: 0, itemCount: 0, promoCode: null, discountPercentage: 0 };
+
+    case "APPLY_PROMO":
+      return { ...state, promoCode: action.payload.code, discountPercentage: action.payload.discount };
+
+    case "REMOVE_PROMO":
+      return { ...state, promoCode: null, discountPercentage: 0 };
 
     default:
       return state;
@@ -141,12 +188,24 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 
   const [state, dispatch] = useReducer(
     cartReducer,
-    { items: [], total: 0, itemCount: 0 },
+    { items: [], total: 0, itemCount: 0, promoCode: null, discountPercentage: 0 },
     (initialState) => {
       const savedCart = localStorage.getItem("nolcop_cart");
       if (savedCart) {
         try {
-          return JSON.parse(savedCart);
+          const parsedCart = JSON.parse(savedCart) as Partial<CartState>;
+          if (!parsedCart || !Array.isArray(parsedCart.items)) {
+            return initialState;
+          }
+
+          return recalculateCartState(
+            parsedCart.items.map((item) => normalizeCartItem(item)),
+            {
+              ...initialState,
+              promoCode: parsedCart.promoCode ?? null,
+              discountPercentage: parsedCart.discountPercentage ?? 0,
+            },
+          );
         } catch (e) {
           console.error(
             "Erreur de récupération du panier depuis localStorage",
@@ -169,7 +228,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     localStorage.setItem("nolcop_cart", JSON.stringify(state));
   }, [state]);
 
-  const addToCart = (product: Product, quantity = 1, image?: string) => {
+  const addToCart = (
+    product: Product,
+    quantity = getMinimumQuantity(product as ProductWithLegacyQuantity),
+    image?: string,
+  ) => {
     dispatch({
       type: "ADD_TO_CART",
       payload: { product, quantity, image },
@@ -202,9 +265,25 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     dispatch({ type: "CLEAR_CART" });
   };
 
+  const applyPromo = (code: string, discount: number) => {
+    dispatch({ type: "APPLY_PROMO", payload: { code, discount } });
+  };
+
+  const removePromo = () => {
+    dispatch({ type: "REMOVE_PROMO" });
+  };
+
   return (
     <CartContext.Provider
-      value={{ state, addToCart, removeFromCart, updateQuantity, clearCart }}
+      value={{
+        state,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        applyPromo,
+        removePromo,
+      }}
     >
       {children}
     </CartContext.Provider>

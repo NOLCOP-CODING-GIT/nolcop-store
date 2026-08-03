@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Star,
   Mail,
-  AlertTriangle,
   LogOut,
 } from "lucide-react";
 
@@ -22,7 +21,6 @@ import { UtilisateursTab } from "../components/admin/tabs/UtilisateursTab";
 import { AnalyseTab } from "../components/admin/tabs/AnalyseTab";
 import { AvisTab } from "../components/admin/tabs/AvisTab";
 import { NewsletterMailTab } from "../components/admin/tabs/NewsletterMailTab";
-import { UrgenceTab } from "../components/admin/tabs/UrgenceTab";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
@@ -72,11 +70,6 @@ const Admin: React.FC = () => {
       label: "Newsletter Mail",
       icon: <Mail className="h-4 w-4" />,
     },
-    {
-      id: "emergency",
-      label: "Urgence",
-      icon: <AlertTriangle className="h-4 w-4" />,
-    },
   ];
 
   const renderTabContent = () => {
@@ -97,8 +90,6 @@ const Admin: React.FC = () => {
         return <AvisTab />;
       case "newsletter":
         return <NewsletterMailTab />;
-      case "emergency":
-        return <UrgenceTab />;
       default:
         return <TableauBordTab />;
     }
